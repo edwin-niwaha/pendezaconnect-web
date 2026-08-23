@@ -1,142 +1,93 @@
 {% load static %}
 
 <style>
-  .app-public-navbar {
-    background: #ffffff !important;
-    border-bottom: 1px solid #e2e8f0 !important;
-    box-shadow: 0 10px 26px rgba(31, 41, 51, .08) !important;
-  }
-  .app-public-navbar .container-fluid {
-    max-width: 1180px;
-    padding-left: 24px;
-    padding-right: 24px;
-  }
-  .app-public-navbar .navbar-brand { color: #173b34 !important; font-weight: 900; letter-spacing: 0; }
-  .app-public-navbar .brand-mark {
-    height: 42px;
-    object-fit: contain;
-    width: 54px;
-  }
-  .app-public-navbar .nav-link {
-    color: #425466 !important;
-    font-size: .94rem;
-    font-weight: 700;
-    padding-left: .85rem !important;
-    padding-right: .85rem !important;
-  }
+  .app-public-navbar { background: rgba(255, 255, 255, .98) !important; border-bottom: 1px solid #e1e8e5 !important; box-shadow: 0 8px 24px rgba(16, 48, 43, .08) !important; min-height: 74px !important; }
+  .app-public-navbar .container-fluid { max-width: 1180px; padding-left: 24px; padding-right: 24px; }
+  .app-public-navbar .navbar-brand { color: #153c34 !important; font-size: 1.08rem; font-weight: 900; letter-spacing: -.015em; white-space: nowrap; }
+  .app-public-navbar .brand-mark { height: 44px; object-fit: contain; width: 52px; }
+  .app-public-navbar .navbar-nav { align-items: center; }
+  .app-public-navbar .nav-link { border-radius: 7px; color: #455a55 !important; font-size: .92rem; font-weight: 700; padding: .7rem .78rem !important; white-space: nowrap; }
   .app-public-navbar .nav-link:hover,
-  .app-public-navbar .nav-link:focus { color: #0f6f5b !important; }
-  .app-public-navbar .navbar-toggler {
-    border-color: #cbd5e1;
-    padding: .35rem .5rem;
+  .app-public-navbar .nav-link:focus { background: #f0f6f4; color: #0f6f5b !important; }
+  .app-public-navbar .nav-account { border: 1px solid #cfdcd8; margin-left: .35rem; padding-left: 1rem !important; padding-right: 1rem !important; }
+  .app-public-navbar .nav-donate { align-items: center; background: #f2b84b; border: 1px solid #f2b84b; color: #173b34 !important; display: inline-flex; font-weight: 900; gap: .45rem; margin-left: .55rem; min-height: 42px; padding-left: 1.1rem !important; padding-right: 1.1rem !important; }
+  .app-public-navbar .nav-donate:hover,
+  .app-public-navbar .nav-donate:focus { background: #e7a92f; color: #173b34 !important; }
+  .app-public-navbar .nav-donate-usd {
+    background: #173b34;
+    border-color: #173b34;
+    color: #fff !important;
+    margin-left: .4rem;
   }
-  .app-public-navbar .navbar-toggler-icon {
-    background-image: none;
-    height: 1.2rem;
-    position: relative;
-    width: 1.35rem;
-  }
+  .app-public-navbar .nav-donate-usd:hover,
+  .app-public-navbar .nav-donate-usd:focus { background: #0f6f5b; border-color: #0f6f5b; color: #fff !important; }
+  .app-public-navbar .dropdown-menu { border-color: #dfe8e4; border-radius: 9px; margin-top: .55rem; min-width: 210px; padding: .45rem; }
+  .app-public-navbar .dropdown-item { border-radius: 6px; color: #344b46; font-size: .9rem; font-weight: 700; padding: .7rem .8rem; }
+  .app-public-navbar .dropdown-item:hover,
+  .app-public-navbar .dropdown-item:focus { background: #edf6f3; color: #0f6f5b; }
+  .app-public-navbar .navbar-toggler { border: 1px solid #cbd8d4; border-radius: 7px; padding: .5rem .58rem; }
+  .app-public-navbar .navbar-toggler:focus { outline: 2px solid rgba(15, 111, 91, .25); }
+  .app-public-navbar .navbar-toggler-icon { background-image: none; height: 1.1rem; position: relative; width: 1.3rem; }
   .app-public-navbar .navbar-toggler-icon,
   .app-public-navbar .navbar-toggler-icon::before,
-  .app-public-navbar .navbar-toggler-icon::after {
-    border-top: 2px solid #173b34;
-    content: "";
-    display: block;
-  }
+  .app-public-navbar .navbar-toggler-icon::after { border-top: 2px solid #173b34; content: ""; display: block; }
   .app-public-navbar .navbar-toggler-icon::before { margin-top: 5px; }
   .app-public-navbar .navbar-toggler-icon::after { margin-top: 4px; }
-  .app-public-navbar .nav-cta {
-    background: #173b34;
-    border-radius: 6px;
-    color: #fff !important;
-    margin-left: .5rem;
-    padding-left: 1rem !important;
-    padding-right: 1rem !important;
-  }
-  .app-public-navbar .nav-cta:hover,
-  .app-public-navbar .nav-cta:focus { background: #0f6f5b; color: #fff !important; }
+
   @media (max-width: 991.98px) {
-    .app-public-navbar .navbar-collapse {
-      border-top: 1px solid #e2e8f0;
-      margin-top: .75rem;
-      padding-top: .75rem;
-    }
-    .app-public-navbar .nav-cta { margin-left: 0; margin-top: .35rem; text-align: center; }
+    .app-public-navbar { min-height: 68px !important; }
+    .app-public-navbar .container-fluid { padding-left: 18px; padding-right: 18px; }
+    .app-public-navbar .navbar-collapse { background: #fff; border-top: 1px solid #e2e8f0; margin-left: -18px; margin-right: -18px; margin-top: .7rem; max-height: calc(100vh - 68px); overflow-y: auto; padding: .75rem 18px 1rem; }
+    .app-public-navbar .navbar-nav { align-items: stretch; }
+    .app-public-navbar .nav-link { padding: .72rem .8rem !important; }
+    .app-public-navbar .nav-account,
+    .app-public-navbar .nav-donate { margin: .35rem 0 0; text-align: center; }
+    .app-public-navbar .nav-donate { justify-content: center; width: 100%; }
+    .app-public-navbar .nav-donate-usd { margin-top: .45rem; }
+    .app-public-navbar .dropdown-menu { border: 0; box-shadow: none; margin: .2rem 0 .35rem; }
+  }
+
+  @media (max-width: 420px) {
+    .app-public-navbar .navbar-brand { font-size: .98rem; }
+    .app-public-navbar .brand-mark { height: 38px; width: 44px; }
   }
 </style>
 
-<nav class="navbar navbar-expand-lg fixed-top app-public-navbar">
+<nav class="navbar navbar-expand-lg fixed-top app-public-navbar" aria-label="Primary navigation">
   <div class="container-fluid">
     <a class="navbar-brand d-flex align-items-center" href="/">
-      <img src="{% static 'images/file.png' %}" alt="Pendeza logo" class="brand-mark mr-2" />
+      <img src="{% static 'images/file.png' %}" alt="Pendeza Connect" class="brand-mark mr-2" />
       <span>Pendeza Connect</span>
     </a>
-
-    <button
-      class="navbar-toggler"
-      type="button"
-      aria-controls="publicNavbar"
-      aria-expanded="false"
-      aria-label="Toggle navigation"
-    >
-      <span class="navbar-toggler-icon"></span>
-    </button>
+    <button class="navbar-toggler" type="button" aria-controls="publicNavbar" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
 
     <div class="collapse navbar-collapse" id="publicNavbar">
-      <ul class="navbar-nav mr-auto mb-2 mb-lg-0">
+      <ul class="navbar-nav ml-lg-4 mr-auto">
+        <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="https://pendeza.org/" target="_blank" rel="noopener noreferrer">About Us</a></li>
         {% if user.is_authenticated and user.profile.resolved_account_type == 'staff' %}
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'main-dashboard' %}">Dashboard</a>
-          </li>
-        {% endif %}
-        {% if user.is_authenticated and user.profile.resolved_account_type == 'sponsor' %}
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'sponsor_portal' %}">Sponsor Portal</a>
-          </li>
-        {% endif %}
-        <li class="nav-item">
-          <a class="nav-link" href="https://pendeza.org/" target="_blank" rel="noopener">About Us</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link nav-cta me-2"
-              href="{% url 'initiate_payment' %}?currency=UGX">
-              Donate UGX
-            </a>
-        </li>
-
-        <li class="nav-item">
-            <a
-                class="nav-link nav-cta"
-                href="https://app.betterunite.com/usapendeza-childsponsorship"
-                target="_blank"
-                rel="noopener noreferrer"
-            >
-                Donate USD
-            </a>
-        </li>
-        {% if user.is_authenticated and user.profile.resolved_account_type == 'client' %}
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'client_savings_dashboard' %}">Client Portal</a>
-          </li>
+          <li class="nav-item"><a class="nav-link" href="{% url 'main-dashboard' %}">Dashboard</a></li>
+        {% elif user.is_authenticated and user.profile.resolved_account_type == 'sponsor' %}
+          <li class="nav-item"><a class="nav-link" href="{% url 'sponsor_portal' %}">Sponsor Portal</a></li>
+        {% elif user.is_authenticated and user.profile.resolved_account_type == 'client' %}
+          <li class="nav-item"><a class="nav-link" href="{% url 'client_savings_dashboard' %}">Client Portal</a></li>
         {% endif %}
       </ul>
 
-      <ul class="navbar-nav ms-auto ml-auto mb-2 mb-lg-0">
+      <ul class="navbar-nav ml-auto">
         {% if user.is_authenticated %}
-          <li class="nav-item">
-            <a href="{% url 'users-profile' %}" class="nav-link">My Profile</a>
-          </li>
-          <li class="nav-item">
-            <a href="{% url 'logout' %}" class="nav-link" onclick="return confirm('Are you sure you want to logout?');">Logout</a>
-          </li>
+          <li class="nav-item"><a href="{% url 'users-profile' %}" class="nav-link">My Profile</a></li>
+          <li class="nav-item"><a href="{% url 'logout' %}" class="nav-link nav-account" onclick="return confirm('Are you sure you want to logout?');">Log Out</a></li>
         {% else %}
-          <li class="nav-item">
-            <a href="{% url 'login' %}" class="nav-link">Log In</a>
-          </li>
-          <li class="nav-item">
-            <a href="{% url 'users-register' %}" class="nav-link">Register</a>
-          </li>
+          <li class="nav-item"><a href="{% url 'login' %}" class="nav-link">Sign In</a></li>
+          <li class="nav-item"><a href="{% url 'users-register' %}" class="nav-link nav-account">Create Account</a></li>
         {% endif %}
+        <li class="nav-item">
+          <a class="nav-link nav-donate" href="{% url 'initiate_payment' %}?currency=UGX"><i class="fas fa-heart" aria-hidden="true"></i> Donate UGX</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link nav-donate nav-donate-usd" href="https://app.betterunite.com/usapendeza-childsponsorship" target="_blank" rel="noopener noreferrer">Donate USD</a>
+        </li>
       </ul>
     </div>
   </div>
@@ -146,32 +97,17 @@
   (function () {
     var navbar = document.getElementById('publicNavbar')
     var toggler = document.querySelector('.app-public-navbar .navbar-toggler')
-
-    if (!navbar || !toggler) {
-      return
-    }
+    if (!navbar || !toggler) return
 
     function setExpanded(isExpanded) {
       navbar.classList.toggle('show', isExpanded)
       toggler.setAttribute('aria-expanded', isExpanded ? 'true' : 'false')
     }
 
-    toggler.addEventListener('click', function () {
-      setExpanded(!navbar.classList.contains('show'))
-    })
-
+    toggler.addEventListener('click', function () { setExpanded(!navbar.classList.contains('show')) })
     navbar.querySelectorAll('.nav-link').forEach(function (link) {
-      link.addEventListener('click', function () {
-        if (window.innerWidth < 992) {
-          setExpanded(false)
-        }
-      })
+      link.addEventListener('click', function () { if (window.innerWidth < 992) setExpanded(false) })
     })
-
-    window.addEventListener('resize', function () {
-      if (window.innerWidth >= 992) {
-        setExpanded(false)
-      }
-    })
+    window.addEventListener('resize', function () { if (window.innerWidth >= 992) setExpanded(false) })
   })()
 </script>

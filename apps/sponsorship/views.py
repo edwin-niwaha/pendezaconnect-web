@@ -538,7 +538,9 @@ def terminate_staff_sponsorship(request, sponsorship_id):
 # ---------------- MoMo Payment Initiation View ---------------- #
 def initiate_payment(request):
     if request.method == "POST":
-        phone = request.POST.get("phone", "").strip()
+        phone = re.sub(r"[^0-9]", "", request.POST.get("phone", ""))
+        if phone.startswith("256") and len(phone) == 12:
+            phone = "0" + phone[3:]
         amount = request.POST.get("amount", "").strip()
         name = request.POST.get("name", "").strip() or None
         email = request.POST.get("email", "").strip() or None

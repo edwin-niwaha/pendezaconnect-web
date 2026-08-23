@@ -5,236 +5,286 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pendeza Connect | Donate</title>
-
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
 
   <style>
     :root {
-      --green: #13745d;
-      --green-dark: #173b34;
-      --green-soft: #edf7f4;
-      --gold: #d99421;
-      --ink: #1f2933;
-      --muted: #667085;
-      --line: #dfe5ec;
-      --page: #f6f8fb;
+      --primary: #0f766e;
+      --primary-dark: #173b34;
+      --primary-soft: #ecfdf5;
+      --surface: #ffffff;
+      --background: #f4f7f6;
+      --border: #dbe4e1;
+      --text: #172b27;
+      --muted: #667872;
+      --danger: #b42318;
+      --gold: #f2b84b;
+      --radius-md: 10px;
+      --radius-lg: 14px;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
+
+    html { overflow-x: hidden; }
 
     body {
-      background: var(--page);
-      color: var(--ink);
+      background:
+        linear-gradient(135deg, rgba(12, 48, 41, .88), rgba(15, 118, 110, .72)),
+        url("{% static 'images/slide/kids.jpg' %}") center / cover no-repeat fixed;
+      color: var(--text);
       font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
       margin: 0;
       min-height: 100vh;
+      overflow-x: hidden;
     }
 
-    .donation-page {
+    img,
+    input,
+    button { max-width: 100%; }
+
+    button,
+    input { font: inherit; }
+
+    .page-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header-inner {
       align-items: center;
       display: flex;
-      min-height: 100vh;
-      padding: 28px;
-    }
-
-    .donation-shell {
-      background: #fff;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      display: grid;
-      grid-template-columns: minmax(300px, .82fr) minmax(360px, 1fr);
       margin: 0 auto;
-      max-width: 1080px;
-      overflow: hidden;
-      width: 100%;
+      max-width: 980px;
+      min-height: 66px;
+      padding: 0 20px;
     }
 
-    .donation-story {
-      background:
-        linear-gradient(180deg, rgba(23, 59, 52, .86), rgba(23, 59, 52, .94)),
-        url("{% static 'images/slide/kids.jpg' %}") center / cover no-repeat;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      min-height: 660px;
-      padding: 34px;
-    }
-
-    .brand-mark {
+    .back-link {
       align-items: center;
-      display: flex;
-      font-size: .9rem;
-      font-weight: 900;
-      gap: 10px;
-      letter-spacing: .02em;
-      text-transform: uppercase;
-    }
-
-    .story-top {
-      align-items: center;
-      display: flex;
-      gap: 14px;
-      justify-content: space-between;
-    }
-
-    .brand-mark i {
-      background: rgba(255, 255, 255, .15);
-      border: 1px solid rgba(255, 255, 255, .2);
       border-radius: 8px;
-      color: #f5b14c;
-      display: grid;
-      height: 38px;
-      place-items: center;
-      width: 38px;
-    }
-
-    .story-copy h1 {
-      font-size: 2.35rem;
-      font-weight: 900;
-      letter-spacing: 0;
-      line-height: 1.08;
-      margin: 0 0 14px;
-      max-width: 440px;
-    }
-
-    .story-copy p {
-      color: rgba(255, 255, 255, .84);
-      font-size: 1rem;
-      line-height: 1.55;
-      margin: 0;
-      max-width: 420px;
-    }
-
-    .merchant-panel {
-      background: rgba(255, 255, 255, .11);
-      border: 1px solid rgba(255, 255, 255, .18);
-      border-radius: 8px;
-      padding: 16px;
-    }
-
-    .merchant-label {
-      color: rgba(255, 255, 255, .72);
-      font-size: .78rem;
-      font-weight: 900;
-      margin-bottom: 8px;
-      text-transform: uppercase;
-    }
-
-    .dial-btn {
-      align-items: center;
-      background: #fff;
-      border-radius: 8px;
-      color: var(--green-dark);
+      color: var(--text);
       display: inline-flex;
-      font-weight: 900;
+      font-size: .9rem;
+      font-weight: 800;
       gap: 8px;
-      padding: 10px 12px;
+      padding: 9px 10px;
       text-decoration: none;
     }
 
-    .dial-btn:hover {
-      color: var(--green);
+    .back-link:hover,
+    .back-link:focus {
+      background: var(--primary-soft);
+      color: var(--primary-dark);
     }
 
-    .donation-form-panel {
-      padding: 34px;
-    }
-
-    .form-heading {
-      align-items: flex-start;
+    .brand {
+      align-items: center;
       display: flex;
-      gap: 16px;
-      justify-content: space-between;
-      margin-bottom: 22px;
-    }
-
-    .form-heading h2 {
-      font-size: 1.55rem;
       font-weight: 900;
-      margin: 0 0 5px;
+      gap: 8px;
+      margin-left: auto;
     }
 
-    .form-heading p {
-      color: var(--muted);
+    .brand img {
+      height: 36px;
+      object-fit: contain;
+      width: 42px;
+    }
+
+    .donation-page {
+      margin: 0 auto;
+      max-width: 980px;
+      min-height: calc(100vh - 66px);
+      padding: clamp(18px, 3vw, 32px) clamp(14px, 3vw, 24px) 44px;
+      width: 100%;
+    }
+
+    .intro {
+      margin-bottom: 18px;
+    }
+
+    .intro-badge {
+      align-items: center;
+      background: rgba(255, 255, 255, .14);
+      border: 1px solid rgba(255, 255, 255, .28);
+      border-radius: 999px;
+      color: #fff;
+      display: inline-flex;
+      font-size: .72rem;
+      font-weight: 900;
+      gap: 6px;
+      letter-spacing: .06em;
+      padding: 7px 10px;
+      text-transform: uppercase;
+    }
+
+    .intro h1 {
+      color: #fff;
+      font-size: 1.75rem;
+      font-weight: 900;
+      letter-spacing: -.02em;
+      margin: 12px 0 5px;
+    }
+
+    .intro p {
+      color: rgba(255, 255, 255, .84);
+      line-height: 1.55;
       margin: 0;
     }
 
-    .secure-pill {
-      align-items: center;
-      background: var(--green-soft);
-      border: 1px solid #d6ebe4;
-      border-radius: 999px;
-      color: var(--green);
-      display: inline-flex;
-      flex: 0 0 auto;
-      font-size: .82rem;
+    .payment-card {
+      background: var(--surface);
+      min-width: 0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 12px 30px rgba(15, 47, 41, .06);
+      padding: 24px;
+    }
+
+    .section-title {
+      font-size: 1.05rem;
       font-weight: 900;
-      gap: 6px;
-      padding: 8px 10px;
+      margin: 0 0 14px;
     }
 
     .amount-grid {
       display: grid;
       gap: 10px;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      margin: 0 0 18px;
+      margin-bottom: 22px;
     }
 
-    .amount-btn {
-      background: #fff;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      color: var(--ink);
+    .amount-chip {
+      background: #f8faf9;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      color: var(--text);
       cursor: pointer;
-      min-height: 74px;
-      padding: 13px;
+      padding: 14px 15px;
       text-align: left;
-      transition: border-color .2s ease, background .2s ease, transform .2s ease;
+      transition: background .18s ease, border-color .18s ease, transform .18s ease;
+      width: 100%;
     }
 
-    .amount-btn:hover,
-    .amount-btn.active {
-      background: var(--green-soft);
-      border-color: var(--green);
+    .amount-chip:hover {
+      border-color: #8dc9bd;
       transform: translateY(-1px);
     }
 
-    .amount-btn strong {
+    .amount-chip.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+
+    .amount-chip strong {
       display: block;
       font-size: .96rem;
       font-weight: 900;
     }
 
-    .amount-btn span {
+    .amount-chip span {
       color: var(--muted);
       display: block;
-      font-size: .8rem;
-      font-weight: 700;
+      font-size: .78rem;
+      font-style: italic;
+      line-height: 1.45;
       margin-top: 4px;
     }
 
+    .amount-chip.active span { color: #ccfbf1; }
+
+    .form-field {
+      margin-bottom: 16px;
+    }
+
     .form-label {
-      color: #475569;
-      font-size: .84rem;
-      font-weight: 900;
-      margin-bottom: 7px;
+      color: var(--text);
+      display: block;
+      font-size: .8rem;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .optional {
+      color: var(--muted);
+      font-weight: 500;
     }
 
     .form-control {
-      border: 1px solid #d7dee8;
-      border-radius: 6px;
-      box-shadow: none !important;
-      min-height: 46px;
-      padding: 10px 12px;
+      background: #f8faf9;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      color: var(--text);
+      min-height: 50px;
+      outline: 0;
+      padding: 12px 14px;
+      width: 100%;
     }
 
     .form-control:focus {
-      border-color: var(--green);
-      box-shadow: 0 0 0 .18rem rgba(19, 116, 93, .13) !important;
+      background: #fff;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(15, 118, 110, .12);
+    }
+
+    .form-control.is-invalid { border-color: var(--danger); }
+
+    .invalid-feedback {
+      color: var(--danger);
+      display: none;
+      font-size: .76rem;
+      font-weight: 700;
+      margin-top: 5px;
+    }
+
+    .form-control.is-invalid + .invalid-feedback { display: block; }
+
+    .month-row {
+      display: grid;
+      gap: 9px;
+      grid-template-columns: 52px minmax(0, 1fr) 52px;
+    }
+
+    .month-button {
+      align-items: center;
+      background: var(--primary-soft);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      color: var(--primary-dark);
+      cursor: pointer;
+      display: flex;
+      font-size: 1.3rem;
+      justify-content: center;
+      min-height: 50px;
+    }
+
+    .month-button:hover,
+    .month-button:focus { border-color: var(--primary); }
+
+    .month-input {
+      font-size: 1.05rem;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .total-card {
+      background: var(--primary-soft);
+      border: 1px solid #99f6e4;
+      border-radius: var(--radius-md);
+      margin: 6px 0 22px;
+      padding: 15px;
+    }
+
+    .total-breakdown {
+      color: var(--primary-dark);
+      font-size: .8rem;
+      margin-bottom: 3px;
+    }
+
+    .total-amount {
+      color: var(--primary-dark);
+      font-size: 1.25rem;
+      font-weight: 900;
     }
 
     .field-row {
@@ -243,284 +293,346 @@
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .submit-btn {
+    .phone-label {
       align-items: center;
-      background: var(--gold);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .phone-label img {
+      height: 20px;
+      object-fit: contain;
+    }
+
+    .message {
+      border-radius: var(--radius-md);
+      font-size: .86rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      padding: 12px 14px;
+    }
+
+    .message-error {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: var(--danger);
+    }
+
+    .message-info {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: #1d4ed8;
+    }
+
+    .pay-button {
+      align-items: center;
+      background: var(--primary);
       border: 0;
-      border-radius: 6px;
+      border-radius: var(--radius-md);
       color: #fff;
-      display: inline-flex;
+      cursor: pointer;
+      display: flex;
+      font-size: .92rem;
       font-weight: 900;
-      gap: 8px;
+      gap: 9px;
       justify-content: center;
-      min-height: 48px;
+      min-height: 52px;
+      padding: 13px 18px;
       width: 100%;
     }
 
-    .submit-btn:hover:not(:disabled) {
-      background: #c57f1c;
-      color: #fff;
-    }
+    .pay-button:hover:not(:disabled),
+    .pay-button:focus:not(:disabled) { background: var(--primary-dark); }
 
-    .submit-btn:disabled {
+    .pay-button:disabled {
       cursor: not-allowed;
-      opacity: .68;
+      opacity: .58;
     }
 
-    .support-strip {
-      border-top: 1px solid #edf1f5;
-      display: grid;
+    .merchant-note {
+      align-items: flex-start;
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: var(--radius-md);
+      color: #76510b;
+      display: flex;
+      font-size: .78rem;
       gap: 10px;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      margin-top: 22px;
-      padding-top: 18px;
+      line-height: 1.5;
+      margin-top: 16px;
+      padding: 12px 14px;
     }
 
-    .support-item {
-      color: var(--muted);
-      font-size: .82rem;
-      font-weight: 800;
+    .merchant-note i {
+      font-size: 1rem;
+      margin-top: 2px;
     }
 
-    .support-item i {
-      color: var(--green);
-      margin-right: 5px;
+    .merchant-note a {
+      color: var(--primary-dark);
+      font-weight: 900;
+      overflow-wrap: anywhere;
     }
 
-    .footer-note {
-      color: #8792a2;
-      font-size: .8rem;
+    .page-note {
+      color: rgba(255, 255, 255, .78);
+      font-size: .75rem;
       margin: 18px 0 0;
       text-align: center;
     }
 
-    .footer-note a {
-      color: var(--green);
+    .page-note a {
+      color: #ffe19a;
       font-weight: 800;
       text-decoration: none;
     }
 
-    .alert {
-      border: 0;
-      border-radius: 8px;
-      font-weight: 700;
-    }
-
-    @media (max-width: 860px) {
-      .donation-page {
-        align-items: stretch;
-        padding: 14px;
-      }
-
-      .donation-shell {
-        grid-template-columns: 1fr;
-      }
-
-      .donation-story {
-        min-height: 320px;
-        padding: 24px;
-      }
-
-      .story-copy h1 {
-        font-size: 1.9rem;
-      }
-
-      .donation-form-panel {
-        padding: 24px;
-      }
-    }
-
-    @media (max-width: 560px) {
-      .form-heading,
-      .field-row {
-        grid-template-columns: 1fr;
-      }
-
-      .support-strip {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .form-heading {
-        display: grid;
-      }
-
+    @media (min-width: 760px) {
       .amount-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
+
+      .amount-chip {
+        min-height: 92px;
+      }
+    }
+
+    @media (max-width: 680px) {
+      .field-row {
+        grid-template-columns: 1fr;
+        gap: 0;
+      }
+    }
+
+    @media (max-width: 760px) {
+      body { background-attachment: scroll; }
+    }
+
+    @media (max-width: 560px) {
+      .header-inner { min-height: 58px; padding: 0 14px; }
+      .brand span { display: none; }
+      .donation-page { padding: 18px 14px 34px; }
+      .intro h1 { font-size: 1.5rem; }
+      .payment-card { border-radius: 12px; padding: 18px 15px; }
+      .amount-chip { padding: 13px; }
+      .merchant-note { align-items: flex-start; }
+    }
+
+    @media (max-width: 359.98px) {
+      .header-inner { padding: 0 10px; }
+      .back-link { padding-left: 6px; padding-right: 6px; }
+      .donation-page { padding-left: 10px; padding-right: 10px; }
+      .payment-card { padding: 16px 12px; }
+      .intro h1 { font-size: 1.35rem; }
+      .month-row { grid-template-columns: 44px minmax(0, 1fr) 44px; gap: 7px; }
+      .month-button { min-height: 48px; }
+      .total-amount { font-size: 1.1rem; }
+      .amount-chip strong { font-size: .88rem; }
+      .amount-chip span { font-size: .74rem; }
     }
   </style>
 </head>
 <body>
+  <header class="page-header">
+    <div class="header-inner">
+      <a class="back-link" href="/"><i class="bi bi-arrow-left"></i> Back</a>
+      <div class="brand">
+        <img src="{% static 'images/file.png' %}" alt="" />
+        <span>Pendeza Connect</span>
+      </div>
+    </div>
+  </header>
+
   <main class="donation-page">
-    <section class="donation-shell shadow-sm">
-      <aside class="donation-story">
-        <div class="story-top">
-          <div class="brand-mark">
-            <i class="bi bi-heart-fill"></i>
-            Pendeza Uganda
-          </div>
-        </div>
-
-        <div class="story-copy">
-          <h1>Donate with MTN MoMo.</h1>
-          <p>Choose an amount and confirm on your phone.</p>
-        </div>
-
-        <div class="merchant-panel">
-          <div class="merchant-label">MTN Merchant Code</div>
-          <a href="tel:*165*3*308124%23" class="dial-btn">
-            <i class="bi bi-telephone-fill"></i>
-            Dial *165*3*308124#
-          </a>
-        </div>
-      </aside>
-
-      <section class="donation-form-panel">
-        {% if messages %}
-          <div class="mb-3">
-            {% for message in messages %}
-              <div class="alert {% if 'error' in message.tags %}alert-danger{% else %}alert-{{ message.tags }}{% endif %} d-flex align-items-center px-3 py-3">
-                <i class="bi bi-info-circle-fill me-2"></i>
-                <span>{{ message }}</span>
-              </div>
-            {% endfor %}
-          </div>
-        {% endif %}
-
-        <div class="form-heading">
-          <div>
-            <h2>Start Donation</h2>
-            <p>Select amount, enter phone, confirm.</p>
-          </div>
-          <span class="secure-pill"><i class="bi bi-shield-check"></i> Secure</span>
-        </div>
-
-        <div class="amount-grid" aria-label="Suggested amounts">
-          <button type="button" class="amount-btn" onclick="setAmount(170000, this)">
-            <strong>UGX 170,000</strong>
-            <span>1 month</span>
-          </button>
-          <button type="button" class="amount-btn" onclick="setAmount(680000, this)">
-            <strong>UGX 680,000</strong>
-            <span>1 term</span>
-          </button>
-          <button type="button" class="amount-btn" onclick="setAmount(1360000, this)">
-            <strong>UGX 1,360,000</strong>
-            <span>2 terms</span>
-          </button>
-          <button type="button" class="amount-btn" onclick="setAmount(2040000, this)">
-            <strong>UGX 2,040,000</strong>
-            <span>1 year</span>
-          </button>
-        </div>
-
-        <form method="POST" id="donationForm" novalidate>
-          {% csrf_token %}
-
-          <div class="mb-3">
-            <label class="form-label" for="amount">Amount (UGX)</label>
-            <input
-              type="number"
-              name="amount"
-              id="amount"
-              class="form-control"
-              min="5000"
-              required
-              placeholder="Minimum 5,000"
-            />
-            <div class="invalid-feedback">Minimum is 5,000 UGX.</div>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label" for="phone">
-              MTN Phone Number
-              <img src="{% static 'images/mtn-logo.png' %}" alt="MTN" height="18" class="ms-1" />
-            </label>
-            <input
-              type="tel"
-              name="phone"
-              id="phone"
-              class="form-control"
-              placeholder="07XXXXXXXX"
-              pattern="07[0-9]{8}"
-              required
-            />
-            <div class="invalid-feedback">Enter a valid MTN number starting with 07.</div>
-          </div>
-
-          <div class="field-row">
-            <div class="mb-3">
-              <label class="form-label" for="name">Full Name <span class="text-muted fw-normal">(Optional)</span></label>
-              <input type="text" name="name" id="name" class="form-control" placeholder="Your name" />
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label" for="email">Email <span class="text-muted fw-normal">(Optional)</span></label>
-              <input type="email" name="email" id="email" class="form-control" placeholder="name@example.com" />
-            </div>
-          </div>
-
-          <button type="submit" id="donateBtn" class="btn submit-btn mt-1" disabled>
-            <i class="bi bi-phone-vibrate"></i>
-            Send Prompt
-          </button>
-        </form>
-
-        <div class="support-strip">
-          <div class="support-item"><i class="bi bi-phone"></i>Mobile Money</div>
-          <div class="support-item"><i class="bi bi-lightning-charge"></i>Fast prompt</div>
-          <div class="support-item"><i class="bi bi-receipt"></i>Tracked gift</div>
-        </div>
-
-        <p class="footer-note">
-          &copy; <span id="year"></span> Pendeza Uganda. Built by
-          <a href="https://perpetual-web-vert.vercel.app/" target="_blank" rel="noopener">Perpetual Labs</a>
-        </p>
-      </section>
+    <section class="intro">
+      <span class="intro-badge"><i class="bi bi-shield-check"></i> Secure MTN MoMo</span>
+      <h1>Make a donation</h1>
+      <p>Choose a support option, select the number of months, and approve the prompt on your phone.</p>
     </section>
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="message {% if 'error' in message.tags or 'danger' in message.tags %}message-error{% else %}message-info{% endif %}">
+          <i class="bi bi-info-circle me-1"></i> {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    <form method="POST" id="donationForm" class="payment-card" novalidate>
+      {% csrf_token %}
+      <h2 class="section-title">Choose an amount</h2>
+
+      <div class="amount-grid" aria-label="Sponsorship options">
+        <button type="button" class="amount-chip active" data-amount="170000">
+          <strong>UGX 170,000 monthly</strong>
+          <span>Child Full Support — Fully support one child's education and care.</span>
+        </button>
+        <button type="button" class="amount-chip" data-amount="85000">
+          <strong>UGX 85,000 monthly</strong>
+          <span>Child Co-Support — Share support for one child with another sponsor.</span>
+        </button>
+        <button type="button" class="amount-chip" data-amount="60000">
+          <strong>UGX 60,000 monthly</strong>
+          <span>Child Co-Support — Share support with two other sponsors.</span>
+        </button>
+        <button type="button" class="amount-chip" data-amount="45000">
+          <strong>UGX 45,000 monthly</strong>
+          <span>Child Co-Support — A flexible four-sponsor option.</span>
+        </button>
+        <button type="button" class="amount-chip" data-amount="70000">
+          <strong>UGX 70,000 monthly</strong>
+          <span>Family Full Support — Support a family toward stability and dignity.</span>
+        </button>
+        <button type="button" class="amount-chip" data-amount="35000">
+          <strong>UGX 35,000 monthly</strong>
+          <span>Family Co-Support — Partner with others to support a family.</span>
+        </button>
+        <button type="button" class="amount-chip" data-amount="40000">
+          <strong>UGX 40,000 monthly</strong>
+          <span>General Support — Give toward the wider mission of Pendeza Uganda.</span>
+        </button>
+      </div>
+
+      <div class="form-field">
+        <label class="form-label" for="monthlyAmount">Monthly amount (UGX)</label>
+        <input type="number" id="monthlyAmount" class="form-control" min="5000" value="170000" placeholder="Minimum 5,000" inputmode="numeric" />
+        <div class="invalid-feedback">Enter a monthly amount of at least UGX 5,000.</div>
+      </div>
+
+      <div class="form-field">
+        <label class="form-label" for="months">Number of months</label>
+        <div class="month-row">
+          <button class="month-button" id="decreaseMonths" type="button" aria-label="Decrease months"><i class="bi bi-dash"></i></button>
+          <input class="form-control month-input" id="months" type="number" min="1" max="60" value="1" inputmode="numeric" />
+          <button class="month-button" id="increaseMonths" type="button" aria-label="Increase months"><i class="bi bi-plus"></i></button>
+        </div>
+      </div>
+
+      <div class="total-card" aria-live="polite">
+        <div class="total-breakdown" id="totalBreakdown">UGX 170,000 × 1 month</div>
+        <div class="total-amount" id="totalAmount">Total: UGX 170,000</div>
+      </div>
+
+      <input type="hidden" name="amount" id="amount" value="170000" />
+
+      <div class="form-field">
+        <label class="form-label phone-label" for="phone">
+          <span>MTN phone number</span>
+          <img src="{% static 'images/mtn-logo.png' %}" alt="MTN" />
+        </label>
+        <input type="tel" name="phone" id="phone" class="form-control" placeholder="07XXXXXXXX" pattern="07[0-9]{8}" inputmode="tel" autocomplete="tel" required />
+        <div class="invalid-feedback">Enter a valid MTN number in the format 07XXXXXXXX.</div>
+      </div>
+
+      <div class="field-row">
+        <div class="form-field">
+          <label class="form-label" for="name">Full name <span class="optional">(optional)</span></label>
+          <input type="text" name="name" id="name" class="form-control" placeholder="Your name" autocomplete="name" />
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="email">Email <span class="optional">(optional)</span></label>
+          <input type="email" name="email" id="email" class="form-control" placeholder="name@example.com" autocomplete="email" />
+        </div>
+      </div>
+
+      <button type="submit" id="donateBtn" class="pay-button" disabled>
+        <i class="bi bi-send"></i>
+        <span>Send payment prompt</span>
+      </button>
+
+      <div class="merchant-note">
+        <i class="bi bi-info-circle"></i>
+        <span>You can also donate directly using merchant code <a href="tel:*165*3*308124%23">*165*3*308124#</a>.</span>
+      </div>
+    </form>
+
+    <p class="page-note">&copy; <span id="year"></span> Pendeza Uganda · Built by <a href="https://perpetual-web-vert.vercel.app/" target="_blank" rel="noopener noreferrer">Perpetual Labs</a></p>
   </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
+    const form = document.getElementById("donationForm");
+    const monthlyAmount = document.getElementById("monthlyAmount");
+    const months = document.getElementById("months");
+    const submittedAmount = document.getElementById("amount");
+    const phone = document.getElementById("phone");
+    const button = document.getElementById("donateBtn");
+    const chips = document.querySelectorAll(".amount-chip");
+    const totalBreakdown = document.getElementById("totalBreakdown");
+    const totalAmount = document.getElementById("totalAmount");
+
     document.getElementById("year").textContent = new Date().getFullYear();
 
-    const form = document.getElementById("donationForm");
-    const phone = document.getElementById("phone");
-    const amount = document.getElementById("amount");
-    const btn = document.getElementById("donateBtn");
-    const amountButtons = document.querySelectorAll(".amount-btn");
-
-    function validate() {
-      const validPhone = /^07\d{8}$/.test(phone.value.trim());
-      const validAmount = parseInt(amount.value, 10) >= 5000;
-
-      btn.disabled = !(validPhone && validAmount);
-      phone.classList.toggle("is-invalid", phone.value.length > 0 && !validPhone);
-      amount.classList.toggle("is-invalid", amount.value.length > 0 && !validAmount);
+    function formatUGX(value) {
+      return "UGX " + Math.max(0, value || 0).toLocaleString("en-US");
     }
 
-    function setAmount(val, el) {
-      amount.value = val;
-      amountButtons.forEach((button) => button.classList.remove("active"));
-      if (el) {
-        el.classList.add("active");
-      }
+    function updateTotal() {
+      const monthly = Number(monthlyAmount.value);
+      const monthCount = Number(months.value);
+      const validMonthly = Number.isFinite(monthly) && monthly >= 5000;
+      const validMonths = Number.isInteger(monthCount) && monthCount >= 1 && monthCount <= 60;
+      const total = validMonthly && validMonths ? monthly * monthCount : 0;
+
+      submittedAmount.value = total ? String(total) : "";
+      totalBreakdown.textContent = validMonths
+        ? formatUGX(Number.isFinite(monthly) ? monthly : 0) + " × " + monthCount + " month" + (monthCount === 1 ? "" : "s")
+        : "Enter a number between 1 and 60 months";
+      totalAmount.textContent = "Total: " + formatUGX(total);
+
+      monthlyAmount.classList.toggle("is-invalid", monthlyAmount.value !== "" && !validMonthly);
+      months.classList.toggle("is-invalid", months.value !== "" && !validMonths);
       validate();
     }
 
-    [phone, amount].forEach((el) => {
-      el.addEventListener("input", function () {
-        if (el === amount) {
-          amountButtons.forEach((button) => button.classList.remove("active"));
-        }
-        validate();
+    function validate() {
+      const validPhone = /^07[0-9]{8}$/.test(phone.value.trim());
+      const validTotal = Number(submittedAmount.value) >= 5000;
+      button.disabled = !(validPhone && validTotal);
+      phone.classList.toggle("is-invalid", phone.value.length > 0 && !validPhone);
+    }
+
+    chips.forEach(function (chip) {
+      chip.addEventListener("click", function () {
+        chips.forEach(function (item) { item.classList.remove("active"); });
+        chip.classList.add("active");
+        monthlyAmount.value = chip.dataset.amount;
+        updateTotal();
       });
     });
 
-    form.addEventListener("submit", function () {
-      btn.disabled = true;
-      btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Sending...';
+    monthlyAmount.addEventListener("input", function () {
+      chips.forEach(function (item) { item.classList.remove("active"); });
+      updateTotal();
     });
+
+    months.addEventListener("input", updateTotal);
+    phone.addEventListener("input", function () {
+      let normalized = phone.value.replace(/[^0-9]/g, "");
+      if (normalized.length === 12 && normalized.indexOf("256") === 0) {
+        normalized = "0" + normalized.slice(3);
+      }
+      if (phone.value !== normalized) {
+        phone.value = normalized;
+      }
+      validate();
+    });
+
+    document.getElementById("decreaseMonths").addEventListener("click", function () {
+      months.value = Math.max(1, (Number(months.value) || 1) - 1);
+      updateTotal();
+    });
+
+    document.getElementById("increaseMonths").addEventListener("click", function () {
+      months.value = Math.min(60, (Number(months.value) || 0) + 1);
+      updateTotal();
+    });
+
+    form.addEventListener("submit", function () {
+      button.disabled = true;
+      button.innerHTML = '<span class="spinner"></span><span>Sending prompt...</span>';
+    });
+
+    updateTotal();
   </script>
 </body>
 </html>
