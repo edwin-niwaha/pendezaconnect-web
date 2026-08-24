@@ -1,5 +1,10 @@
 ﻿from django.db.models import Count, Q
 
+from decimal import Decimal
+
+from django.db.models import DecimalField, ExpressionWrapper, F, OuterRef, Subquery, Sum, Value
+from django.db.models.functions import Coalesce
+
 from apps.child.models import Child
 from apps.client.models import Client
 from apps.finance.models import ChildPayments, Payment, StaffPayments
@@ -60,13 +65,36 @@ def sponsors_for_user(user):
 
 
 def clients_for_user(user):
+    money_field = DecimalField(max_digits=15, decimal_places=2)
+    savings_balance = (
+        SavingsAccount.objects.filter(client_id=OuterRef("pk"))
+        .annotate(
+            credits=Coalesce(
+                Sum("transactions__amount", filter=Q(transactions__status="approved", transactions__transaction_type__in=SavingsTransaction.CREDIT_TYPES)),
+                Value(Decimal("0.00")),
+                output_field=money_field,
+            ),
+            debits=Coalesce(
+                Sum("transactions__amount", filter=Q(transactions__status="approved", transactions__transaction_type__in=SavingsTransaction.DEBIT_TYPES)),
+                Value(Decimal("0.00")),
+                output_field=money_field,
+            ),
+        )
+        .annotate(calculated_balance=ExpressionWrapper(F("credits") - F("debits"), output_field=money_field))
+        .values("calculated_balance")[:1]
+    )
     queryset = (
         Client.objects.select_related("savings_account")
         .annotate(
             active_loans_count=Count(
                 "loans",
                 filter=Q(loans__status__in=Loan.ACTIVE_STATUSES),
-            )
+            ),
+            calculated_savings_balance=Coalesce(
+                Subquery(savings_balance, output_field=money_field),
+                Value(Decimal("0.00")),
+                output_field=money_field,
+            ),
         )
         .order_by("id")
     )
@@ -78,17 +106,34 @@ def clients_for_user(user):
     return queryset.filter(id=client_id)
 
 
-def children_for_user(user):
-    queryset = Child.objects.order_by("id")
+def children_for_user(user, scope=""):
+    queryset = Child.objects.all()
     if is_internal_user(user):
-        return queryset
+        if scope == "departed":
+            queryset = queryset.filter(is_departed=True)
+        else:
+            queryset = queryset.filter(is_departed=False)
+            if scope == "sponsored":
+                queryset = queryset.filter(is_sponsored=True)
+            elif scope == "non-sponsored":
+                queryset = queryset.filter(is_sponsored=False)
+        return queryset.order_by("id")
     return queryset.none()
 
 
-def staff_for_user(user):
+def staff_for_user(user, scope=""):
     if not is_internal_user(user):
         return Staff.objects.none()
-    return Staff.objects.filter(is_departed=False).order_by("id")
+    queryset = Staff.objects.prefetch_related("departures")
+    if scope == "departed":
+        queryset = queryset.filter(is_departed=True)
+    else:
+        queryset = queryset.filter(is_departed=False)
+        if scope == "sponsored":
+            queryset = queryset.filter(is_sponsored=True)
+        elif scope == "non-sponsored":
+            queryset = queryset.filter(is_sponsored=False)
+    return queryset.order_by("id")
 
 
 def loans_for_user(user):

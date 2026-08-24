@@ -17,6 +17,7 @@ from api.v1.serializers import (
     UserProfileSerializer,
     UserProfileUpdateSerializer,
 )
+from apps.users.tasks import queue_user_notification
 
 logger = logging.getLogger(__name__)
 
@@ -115,6 +116,7 @@ class AuthViewSet(viewsets.ViewSet):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         update_session_auth_hash(request, user)
+        queue_user_notification([user.id], "account_security_changed")
         return Response({"detail": "Password changed successfully."})
 
     @action(detail=False, methods=["post"], url_path="password/reset")

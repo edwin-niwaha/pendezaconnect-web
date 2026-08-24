@@ -17,7 +17,7 @@ class ChildViewSet(viewsets.ReadOnlyModelViewSet):
     ordering = ["id"]
 
     def get_queryset(self):
-        return children_for_user(self.request.user)
+        return children_for_user(self.request.user, self.request.query_params.get("scope", ""))
 
     @action(detail=True, methods=["post"], parser_classes=[MultiPartParser, FormParser])
     def photos(self, request, pk=None):

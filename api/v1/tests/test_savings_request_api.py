@@ -14,7 +14,7 @@ class SavingsRequestApiTests(APITestCase):
         self.client_record = Client.objects.create(
             full_name="Savings Client",
             email="savings@example.com",
-            reg_number="SAVINGS-CLIENT",
+            reg_number="SAV-CLIENT",
         )
         self.account = SavingsAccount.objects.create(client=self.client_record)
         self.user = User.objects.create_user("savings-client", password="pass12345")
