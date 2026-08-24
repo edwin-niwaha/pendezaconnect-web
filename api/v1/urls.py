@@ -10,6 +10,7 @@ from api.v1.views import (
     DeviceInstallationViewSet,
     FeedbackViewSet,
     LoanViewSet,
+    UserNotificationViewSet,
     PaymentViewSet,
     SponsorViewSet,
     StaffViewSet,
@@ -25,6 +26,7 @@ router.register("staff", StaffViewSet, basename="mobile-staff")
 router.register("loans", LoanViewSet, basename="mobile-loans")
 router.register("payments", PaymentViewSet, basename="mobile-payments")
 router.register("device-installations", DeviceInstallationViewSet, basename="mobile-device-installations")
+router.register("notifications", UserNotificationViewSet, basename="mobile-notifications")
 router.register("feedback", FeedbackViewSet, basename="mobile-feedback")
 
 urlpatterns = [

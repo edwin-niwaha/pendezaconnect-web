@@ -37,7 +37,17 @@ class LoanViewSet(viewsets.ModelViewSet):
     ordering = ["-id"]
 
     def get_queryset(self):
-        return loans_for_user(self.request.user).prefetch_related("documents")
+        queryset = loans_for_user(self.request.user).prefetch_related("documents")
+        requested_statuses = {
+            value.strip()
+            for value in self.request.query_params.get("status", "").split(",")
+            if value.strip()
+        }
+        valid_statuses = {value for value, _label in Loan.STATUS_CHOICES}
+        selected_statuses = requested_statuses & valid_statuses
+        if selected_statuses:
+            queryset = queryset.filter(status__in=selected_statuses)
+        return queryset
 
     def _serialize(self, loan, response_status=status.HTTP_200_OK):
         serializer = self.get_serializer(loan)
@@ -116,6 +126,7 @@ class LoanViewSet(viewsets.ModelViewSet):
             )
             self._save_documents(loan, request.FILES)
 
+        self._notify_borrower(loan, "loan_submitted")
         return self._serialize(loan, status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):

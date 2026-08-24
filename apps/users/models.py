@@ -218,6 +218,30 @@ class DeviceInstallation(models.Model):
         return f"{self.user_id}:{self.platform}:{self.installation_id}"
 
 
+class UserNotification(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="notifications",
+    )
+    event = models.CharField(max_length=50)
+    record_id = models.PositiveBigIntegerField(null=True, blank=True)
+    title = models.CharField(max_length=160)
+    body = models.TextField(max_length=500)
+    read_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-created_at", "-id")
+        indexes = [
+            models.Index(fields=("user", "read_at"), name="users_notif_user_read_idx"),
+            models.Index(fields=("user", "created_at"), name="users_notif_user_date_idx"),
+        ]
+
+    def __str__(self):
+        return f"{self.user_id}:{self.event}:{self.id}"
+
+
 # =================================== Policy Model  ===================================
 class Policy(models.Model):
     title = models.CharField(max_length=50)

@@ -11,6 +11,7 @@ class StaffSerializer(serializers.ModelSerializer):
     picture_url = serializers.SerializerMethodField()
     photo_url = serializers.SerializerMethodField()
     thumbnail_url = serializers.SerializerMethodField()
+    departure_date = serializers.SerializerMethodField()
 
     class Meta:
         model = Staff
@@ -22,8 +23,14 @@ class StaffSerializer(serializers.ModelSerializer):
             "last_name",
             "email",
             "mobile_telephone",
+            "gender",
+            "date_of_birth",
+            "date_started_work",
+            "department",
             "job_title",
             "is_departed",
+            "is_sponsored",
+            "departure_date",
             "current_picture_url",
             "picture_url",
             "photo_url",
@@ -44,3 +51,8 @@ class StaffSerializer(serializers.ModelSerializer):
 
     def get_thumbnail_url(self, obj):
         return self.get_current_picture_url(obj)
+
+    def get_departure_date(self, obj):
+        departures = list(obj.departures.all())
+        departure = max(departures, key=lambda item: (item.departure_date is not None, item.departure_date, item.id), default=None)
+        return departure.departure_date if departure else None

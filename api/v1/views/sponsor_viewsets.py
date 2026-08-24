@@ -25,7 +25,18 @@ class SponsorViewSet(viewsets.ReadOnlyModelViewSet):
     ordering = ["id"]
 
     def get_queryset(self):
-        return sponsors_for_user(self.request.user)
+        queryset = sponsors_for_user(self.request.user)
+        category_fields = {
+            "child": "is_child_sponsor",
+            "staff": "is_staff_sponsor",
+            "family": "is_family_supporter",
+            "general": "is_general_donor",
+            "one_time": "is_one_time_donor",
+        }
+        category = self.request.query_params.get("category", "all")
+        if category in category_fields:
+            queryset = queryset.filter(**{category_fields[category]: True})
+        return queryset
 
     @action(detail=True, methods=["get"])
     def payments(self, request, pk=None):

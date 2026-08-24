@@ -16,7 +16,7 @@ class StaffViewSet(viewsets.ReadOnlyModelViewSet):
     ordering = ["id"]
 
     def get_queryset(self):
-        return staff_for_user(self.request.user)
+        return staff_for_user(self.request.user, self.request.query_params.get("scope", ""))
 
     @action(detail=True, methods=["post", "delete"], parser_classes=[MultiPartParser, FormParser])
     def photos(self, request, pk=None):

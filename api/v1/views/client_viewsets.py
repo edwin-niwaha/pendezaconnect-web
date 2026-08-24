@@ -18,6 +18,7 @@ from api.v1.serializers import (
     SavingsTransactionSerializer,
 )
 from apps.savings.models import SavingsAccount, SavingsTransaction
+from apps.users.tasks import queue_user_notification
 
 
 class ClientViewSet(viewsets.ReadOnlyModelViewSet):
@@ -29,7 +30,13 @@ class ClientViewSet(viewsets.ReadOnlyModelViewSet):
     ordering = ["id"]
 
     def get_queryset(self):
-        return clients_for_user(self.request.user)
+        queryset = clients_for_user(self.request.user)
+        selected_view = self.request.query_params.get("view", "all")
+        if selected_view == "active_loans":
+            queryset = queryset.filter(active_loans_count__gt=0)
+        elif selected_view == "has_savings":
+            queryset = queryset.filter(calculated_savings_balance__gt=0)
+        return queryset
 
     @action(detail=True, methods=["post", "delete"], parser_classes=[MultiPartParser, FormParser])
     def photos(self, request, pk=None):
@@ -93,6 +100,7 @@ class ClientViewSet(viewsets.ReadOnlyModelViewSet):
             status="pending",
             **serializer.validated_data,
         )
+        queue_user_notification([request.user.id], "savings_request_submitted", savings_request.id)
         return Response(
             {
                 "detail": "Savings request submitted for review.",

@@ -35,6 +35,9 @@ class ClientSerializer(serializers.ModelSerializer):
         )
 
     def get_savings_balance(self, obj):
+        annotated_balance = getattr(obj, "calculated_savings_balance", None)
+        if annotated_balance is not None:
+            return annotated_balance
         account = getattr(obj, "savings_account", None)
         return account.balance if account else 0
 

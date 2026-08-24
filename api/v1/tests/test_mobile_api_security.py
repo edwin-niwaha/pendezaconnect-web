@@ -17,7 +17,7 @@ from apps.loans.models import ChartOfAccounts, Loan
 from apps.savings.models import SavingsAccount, SavingsTransaction
 from apps.sponsor.models import Sponsor
 from apps.staff.models import Staff
-from apps.users.models import DeviceInstallation, Profile
+from apps.users.models import DeviceInstallation, Profile, UserNotification
 
 
 class MobileApiOwnershipTests(APITestCase):
@@ -411,6 +411,41 @@ class MobileDeviceInstallationTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         installation.refresh_from_db()
         self.assertTrue(installation.active)
+
+
+class MobileNotificationInboxTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user("notification_user", password="pass12345")
+        self.other_user = User.objects.create_user("other_notification_user", password="pass12345")
+        self.notification = UserNotification.objects.create(
+            user=self.user,
+            event="loan_updated",
+            record_id=42,
+            title="Loan update",
+            body="Your loan application was updated.",
+        )
+        UserNotification.objects.create(
+            user=self.other_user,
+            event="savings_updated",
+            title="Savings update",
+            body="Your savings account was updated.",
+        )
+
+    def test_inbox_is_private_and_supports_read_state(self):
+        self.client.force_authenticate(self.user)
+
+        listing = self.client.get(reverse("mobile-notifications-list"))
+        unread = self.client.get(reverse("mobile-notifications-unread-count"))
+        marked = self.client.post(reverse("mobile-notifications-mark-read", args=[self.notification.id]))
+        after = self.client.get(reverse("mobile-notifications-unread-count"))
+
+        self.assertEqual(listing.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(listing.data["results"]), 1)
+        self.assertEqual(listing.data["results"][0]["data"], {"event": "loan_updated", "record_id": 42})
+        self.assertEqual(unread.data["count"], 1)
+        self.assertEqual(marked.status_code, status.HTTP_200_OK)
+        self.assertTrue(marked.data["is_read"])
+        self.assertEqual(after.data["count"], 0)
 
 
 
