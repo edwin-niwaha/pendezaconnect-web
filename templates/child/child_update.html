@@ -25,6 +25,7 @@
                 {% csrf_token %}
                 <!--  -->
                 {{ form|crispy }}
+                {% include '_partials/profile_photo_picker.html' %}
                 <div class="form-group mt-4 mb-0">
                   <button type="submit" class="col-md-12 btn btn-dark" onclick="return confirm('Are you sure you want to proceed?') && validateForm()">UPDATE</button>
                   <br />

@@ -1,262 +1,307 @@
 {% extends "accounts/base.html" %}
 {% block title %}Pendeza Connect | Sign In{% endblock %}
+
 {% block content %}
-  <style>
-    .login-shell { max-width: 1080px; margin: 24px auto; }
-    .login-panel {
-      background: #fff;
-      border: 1px solid #d9dee5;
-      border-radius: 8px;
-      overflow: hidden;
+<style>
+  .public-content-shell {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .signin-page {
+    align-items: center;
+    background:
+      radial-gradient(circle at 12% 12%, rgba(242, 184, 75, .18), transparent 25rem),
+      radial-gradient(circle at 88% 88%, rgba(22, 128, 104, .12), transparent 24rem),
+      #f3f7f6;
+    display: flex;
+    justify-content: center;
+    min-height: calc(100vh - 76px);
+    padding: 44px 20px;
+  }
+
+  .signin-card {
+    background: #fff;
+    border: 1px solid #dbe5e2;
+    border-radius: 20px;
+    box-shadow: 0 24px 60px rgba(23, 59, 52, .13);
+    max-width: 560px;
+    overflow: hidden;
+    width: 100%;
+  }
+
+  .signin-accent {
+    background: linear-gradient(90deg, #123d35, #168068 70%, #f2b84b);
+    height: 6px;
+  }
+
+  .signin-body {
+    padding: 40px 42px 36px;
+  }
+
+  .signin-header {
+    align-items: center;
+    display: flex;
+    gap: 16px;
+    margin-bottom: 26px;
+  }
+
+  .signin-header-copy {
+    min-width: 0;
+  }
+
+  .signin-mark {
+    align-items: center;
+    background: #edf7f4;
+    border: 1px solid #d4e9e2;
+    border-radius: 14px;
+    color: #13745d;
+    display: inline-flex;
+    font-size: 1.65rem;
+    height: 52px;
+    justify-content: center;
+    flex: 0 0 52px;
+    margin-bottom: 0;
+    width: 52px;
+  }
+
+  .signin-title {
+    color: #173b34;
+    font-size: 1.85rem;
+    font-weight: 900;
+    letter-spacing: -.025em;
+    margin: 0 0 7px;
+  }
+
+  .signin-subtitle {
+    color: #667085;
+    line-height: 1.55;
+    margin: 0;
+  }
+
+  .signin-google {
+    align-items: center;
+    background: #fff;
+    border: 1px solid #ccd8d5;
+    border-radius: 10px;
+    color: #26384d;
+    display: flex;
+    font-weight: 800;
+    justify-content: center;
+    min-height: 50px;
+    text-decoration: none;
+    transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+  }
+
+  .signin-google:hover,
+  .signin-google:focus {
+    border-color: #168068;
+    box-shadow: 0 8px 20px rgba(23, 59, 52, .1);
+    color: #173b34;
+    text-decoration: none;
+    transform: translateY(-1px);
+  }
+
+  .signin-google:active {
+    box-shadow: none;
+    transform: translateY(0) scale(.99);
+  }
+
+  .signin-google .fa-google {
+    color: #4285f4;
+  }
+
+  .signin-divider {
+    align-items: center;
+    color: #8a98a6;
+    display: flex;
+    font-size: .72rem;
+    font-weight: 800;
+    gap: 12px;
+    margin: 22px 0;
+    text-transform: uppercase;
+  }
+
+  .signin-divider::before,
+  .signin-divider::after {
+    background: #e1e8e6;
+    content: "";
+    flex: 1;
+    height: 1px;
+  }
+
+  .signin-form label {
+    color: #344a46;
+    font-size: .84rem;
+    font-weight: 800;
+  }
+
+  .signin-form .form-control {
+    border: 1px solid #ccd8d5;
+    border-radius: 10px;
+    color: #243447;
+    height: 50px;
+    padding: 12px 14px;
+  }
+
+  .signin-form .form-control:focus {
+    border-color: #168068;
+    box-shadow: 0 0 0 3px rgba(22, 128, 104, .12);
+  }
+
+  .signin-options {
+    align-items: center;
+    display: flex;
+    gap: 14px;
+    justify-content: space-between;
+    margin: 4px 0 20px;
+  }
+
+  .signin-options label {
+    align-items: center;
+    display: inline-flex;
+    font-weight: 600;
+    gap: 7px;
+    margin: 0;
+  }
+
+  .signin-link {
+    color: #0f705a;
+    font-size: .84rem;
+    font-weight: 800;
+  }
+
+  .signin-submit {
+    background: #173b34;
+    border: 0;
+    border-radius: 10px;
+    box-shadow: 0 10px 22px rgba(23, 59, 52, .18);
+    font-weight: 900;
+    min-height: 50px;
+    transition: background .18s ease, transform .18s ease;
+  }
+
+  .signin-submit:hover,
+  .signin-submit:focus {
+    background: #0f705a;
+    transform: translateY(-1px);
+  }
+
+  .signin-submit:active {
+    transform: translateY(0) scale(.99);
+  }
+
+  .signin-footer {
+    border-top: 1px solid #e5ebe9;
+    color: #667085;
+    font-size: .88rem;
+    margin-top: 26px;
+    padding-top: 20px;
+    text-align: center;
+  }
+
+  .signin-footer a {
+    color: #0f705a;
+    font-weight: 800;
+  }
+
+  .signin-errors {
+    border-radius: 9px;
+    font-size: .88rem;
+    margin-bottom: 18px;
+  }
+
+  @media (max-width: 575.98px) {
+    .signin-page {
+      align-items: flex-start;
+      min-height: calc(100vh - 64px);
+      padding: 18px 12px 30px;
     }
-    .login-copy {
-      background: #123d35;
-      color: #fff;
-      min-height: 100%;
-      padding: 34px;
+
+    .signin-card {
+      border-radius: 15px;
     }
-    .login-copy h1 { font-size: 1.85rem; font-weight: 800; letter-spacing: 0; }
-    .login-copy p { color: rgba(255, 255, 255, .82); }
-    .login-audience-grid {
-      display: grid;
+
+    .signin-body {
+      padding: 30px 22px 26px;
+    }
+
+    .signin-title {
+      font-size: 1.55rem;
+    }
+
+    .signin-header {
+      align-items: flex-start;
+      margin-bottom: 24px;
+    }
+
+    .signin-mark {
+      flex-basis: 46px;
+      height: 46px;
+      width: 46px;
+    }
+
+    .signin-options {
+      align-items: flex-start;
+      flex-direction: column;
       gap: 10px;
-      margin-top: 24px;
     }
-    .login-audience {
-      background: rgba(255, 255, 255, .08);
-      border: 1px solid rgba(255, 255, 255, .14);
-      border-radius: 8px;
-      padding: 13px 14px;
-    }
-    .login-audience div {
-      font-weight: 900;
-      margin-bottom: 3px;
-    }
-    .login-audience p {
-      font-size: .88rem;
-      margin: 0;
-    }
-    .login-form-area { padding: 34px; }
-    .login-title { color: #26384d; font-size: 1.5rem; font-weight: 800; }
-    .google-btn {
-      align-items: center;
-      background: #fff;
-      border: 1px solid #d9dee5;
-      border-radius: 6px;
-      color: #26384d;
-      display: flex;
-      font-weight: 700;
-      justify-content: center;
-      min-height: 46px;
-      text-decoration: none;
-    }
-    .google-btn:hover { color: #26384d; text-decoration: none; background: #f8fafc; }
-    .divider { align-items: center; color: #667085; display: flex; font-size: .78rem; font-weight: 800; gap: 10px; text-transform: uppercase; }
-    .divider::before, .divider::after { background: #e3e8ef; content: ""; flex: 1; height: 1px; }
-    .login-route-note {
-      background: #f6f8fb;
-      border: 1px solid #e3e8ef;
-      border-radius: 8px;
-      color: #516173;
-      font-size: .9rem;
-      padding: 12px 14px;
-    }
-    @media (max-width: 768px) {
-      .login-copy, .login-form-area { padding: 22px; }
-      .login-copy h1 { font-size: 1.45rem; }
-    }
-    /* Refined sign-in experience */
-    .public-content-shell { padding-left: 0; padding-right: 0; }
-    .login-shell {
-      background:
-        radial-gradient(circle at 10% 15%, rgba(242, 184, 75, .15), transparent 26rem),
-        linear-gradient(145deg, #f1f6f4, #f8fafc 55%, #edf2f6);
-      margin: 0;
-      max-width: none;
-      min-height: calc(100vh - 76px);
-      padding: 64px 24px;
-    }
-    .login-panel {
-      border: 1px solid rgba(207, 217, 226, .9);
-      border-radius: 22px;
-      box-shadow: 0 28px 70px rgba(20, 51, 45, .13) !important;
-      margin: 0 auto;
-      max-width: 1120px;
-    }
-    .login-copy {
-      background: linear-gradient(145deg, #0d302a 0%, #155847 100%);
-      min-height: 590px;
-      padding: 54px 46px;
-      position: relative;
-    }
-    .login-copy::after {
-      border: 1px solid rgba(255, 255, 255, .08);
-      border-radius: 50%;
-      content: "";
-      height: 280px;
-      position: absolute;
-      right: -170px;
-      top: -110px;
-      width: 280px;
-    }
-    .login-copy h1 {
-      font-size: 2.55rem;
-      font-weight: 900;
-      letter-spacing: -.035em;
-      line-height: 1.08;
-      margin-bottom: 18px;
-    }
-    .login-copy > p { font-size: 1rem; line-height: 1.65; }
-    .login-audience-grid { gap: 14px; margin-top: 42px; }
-    .login-audience {
-      align-items: center;
-      backdrop-filter: blur(5px);
-      border-radius: 12px;
-      display: grid;
-      min-height: 78px;
-      padding: 15px 17px;
-    }
-    .login-audience div { color: #fff; font-size: .95rem; }
-    .login-form-area { padding: 54px 60px; }
-    .login-title {
-      color: #173b34;
-      font-size: 1.85rem;
-      font-weight: 900;
-      letter-spacing: -.02em;
-      margin-bottom: 6px;
-    }
-    .login-route-note {
-      background: #f2f8f6;
-      border: 1px solid #d7e9e3;
-      border-left: 4px solid #168068;
-      border-radius: 9px;
-      line-height: 1.5;
-      padding: 13px 15px;
-    }
-    .google-btn {
-      border-radius: 10px;
-      font-weight: 800;
-      min-height: 52px;
-      transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
-    }
-    .google-btn:hover {
-      border-color: #aebdc9;
-      box-shadow: 0 9px 22px rgba(31, 41, 51, .09);
-      color: #173b34;
-      transform: translateY(-1px);
-    }
-    .google-btn .fa-google { color: #4285f4; }
-    .login-form-area label { color: #344a46; font-size: .84rem; font-weight: 800; }
-    .login-form-area .form-control {
-      border: 1px solid #cfdae2;
-      border-radius: 9px;
-      color: #243447;
-      height: 50px;
-      padding: 12px 14px;
-    }
-    .login-form-area .form-control:focus {
-      border-color: #178068;
-      box-shadow: 0 0 0 3px rgba(23, 128, 104, .12);
-    }
-    .login-form-area a { color: #0f705a; font-weight: 700; }
-    #login {
-      background: #173b34;
-      border: 0;
-      border-radius: 9px;
-      box-shadow: 0 10px 22px rgba(23, 59, 52, .18);
-      font-weight: 800;
-      min-height: 50px;
-    }
-    #login:hover, #login:focus { background: #0f705a; }
-    @media (max-width: 991.98px) {
-      .login-shell { padding: 38px 20px; }
-      .login-copy { min-height: auto; padding: 38px; }
-      .login-copy h1 { font-size: 2.15rem; }
-      .login-audience-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 28px; }
-      .login-form-area { padding: 44px; }
-    }
-    @media (max-width: 575.98px) {
-      .login-shell { padding: 18px 12px 34px; }
-      .login-panel { border-radius: 15px; }
-      .login-copy, .login-form-area { padding: 30px 22px; }
-      .login-copy h1 { font-size: 1.85rem; }
-      .login-audience-grid { grid-template-columns: 1fr; }
-      .login-title { font-size: 1.55rem; }
-    }
-  </style>
+  }
+</style>
 
-  <main class="login-shell">
-    <div class="login-panel shadow-sm">
-      <div class="row no-gutters">
-        <div class="col-lg-5">
-          <section class="login-copy">
-            <h1>One secure place to create lasting impact.</h1>
-            <p class="mb-0">Access the tools and information designed for your role.</p>
-
-            <div class="login-audience-grid">
-              <div class="login-audience">
-                <div>Sponsors</div>
-                <p>Follow sponsored children and giving activity.</p>
-              </div>
-              <div class="login-audience">
-                <div>Clients</div>
-                <p>Manage savings, withdrawals, loans, and repayments.</p>
-              </div>
-              <div class="login-audience">
-                <div>Staff</div>
-                <p>Access your workspace for operations, finance, and program work.</p>
-              </div>
-            </div>
-          </section>
+<main class="signin-page">
+  <section class="signin-card" aria-labelledby="signin-title">
+    <div class="signin-accent" aria-hidden="true"></div>
+    <div class="signin-body">
+      <header class="signin-header">
+        <div class="signin-mark" aria-hidden="true">
+          <i class="fas fa-user-lock"></i>
         </div>
-        <div class="col-lg-7">
-          <section class="login-form-area">
-            <div class="mb-4">
-              <div class="login-title">Sign in</div>
-              <div class="text-muted small">Welcome back. Use Google or enter your account credentials.</div>
-            </div>
-
-            <div class="login-route-note mb-3">
-              <i class="fas fa-shield-alt mr-1"></i> Secure sign-in with email verification for added protection.
-            </div>
-
-            {% if form.errors %}
-              <div class="alert alert-danger" role="alert">
-                {% for key, value in form.errors.items %}
-                  <div>{{ value }}</div>
-                {% endfor %}
-              </div>
-            {% endif %}
-
-            <a href="{% url 'social:begin' 'google-oauth2' %}" class="google-btn mb-3">
-              <i class="fab fa-google mr-2"></i> Continue with Google
-            </a>
-
-            <div class="divider my-3">or use password</div>
-
-            <form method="POST">
-              {% csrf_token %}
-              <div class="form-group">
-                <label class="small mb-1" for="{{ form.username.id_for_label }}">Email or username</label>
-                {{ form.username }}
-              </div>
-              <div class="form-group">
-                <label class="small mb-1" for="{{ form.password.id_for_label }}">Password</label>
-                {{ form.password }}
-              </div>
-              <div class="form-group d-flex justify-content-between align-items-center">
-                <label class="mb-0 small">{{ form.remember_me }} Remember me</label>
-                <a href="{% url 'password_reset' %}" class="small">Forgot password?</a>
-              </div>
-              <button name="login" class="btn btn-dark btn-block" id="login">Sign in securely</button>
-            </form>
-
-            <div class="border-top mt-4 pt-3 small text-center">
-              New to Pendeza Connect? <a href="{% url 'users-register' %}">Create an account</a>
-            </div>
-          </section>
+        <div class="signin-header-copy">
+          <h1 class="signin-title" id="signin-title">Welcome back</h1>
+          <p class="signin-subtitle">Sign in to continue to Pendeza Connect.</p>
         </div>
+      </header>
+
+      {% if form.errors %}
+        <div class="alert alert-danger signin-errors" role="alert">
+          Please check your email or username and password, then try again.
+        </div>
+      {% endif %}
+
+      <a href="{% url 'social:begin' 'google-oauth2' %}" class="signin-google">
+        <i class="fab fa-google mr-2" aria-hidden="true"></i>Continue with Google
+      </a>
+
+      <div class="signin-divider">or</div>
+
+      <form method="post" class="signin-form">
+        {% csrf_token %}
+        <div class="form-group">
+          <label for="{{ form.username.id_for_label }}">Email or username</label>
+          {{ form.username }}
+          {% if form.username.errors %}<div class="text-danger small mt-1">{{ form.username.errors|striptags }}</div>{% endif %}
+        </div>
+        <div class="form-group">
+          <label for="{{ form.password.id_for_label }}">Password</label>
+          {{ form.password }}
+          {% if form.password.errors %}<div class="text-danger small mt-1">{{ form.password.errors|striptags }}</div>{% endif %}
+        </div>
+
+        <div class="signin-options">
+          <label>{{ form.remember_me }} <span>Remember me</span></label>
+          <a href="{% url 'password_reset' %}" class="signin-link">Forgot password?</a>
+        </div>
+
+        <button name="login" class="btn btn-dark btn-block signin-submit" id="login">
+          Sign in
+        </button>
+      </form>
+
+      <div class="signin-footer">
+        Need an account? <a href="{% url 'users-register' %}">Create account</a>
       </div>
     </div>
-  </main>
+  </section>
+</main>
 {% endblock content %}

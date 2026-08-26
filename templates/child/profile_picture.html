@@ -12,9 +12,6 @@
       <p>Upload a current child photo for reports, lists, and sponsor-facing communication.</p>
     </div>
     <div class="ops-actions">
-      <a class="btn btn-outline-secondary" href="{% url 'update_picture' %}">
-        <i class="mdi mdi-cloud-upload mr-1"></i>Upload
-      </a>
       <a class="btn btn-success" href="{% url 'profile_pictures' %}">
         <i class="mdi mdi-image-multiple mr-1"></i>Picture List
       </a>
@@ -24,25 +21,24 @@
   <div class="ops-card">
     <div class="ops-card-header">
       <h4>Profile Picture</h4>
-      <span class="ops-muted">Images up to 10 MB are accepted</span>
+      <span class="ops-muted">Photos are automatically resized before upload</span>
     </div>
     <div class="ops-card-body">
       <form method="post" enctype="multipart/form-data" novalidate>
         {% csrf_token %}
-        <div class="ops-form-grid">
-          <div class="ops-select-panel">
-            <label for="dropdown">Child</label>
-            <select name="id" id="dropdown" class="chzn-select" required>
-              <option value="" selected disabled>Search child...</option>
-              {% for child in children %}
-                <option value="{{ child.id }}">{{ child.full_name }} - {{ child.prefixed_id }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          {{ form|crispy }}
+        <div class="ops-select-panel mb-3">
+          <label for="dropdown">Child</label>
+          <select name="id" id="dropdown" class="chzn-select" data-photo-record-select required>
+            <option value="" selected disabled>Search child...</option>
+            {% for child in children %}
+              <option value="{{ child.id }}" data-photo-url="{% if child.current_profile_pictures %}{{ child.current_profile_pictures.0.picture.url }}{% endif %}">{{ child.full_name }} - {{ child.prefixed_id }}</option>
+            {% endfor %}
+          </select>
         </div>
+        {{ form|crispy }}
+        {% include '_partials/profile_photo_picker.html' %}
         <div class="ops-submit-row">
-          <button type="submit" class="btn btn-dark" onclick="return confirm('Upload this profile picture?')">
+          <button type="submit" class="btn btn-dark">
             Upload Picture
           </button>
         </div>

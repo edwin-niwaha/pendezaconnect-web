@@ -1,6 +1,7 @@
 ﻿from rest_framework import serializers
 
 from apps.child.models import Child, ChildProfilePicture
+from .media import absolute_media_url
 
 
 class ChildSerializer(serializers.ModelSerializer):
@@ -33,10 +34,14 @@ class ChildSerializer(serializers.ModelSerializer):
         )
 
     def get_current_picture_url(self, obj):
-        picture = obj.get_current_profile_picture()
+        prefetched = getattr(obj, "current_profile_pictures", None)
+        if prefetched is None:
+            picture = obj.get_current_profile_picture()
+        else:
+            picture = prefetched[0] if prefetched else None
         if not picture or not picture.picture:
             return None
-        return str(picture.picture)
+        return absolute_media_url(self, picture.picture)
 
 
 class ChildPhotoUploadSerializer(serializers.ModelSerializer):
@@ -48,4 +53,4 @@ class ChildPhotoUploadSerializer(serializers.ModelSerializer):
         read_only_fields = ("id", "child", "picture_url", "uploaded_at", "is_current")
 
     def get_picture_url(self, obj):
-        return str(obj.picture) if obj.picture else None
+        return absolute_media_url(self, obj.picture)

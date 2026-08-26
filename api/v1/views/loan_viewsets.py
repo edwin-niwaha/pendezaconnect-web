@@ -25,6 +25,7 @@ from apps.client.models import Client
 from apps.loans.models import Loan, LoanApplicationDocument
 from apps.users.models import Profile
 from apps.users.tasks import queue_user_notification
+from api.v1.uploads import validate_document_upload
 
 
 class LoanViewSet(viewsets.ModelViewSet):
@@ -37,7 +38,9 @@ class LoanViewSet(viewsets.ModelViewSet):
     ordering = ["-id"]
 
     def get_queryset(self):
-        queryset = loans_for_user(self.request.user).prefetch_related("documents")
+        queryset = loans_for_user(self.request.user).prefetch_related(
+            "documents", "repayments", "penalties"
+        )
         requested_statuses = {
             value.strip()
             for value in self.request.query_params.get("status", "").split(",")
@@ -78,6 +81,7 @@ class LoanViewSet(viewsets.ModelViewSet):
             upload = files.get(document_type)
             if not upload:
                 continue
+            upload = validate_document_upload(upload, document_type)
             documents.append(
                 LoanApplicationDocument.objects.create(
                     loan=loan,

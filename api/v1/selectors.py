@@ -2,10 +2,10 @@
 
 from decimal import Decimal
 
-from django.db.models import DecimalField, ExpressionWrapper, F, OuterRef, Subquery, Sum, Value
+from django.db.models import DecimalField, ExpressionWrapper, F, OuterRef, Prefetch, Subquery, Sum, Value
 from django.db.models.functions import Coalesce
 
-from apps.child.models import Child
+from apps.child.models import Child, ChildProfilePicture
 from apps.client.models import Client
 from apps.finance.models import ChildPayments, Payment, StaffPayments
 from apps.loans.models import Loan
@@ -107,7 +107,13 @@ def clients_for_user(user):
 
 
 def children_for_user(user, scope=""):
-    queryset = Child.objects.all()
+    queryset = Child.objects.prefetch_related(
+        Prefetch(
+            "profile_picture",
+            queryset=ChildProfilePicture.objects.filter(is_current=True).order_by("-uploaded_at"),
+            to_attr="current_profile_pictures",
+        )
+    )
     if is_internal_user(user):
         if scope == "departed":
             queryset = queryset.filter(is_departed=True)

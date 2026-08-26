@@ -9,6 +9,7 @@ from rest_framework.decorators import action
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import TokenError
 
 from api.v1.serializers import (
     AvatarUploadSerializer,
@@ -18,6 +19,7 @@ from api.v1.serializers import (
     UserProfileUpdateSerializer,
 )
 from apps.users.tasks import queue_user_notification
+from api.v1.throttles import LoginThrottle, PasswordResetThrottle
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +27,7 @@ logger = logging.getLogger(__name__)
 class AuthViewSet(viewsets.ViewSet):
     permission_classes = [permissions.AllowAny]
 
-    @action(detail=False, methods=["post"], url_path="login")
+    @action(detail=False, methods=["post"], url_path="login", throttle_classes=[LoginThrottle])
     def login(self, request):
         username = request.data.get("username") or request.data.get("email")
         password = request.data.get("password")
@@ -105,6 +107,23 @@ class AuthViewSet(viewsets.ViewSet):
     @action(
         detail=False,
         methods=["post"],
+        authentication_classes=[],
+        permission_classes=[permissions.AllowAny],
+        url_path="logout",
+    )
+    def logout(self, request):
+        refresh_value = str(request.data.get("refresh", "")).strip()
+        if not refresh_value:
+            return Response({"refresh": ["Refresh token is required."]}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            RefreshToken(refresh_value).blacklist()
+        except TokenError:
+            return Response({"refresh": ["Refresh token is invalid or expired."]}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(
+        detail=False,
+        methods=["post"],
         parser_classes=[JSONParser],
         permission_classes=[permissions.IsAuthenticated],
         url_path="password/change",
@@ -119,7 +138,7 @@ class AuthViewSet(viewsets.ViewSet):
         queue_user_notification([user.id], "account_security_changed")
         return Response({"detail": "Password changed successfully."})
 
-    @action(detail=False, methods=["post"], url_path="password/reset")
+    @action(detail=False, methods=["post"], url_path="password/reset", throttle_classes=[PasswordResetThrottle])
     def reset_password(self, request):
         email = str(request.data.get("email", "")).strip().lower()
         if not email:

@@ -1,6 +1,9 @@
+from decimal import Decimal
+
 from rest_framework import serializers
 
 from apps.loans.models import Loan, LoanApplicationDocument
+from .media import absolute_media_url
 
 
 class LoanApplicationDocumentSerializer(serializers.ModelSerializer):
@@ -21,12 +24,7 @@ class LoanApplicationDocumentSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
     def get_file_url(self, obj):
-        if not obj.file:
-            return None
-        try:
-            return obj.file.url
-        except ValueError:
-            return str(obj.file)
+        return absolute_media_url(self, obj.file)
 
 
 class LoanApplicationSerializer(serializers.Serializer):
@@ -89,16 +87,36 @@ class LoanSerializer(serializers.ModelSerializer):
         )
 
     def get_total_outstanding(self, obj):
-        try:
-            return obj.report_balances()["total_outstanding"]
-        except Exception:
-            return None
+        repayments = list(obj.repayments.all())
+        penalties = list(obj.penalties.all())
+        paid_principal = sum((item.principal_payment or Decimal("0")) for item in repayments)
+        paid_interest = sum((item.interest_payment or Decimal("0")) for item in repayments)
+        unpaid_penalties = sum(
+            (item.remaining_amount or Decimal("0"))
+            for item in penalties
+            if not item.is_paid and not item.is_deleted
+        )
+        return (
+            max(obj.principal_amount - paid_principal, Decimal("0"))
+            + max((obj.total_interest or Decimal("0")) - paid_interest, Decimal("0"))
+            + max(unpaid_penalties, Decimal("0"))
+        )
 
     def get_documents(self, obj):
-        return LoanApplicationDocumentSerializer(obj.documents.all(), many=True).data
+        return LoanApplicationDocumentSerializer(obj.documents.all(), many=True, context=self.context).data
 
     def get_missing_required_documents(self, obj):
-        return obj.missing_required_documents
+        attached_types = {
+            document.document_type
+            for document in obj.documents.all()
+            if document.file and document.document_type in obj.REQUIRED_DOCUMENT_TYPES
+        }
+        labels = dict(LoanApplicationDocument.DOCUMENT_TYPE_CHOICES)
+        return [
+            {"type": item, "label": labels.get(item, item.replace("_", " ").title())}
+            for item in obj.REQUIRED_DOCUMENT_TYPES
+            if item not in attached_types
+        ]
 
     def get_can_approve(self, obj):
         return can_approve_loan(self.context.get("request"), obj)

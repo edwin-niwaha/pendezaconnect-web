@@ -1,5 +1,6 @@
 import os
 import sys
+from datetime import timedelta
 from pathlib import Path
 
 import dj_database_url
@@ -90,6 +91,7 @@ INSTALLED_APPS = [
     "django_select2",
     "cloudinary",
     "rest_framework",
+    "rest_framework_simplejwt.token_blacklist",
     "drf_yasg",
     "corsheaders",
     "apps.users",
@@ -239,6 +241,18 @@ SOCIAL_AUTH_PIPELINE = (
 # either REDIS_URL, CELERY_BROKER_URL, or CELERY_RESULT_BACKEND.
 REDIS_URL = os.environ.get("REDIS_URL")
 
+CACHES = {
+    "default": {
+        "BACKEND": (
+            "django.core.cache.backends.redis.RedisCache"
+            if REDIS_URL
+            else "django.core.cache.backends.locmem.LocMemCache"
+        ),
+        "LOCATION": REDIS_URL or "pendeza-connect-local-cache",
+        "TIMEOUT": 300,
+    }
+}
+
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL") or REDIS_URL
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND") or REDIS_URL
 
@@ -318,6 +332,26 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 20,
+    "DEFAULT_THROTTLE_CLASSES": (
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ),
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "60/minute",
+        "user": "600/minute",
+        "login": "5/minute",
+        "password_reset": "3/hour",
+        "payment_start": "10/minute",
+        "payment_status": "60/minute",
+    },
+}
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "UPDATE_LAST_LOGIN": False,
 }
 
 SWAGGER_SETTINGS = {

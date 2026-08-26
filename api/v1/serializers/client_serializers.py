@@ -5,6 +5,7 @@ from rest_framework import serializers
 
 from apps.client.models import Client
 from apps.savings.models import SavingsAccount, SavingsTransaction
+from .media import absolute_media_url, thumbnail_url
 
 
 class ClientSerializer(serializers.ModelSerializer):
@@ -42,12 +43,7 @@ class ClientSerializer(serializers.ModelSerializer):
         return account.balance if account else 0
 
     def get_current_picture_url(self, obj):
-        if not obj.picture:
-            return None
-        try:
-            return obj.picture.url
-        except ValueError:
-            return str(obj.picture)
+        return absolute_media_url(self, obj.picture)
 
     def get_picture_url(self, obj):
         return self.get_current_picture_url(obj)
@@ -56,7 +52,7 @@ class ClientSerializer(serializers.ModelSerializer):
         return self.get_current_picture_url(obj)
 
     def get_thumbnail_url(self, obj):
-        return self.get_current_picture_url(obj)
+        return thumbnail_url(self, obj.picture)
 
 
 class SavingsAccountSerializer(serializers.ModelSerializer):

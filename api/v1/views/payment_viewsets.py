@@ -11,6 +11,7 @@ from api.v1.selectors import payments_for_user
 from api.v1.serializers import PaymentSerializer
 from apps.sponsorship.models import MoMoTransaction
 from apps.sponsorship.momo_prod import create_access_token, generate_uuid, request_to_pay
+from api.v1.throttles import PaymentStartThrottle, PaymentStatusThrottle
 
 
 class PaymentViewSet(viewsets.ReadOnlyModelViewSet):
@@ -34,6 +35,7 @@ class PaymentViewSet(viewsets.ReadOnlyModelViewSet):
         methods=["post"],
         authentication_classes=[],
         permission_classes=[permissions.AllowAny],
+        throttle_classes=[PaymentStartThrottle],
         url_path="mobile-money/initiate",
     )
     def initiate_mobile_money(self, request):
@@ -86,6 +88,7 @@ class PaymentViewSet(viewsets.ReadOnlyModelViewSet):
         methods=["get"],
         authentication_classes=[],
         permission_classes=[permissions.AllowAny],
+        throttle_classes=[PaymentStatusThrottle],
         url_path=r"mobile-money/(?P<reference_id>[0-9a-f-]+)/status",
     )
     def mobile_money_status(self, request, reference_id=None):
@@ -122,7 +125,7 @@ class PaymentViewSet(viewsets.ReadOnlyModelViewSet):
             "status": transaction.status,
             "amount": transaction.amount,
             "currency": transaction.currency,
-            "phone": transaction.phone_number,
+            "phone": f"******{str(transaction.phone_number)[-4:]}",
             "reason": transaction.payer_message if transaction.status == "FAILED" else "",
             "updated_at": transaction.updated_at,
         })
