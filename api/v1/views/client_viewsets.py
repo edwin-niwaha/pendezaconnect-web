@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.parsers import FormParser, MultiPartParser
@@ -5,6 +6,7 @@ from rest_framework.response import Response
 
 from api.v1.selectors import (
     clients_for_user,
+    is_internal_user,
     linked_client_id,
     loans_for_user,
     savings_accounts_for_client,
@@ -19,6 +21,8 @@ from api.v1.serializers import (
 )
 from apps.savings.models import SavingsAccount, SavingsTransaction
 from apps.users.tasks import queue_user_notification
+from api.v1.uploads import validate_image_upload
+from apps.client.models import ClientProfilePicture
 
 
 class ClientViewSet(viewsets.ReadOnlyModelViewSet):
@@ -39,10 +43,19 @@ class ClientViewSet(viewsets.ReadOnlyModelViewSet):
         return queryset
 
     @action(detail=True, methods=["post", "delete"], parser_classes=[MultiPartParser, FormParser])
+    @transaction.atomic
     def photos(self, request, pk=None):
+        if not is_internal_user(request.user):
+            return Response(
+                {"detail": "Only authorized staff can change client profile photos."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         client = self.get_object()
 
         if request.method == "DELETE":
+            ClientProfilePicture.objects.filter(client=client, is_current=True).update(
+                is_current=False
+            )
             client.picture = None
             client.save(update_fields=["picture", "updated_at"])
             return Response(self.get_serializer(client).data, status=status.HTTP_200_OK)
@@ -51,8 +64,16 @@ class ClientViewSet(viewsets.ReadOnlyModelViewSet):
         if not picture:
             return Response({"picture": ["No image file was submitted."]}, status=status.HTTP_400_BAD_REQUEST)
 
-        client.picture = picture
+        client.picture = validate_image_upload(picture)
         client.save(update_fields=["picture", "updated_at"])
+        ClientProfilePicture.objects.filter(client=client, is_current=True).update(
+            is_current=False
+        )
+        ClientProfilePicture.objects.create(
+            client=client,
+            picture=client.picture,
+            is_current=True,
+        )
         return Response(self.get_serializer(client).data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["get"])

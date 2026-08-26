@@ -70,6 +70,30 @@ class Client(models.Model):
         return {"label": self.get_full_name(), "value": self.id}
 
 
+class ClientProfilePicture(models.Model):
+    client = models.ForeignKey(
+        Client,
+        on_delete=models.CASCADE,
+        related_name="profile_pictures",
+        verbose_name="Client",
+    )
+    picture = CloudinaryField(
+        "client_uploads",
+        validators=[FileExtensionValidator(allowed_extensions=["jpg", "jpeg", "png"])],
+    )
+    uploaded_at = models.DateTimeField(auto_now_add=True, verbose_name="Uploaded at")
+    is_current = models.BooleanField(default=False, verbose_name="Is Current Picture")
+
+    class Meta:
+        db_table = "client_pictures"
+        verbose_name = "Client Profile Picture"
+        verbose_name_plural = "Client Profile Pictures"
+        ordering = ["-uploaded_at", "-id"]
+
+    def __str__(self):
+        return f"{self.client.full_name} - {self.uploaded_at:%Y-%m-%d}"
+
+
 # 7Hills registration
 class SevenHillsRegistration(models.Model):
     registration_date = models.DateField()

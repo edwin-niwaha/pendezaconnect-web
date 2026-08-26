@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.management import call_command
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db import transaction
-from django.db.models import CharField, F, OuterRef, Q, Subquery, Value
+from django.db.models import CharField, F, OuterRef, Prefetch, Q, Subquery, Value
 from django.db.models.functions import Concat, ExtractMonth
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
@@ -173,7 +173,11 @@ def register_child(request):
         form = ChildForm(request.POST, request.FILES)
 
         if form.is_valid():
-            form.save()
+            child = form.save()
+            picture = form.cleaned_data.get("picture")
+            if picture:
+                ChildProfilePicture.objects.filter(child=child, is_current=True).update(is_current=False)
+                ChildProfilePicture.objects.create(child=child, picture=picture, is_current=True)
             messages.success(
                 request, "Record saved successfully!", extra_tags="bg-success"
             )
@@ -210,7 +214,13 @@ def update_child(request, pk, template_name="child/child_update.html"):
     if request.method == "POST":
         form = ChildForm(request.POST, request.FILES, instance=child_record)
         if form.is_valid():
-            form.save()
+            child = form.save()
+            picture = form.cleaned_data.get("picture")
+            if picture:
+                ChildProfilePicture.objects.filter(child=child, is_current=True).update(is_current=False)
+                ChildProfilePicture.objects.create(child=child, picture=picture, is_current=True)
+            elif request.POST.get("remove_picture") == "1":
+                ChildProfilePicture.objects.filter(child=child, is_current=True).update(is_current=False)
 
             messages.success(
                 request, "Child record updated successfully!", extra_tags="bg-success"
@@ -227,7 +237,15 @@ def update_child(request, pk, template_name="child/child_update.html"):
         # Pre-populate the form with existing data
         form = ChildForm(instance=child_record)
 
-    context = {"form_name": "Child Registration", "form": form}
+    current_picture = child_record.get_current_profile_picture()
+    context = {
+        "form_name": "Child Registration",
+        "form": form,
+        "current_photo_url": (
+            current_picture.picture.url if current_picture and current_picture.picture else ""
+        ),
+        "photo_subject": child_record.full_name,
+    }
     return render(request, template_name, context)
 
 
@@ -269,6 +287,9 @@ def update_picture(request):
                 return redirect("update_picture")
 
             # Create a ChildProfilePicture instance
+            ChildProfilePicture.objects.filter(
+                child=child_profile, is_current=True
+            ).update(is_current=False)
             new_picture = form.save(commit=False)
             new_picture.child = child_profile
             new_picture.is_current = True
@@ -292,8 +313,16 @@ def update_picture(request):
     else:
         form = ChildProfilePictureForm()
 
-    # Retrieve all child objects
-    children = Child.objects.filter(is_departed=False).order_by("full_name", "id")
+    # Retrieve active children and their current photo in one query.
+    children = Child.objects.filter(is_departed=False).prefetch_related(
+        Prefetch(
+            "profile_picture",
+            queryset=ChildProfilePicture.objects.filter(is_current=True).order_by(
+                "-uploaded_at", "-id"
+            ),
+            to_attr="current_profile_pictures",
+        )
+    ).order_by("full_name", "id")
 
     return render(
         request,

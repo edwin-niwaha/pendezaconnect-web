@@ -5,6 +5,7 @@ from rest_framework.response import Response
 
 from api.v1.selectors import staff_for_user
 from api.v1.serializers import StaffSerializer
+from api.v1.uploads import validate_image_upload
 
 
 class StaffViewSet(viewsets.ReadOnlyModelViewSet):
@@ -31,6 +32,6 @@ class StaffViewSet(viewsets.ReadOnlyModelViewSet):
         if not picture:
             return Response({"picture": ["No image file was submitted."]}, status=status.HTTP_400_BAD_REQUEST)
 
-        staff.picture = picture
+        staff.picture = validate_image_upload(picture)
         staff.save(update_fields=["picture", "updated_at"])
         return Response(self.get_serializer(staff).data, status=status.HTTP_200_OK)

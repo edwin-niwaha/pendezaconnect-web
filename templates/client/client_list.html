@@ -6,7 +6,9 @@
   <style>
     .client-directory {
       color: #233142;
-      padding-bottom: 28px;
+      max-width: none;
+      padding: 0 0 28px;
+      width: 100%;
     }
 
     .client-header,
@@ -93,7 +95,7 @@
       color: #13745d;
       display: inline-flex;
       flex: 0 0 42px;
-      font-size: 1.3rem;
+      font-size: 1.65rem;
       height: 42px;
       justify-content: center;
       width: 42px;
@@ -126,7 +128,8 @@
 
     .client-panel {
       margin-bottom: 14px;
-      padding: 16px;
+      overflow: hidden;
+      padding: 0;
     }
 
     .client-panel-head {
@@ -134,7 +137,8 @@
       display: flex;
       gap: 14px;
       justify-content: space-between;
-      margin-bottom: 14px;
+      margin-bottom: 0;
+      padding: 16px 18px;
     }
 
     .client-panel-head h4 {
@@ -158,6 +162,8 @@
 
     .client-table {
       margin-bottom: 0;
+      table-layout: fixed;
+      width: 100%;
     }
 
     .client-table thead th {
@@ -166,13 +172,26 @@
       font-size: .76rem;
       font-weight: 900;
       text-transform: uppercase;
+      padding: 12px 10px;
       white-space: nowrap;
     }
+
+    .client-table thead th:nth-child(1) { width: 48px; }
+    .client-table thead th:nth-child(2) { width: 25%; }
+    .client-table thead th:nth-child(3) { width: 105px; }
+    .client-table thead th:nth-child(4) { width: 150px; }
+    .client-table thead th:nth-child(6) { width: 150px; }
 
     .client-table tbody td,
     .client-table tbody th {
       border-color: #edf0f4;
+      padding: 12px 10px;
       vertical-align: middle;
+    }
+
+    .client-table tbody td {
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
 
     .client-index {
@@ -185,7 +204,7 @@
       align-items: center;
       display: flex;
       gap: 10px;
-      min-width: 230px;
+      min-width: 0;
     }
 
     .client-avatar {
@@ -234,14 +253,21 @@
     }
 
     .client-row-actions {
+      flex-wrap: nowrap;
       justify-content: flex-end;
-      min-width: 136px;
+      min-width: 0;
+      padding-right: 3px;
+    }
+
+    .client-table tbody td:last-child {
+      overflow: visible;
     }
 
     .client-row-actions .btn {
       align-items: center;
       display: inline-flex;
-      height: 32px;
+      flex: 0 0 34px;
+      height: 34px;
       justify-content: center;
       padding: 0;
       width: 34px;
@@ -255,7 +281,18 @@
     }
 
     .client-report-modal .modal-dialog {
-      max-width: 920px;
+      max-width: 1080px;
+      width: calc(100% - 32px);
+    }
+
+    .client-report-modal .modal-content {
+      border: 0;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .client-report-modal .modal-body {
+      padding: 24px;
     }
 
     .client-report {
@@ -263,28 +300,31 @@
     }
 
     .client-report-cover {
-      align-items: center;
-      border-bottom: 1px solid #edf0f4;
-      display: flex;
-      gap: 16px;
-      margin-bottom: 16px;
-      padding-bottom: 16px;
+      align-items: stretch;
+      background: linear-gradient(135deg, #f2f8f6, #f8fafc);
+      border: 1px solid #dce8e4;
+      border-radius: 14px;
+      display: grid;
+      gap: 26px;
+      grid-template-columns: minmax(300px, 38%) minmax(0, 1fr);
+      margin-bottom: 20px;
+      padding: 20px;
     }
 
     .client-report-photo {
       align-items: center;
       background: #eef4ff;
       border: 1px solid #dbe5ff;
-      border-radius: 8px;
+      border-radius: 16px;
+      box-shadow: 0 14px 30px rgba(31, 52, 77, .14);
       color: #315fbb;
       display: inline-flex;
-      flex: 0 0 96px;
-      font-size: 2rem;
+      font-size: 3.5rem;
       font-weight: 900;
-      height: 96px;
+      min-height: 380px;
       justify-content: center;
       overflow: hidden;
-      width: 96px;
+      width: 100%;
     }
 
     .client-report-photo img {
@@ -292,6 +332,75 @@
       object-fit: cover;
       width: 100%;
     }
+
+    .client-photo-table-wrap {
+      border: 1px solid #dfe6ee;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      overflow-x: auto;
+    }
+
+    .client-photo-table {
+      border-collapse: collapse;
+      margin: 0;
+      min-width: 680px;
+      width: 100%;
+    }
+
+    .client-photo-table th {
+      background: #f3f7f5;
+      color: #44546a;
+      font-size: .75rem;
+      font-weight: 900;
+      padding: 11px 12px;
+      text-transform: uppercase;
+    }
+
+    .client-photo-table td {
+      border-top: 1px solid #e8edf2;
+      padding: 12px;
+      vertical-align: middle;
+    }
+
+    .client-photo-table__image {
+      background: #edf2f7;
+      border: 1px solid #d8e0e8;
+      border-radius: 10px;
+      display: block;
+      height: 140px;
+      overflow: hidden;
+      width: 120px;
+    }
+
+    .client-photo-table__image img {
+      height: 100%;
+      object-fit: cover;
+      width: 100%;
+    }
+
+    .client-photo-current {
+      background: #e9f8f0;
+      border-radius: 999px;
+      color: #18794e;
+      display: inline-block;
+      font-size: .72rem;
+      font-weight: 800;
+      margin-top: 6px;
+      padding: 4px 8px;
+    }
+
+    .client-photo-empty {
+      color: #805b12;
+      padding: 24px !important;
+      text-align: center;
+    }
+
+    .client-report-identity {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
 
     .client-report-cover h4 {
       color: #1f344d;
@@ -437,15 +546,241 @@
         grid-template-columns: 1fr;
       }
 
+      .table-responsive {
+        overflow: visible;
+      }
+
+      .client-table,
+      .client-table tbody,
+      .client-table tr,
+      .client-table td {
+        display: block;
+        width: 100%;
+      }
+
+      .client-table thead,
+      .client-index {
+        display: none;
+      }
+
+      .client-table tbody {
+        background: #f5f8f7;
+        padding: 10px;
+      }
+
+      .client-table tbody tr {
+        background: #fff;
+        border: 1px solid #dfe7e4;
+        border-radius: 12px;
+        box-shadow: 0 6px 16px rgba(31, 41, 51, .05);
+        margin-bottom: 10px;
+        overflow: hidden;
+        padding: 12px;
+      }
+
+      .client-table tbody td {
+        border: 0;
+        padding: 8px 4px;
+        text-align: left !important;
+      }
+
+      .client-table tbody td:nth-child(n+3):not(:last-child) {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: 105px minmax(0, 1fr);
+      }
+
+      .client-table tbody td:nth-child(n+3):not(:last-child)::before {
+        color: #667085;
+        content: attr(data-label);
+        font-size: .72rem;
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+
+      .client-row-actions {
+        border-top: 1px solid #edf0f4;
+        justify-content: flex-start;
+        margin-top: 5px;
+        min-width: 0;
+        padding-top: 12px;
+      }
+
       .client-report-cover {
-        align-items: flex-start;
-        flex-direction: column;
+        grid-template-columns: minmax(240px, 40%) minmax(0, 1fr);
+        padding: 16px;
+      }
+
+      .client-report-photo {
+        font-size: 2.7rem;
+        min-height: 320px;
+        width: 100%;
       }
 
       .client-report-grid,
       .client-documents {
         grid-template-columns: 1fr;
       }
+    }
+
+    @media (max-width: 479.98px) {
+      .client-report-modal .modal-dialog {
+        margin: 8px;
+        width: calc(100% - 16px);
+      }
+
+      .client-report-modal .modal-body {
+        padding: 14px;
+      }
+
+      .client-report-cover {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+
+      .client-report-photo {
+        min-height: min(110vw, 430px);
+        margin: 0 auto;
+        width: 100%;
+      }
+
+      .client-report-cover .client-eyebrow {
+        margin-top: 4px;
+      }
+    }
+
+    .client-photo-only-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .client-photo-only-item {
+      align-items: center;
+      background: #f8fafc;
+      border: 1px solid #e1e7ee;
+      border-radius: 12px;
+      display: grid;
+      gap: 14px;
+      grid-template-columns: 72px minmax(0, 1fr) auto;
+      padding: 12px;
+    }
+
+    .client-photo-only-image {
+      background: #eaf0f5;
+      border: 1px solid #d6dee7;
+      border-radius: 50%;
+      display: block;
+      height: 72px;
+      overflow: hidden;
+      width: 72px;
+    }
+
+    .client-report-modal .client-photo-only-image > img.client-photo-only-img {
+      display: block !important;
+      height: 100% !important;
+      max-height: none !important;
+      max-width: none !important;
+      min-height: 100% !important;
+      min-width: 100% !important;
+      object-fit: cover !important;
+      object-position: center center !important;
+      width: 100% !important;
+    }
+
+    .client-photo-only-name {
+      color: #1f344d;
+      font-size: 1rem;
+      font-weight: 900;
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .client-photo-only-empty {
+      color: #667085;
+      padding: 28px 16px;
+      text-align: center;
+    }
+
+    @media (max-width: 480px) {
+      .client-photo-only-item {
+        gap: 10px;
+        grid-template-columns: 60px minmax(0, 1fr) auto;
+        padding: 10px;
+      }
+
+      .client-photo-only-image {
+        height: 60px;
+        width: 60px;
+      }
+
+      .client-photo-only-item .btn {
+        align-items: center;
+        display: inline-flex;
+        height: 38px;
+        justify-content: center;
+        padding: 0;
+        width: 38px;
+      }
+
+      .client-photo-only-item .btn span {
+        display: none;
+      }
+    }
+
+    .client-photo-report-head {
+      align-items: center;
+      display: flex;
+      gap: 12px;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .client-photo-report-head h4 {
+      color: #1f344d;
+      font-size: 1rem;
+      font-weight: 900;
+      margin: 0;
+    }
+
+    .client-photo-report-count {
+      background: #e9f6ef;
+      border-radius: 999px;
+      color: #18794e;
+      font-size: .75rem;
+      font-weight: 800;
+      padding: 6px 10px;
+      white-space: nowrap;
+    }
+
+    .client-photo-report-table-wrap {
+      border: 1px solid #dfe6ee;
+      border-radius: 12px;
+      overflow-x: auto;
+    }
+
+    .client-photo-report-table {
+      margin: 0;
+      min-width: 560px;
+      width: 100%;
+    }
+
+    .client-photo-report-table th {
+      color: #667085;
+      font-size: .75rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .client-photo-report-table td,
+    .client-photo-report-table th {
+      padding: 11px 12px;
+      vertical-align: middle;
+    }
+
+    .client-photo-report-table tbody tr:not(:first-child) td,
+    .client-photo-report-table tbody tr:not(:first-child) th {
+      border-top: 1px solid #e8edf2;
     }
   </style>
 
@@ -552,7 +887,7 @@
                   <th scope="row" class="client-index">{{ records.start_index|add:forloop.counter0 }}</th>
                   <td>
                     <div class="client-profile">
-                      <a class="client-avatar" title="Click to update picture" href="{% url 'update_picture' %}" onclick="return confirm('Are you sure you want to update client picture? ');">
+                      <a class="client-avatar" title="Click to update picture" href="{% url 'upload_client_photo' %}">
                         {% if client.picture %}
                           <img src="{{ client.picture.url }}" alt="{{ client.full_name }}" />
                         {% else %}
@@ -565,10 +900,10 @@
                       </div>
                     </div>
                   </td>
-                  <td><span class="client-badge">{{ client.reg_number|default:'Not set' }}</span></td>
-                  <td>{% if client.mobile_telephone %}{{ client.mobile_telephone }}{% else %}<span class="client-muted">Not recorded</span>{% endif %}</td>
-                  <td>{% if client.email and client.email != 'no-email@example.com' %}{{ client.email }}{% else %}<span class="client-muted">Not recorded</span>{% endif %}</td>
-                  <td class="text-right print-hide">
+                  <td data-label="Registration"><span class="client-badge">{{ client.reg_number|default:'Not set' }}</span></td>
+                  <td data-label="Telephone">{% if client.mobile_telephone %}{{ client.mobile_telephone }}{% else %}<span class="client-muted">Not recorded</span>{% endif %}</td>
+                  <td data-label="Email">{% if client.email and client.email != 'no-email@example.com' %}{{ client.email }}{% else %}<span class="client-muted">Not recorded</span>{% endif %}</td>
+                  <td class="text-right print-hide" data-label="Actions">
                     <div class="client-row-actions">
                       <button type="button" class="btn btn-outline-info btn-sm" title="View details report" data-bs-toggle="modal" data-bs-target="#clientReportModal{{ client.id }}">
                         <i class="mdi mdi-file-eye-outline"></i>
@@ -591,99 +926,52 @@
                       <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
                         <div class="modal-content">
                           <div class="modal-header">
-                            <h5 class="modal-title">Client Details Report</h5>
+                            <h5 class="modal-title">Client Photos</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                           </div>
                           <div class="modal-body">
-                            <div class="client-report" id="clientReport{{ client.id }}">
-                              <div class="client-report-cover">
-                                <div class="client-report-photo">
-                                  {% if client.picture %}
-                                    <img src="{{ client.picture.url }}" alt="{{ client.full_name }}" />
-                                  {% else %}
-                                    {{ client.full_name|first|upper }}
-                                  {% endif %}
-                                </div>
-                                <div>
-                                  <span class="client-eyebrow">Client Profile</span>
-                                  <h4>{{ client.full_name }}</h4>
-                                  <div class="client-muted">Registration No: {{ client.reg_number|default:'Not set' }}</div>
-                                  <div class="client-muted">Generated on {% now "M d, Y" %}</div>
-                                </div>
-                              </div>
-
-                              <div class="client-report-grid">
-                                <div class="client-report-field">
-                                  <span>Full Name</span>
-                                  <strong>{{ client.full_name }}</strong>
-                                </div>
-                                <div class="client-report-field">
-                                  <span>Registration No</span>
-                                  <strong>{{ client.reg_number|default:'Not set' }}</strong>
-                                </div>
-                                <div class="client-report-field">
-                                  <span>Telephone</span>
-                                  <strong>{{ client.mobile_telephone|default:'Not recorded' }}</strong>
-                                </div>
-                                <div class="client-report-field">
-                                  <span>Email</span>
-                                  <strong>{% if client.email and client.email != 'no-email@example.com' %}{{ client.email }}{% else %}Not recorded{% endif %}</strong>
-                                </div>
-                                <div class="client-report-field">
-                                  <span>Created</span>
-                                  <strong>{{ client.created_at|date:'M d, Y' }}</strong>
-                                </div>
-                                <div class="client-report-field">
-                                  <span>Last Updated</span>
-                                  <strong>{{ client.updated_at|date:'M d, Y' }}</strong>
-                                </div>
-                              </div>
-
-                              <div class="client-report-section-title">
-                                <h5>Linked Documents</h5>
-                                <span class="client-muted">Client image and loan application files</span>
-                              </div>
-
-                              <div class="client-documents">
-                                {% if client.picture %}
-                                  <div class="client-document-card">
-                                    <div>
-                                      <span>Client Profile</span>
-                                      <strong>Profile picture</strong>
-                                      <small class="client-muted">Uploaded on client record</small>
-                                    </div>
-                                    <a href="{{ client.picture.url }}" target="_blank" rel="noopener" download class="btn btn-outline-primary btn-sm">
-                                      <i class="mdi mdi-download"></i>
-                                    </a>
-                                  </div>
-                                {% endif %}
-
-                                {% for loan in client.loans.all %}
-                                  {% for document in loan.documents.all %}
-                                    <div class="client-document-card">
-                                      <div>
-                                        <span>Loan #{{ loan.id }}</span>
-                                        <strong>{{ document.get_document_type_display }}</strong>
-                                        <small class="client-muted">{{ document.description|default:'Loan application document' }} | {{ document.created_at|date:'M d, Y' }}</small>
-                                      </div>
-                                      {% if document.file %}
-                                        <a href="{{ document.file.url }}" target="_blank" rel="noopener" download class="btn btn-outline-primary btn-sm">
-                                          <i class="mdi mdi-download"></i>
+                            <div class="client-photo-report-head">
+                              <h4>{{ client.full_name }} Pictures</h4>
+                              <span class="client-photo-report-count">{{ client.profile_pictures.all|length }} uploads</span>
+                            </div>
+                            <div class="client-photo-report-table-wrap">
+                              <table class="table client-photo-report-table">
+                                <thead>
+                                  <tr>
+                                    <th scope="col">#</th>
+                                    <th scope="col">Uploaded At</th>
+                                    <th scope="col">Picture</th>
+                                    <th scope="col">Action</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {% for photo in client.profile_pictures.all %}
+                                    <tr>
+                                      <th scope="row">{{ forloop.counter }}</th>
+                                      <td>{{ photo.uploaded_at|date:"d M Y, H:i" }}</td>
+                                      <td>
+                                        <a class="client-photo-only-image" href="{{ photo.picture.url }}" target="_blank" rel="noopener" title="Open full image">
+                                          <img class="client-photo-only-img" src="{{ photo.picture.url }}" alt="{{ client.full_name }}" loading="lazy" />
                                         </a>
-                                      {% endif %}
-                                    </div>
+                                      </td>
+                                      <td>
+                                        {% if user.profile.role == 'administrator' or user.profile.role == 'manager' %}
+                                          <form method="post" action="{% url 'delete_client_profile_picture' photo.id %}" onsubmit="return confirm('Delete this client photo permanently?');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger btn-sm" title="Delete image" aria-label="Delete image"><i class="bi bi-trash"></i></button>
+                                          </form>
+                                        {% endif %}
+                                      </td>
+                                    </tr>
+                                  {% empty %}
+                                    <tr><td colspan="4" class="client-photo-only-empty">No profile pictures found for {{ client.full_name }}.</td></tr>
                                   {% endfor %}
-                                {% endfor %}
-                              </div>
-
-                              <div class="client-document-empty client-document-empty-js" data-client-document-empty="{{ client.id }}">No linked documents found for this client.</div>
+                                </tbody>
+                              </table>
                             </div>
                           </div>
                           <div class="modal-footer">
                             <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Close</button>
-                            <button type="button" class="btn btn-dark btn-sm" onclick="printClientReport('clientReport{{ client.id }}')">
-                              <i class="mdi mdi-printer"></i> Print
-                            </button>
                           </div>
                         </div>
                       </div>
@@ -725,33 +1013,4 @@
     </section>
   </div>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      document.querySelectorAll('.client-document-empty-js').forEach(function (emptyState) {
-        var report = emptyState.closest('.client-report');
-        var documentCount = report ? report.querySelectorAll('.client-document-card').length : 0;
-        emptyState.hidden = documentCount > 0;
-      });
-    });
-
-    function printClientReport(reportId) {
-      var report = document.getElementById(reportId);
-
-      if (!report) {
-        return;
-      }
-
-      var printWindow = window.open('', '_blank', 'width=900,height=700');
-      var styles = Array.prototype.slice.call(document.querySelectorAll('style')).map(function (style) {
-        return style.outerHTML;
-      }).join('');
-
-      printWindow.document.write('<html><head><title>Client Details Report</title>' + styles + '</head><body>');
-      printWindow.document.write(report.outerHTML);
-      printWindow.document.write('</body></html>');
-      printWindow.document.close();
-      printWindow.focus();
-      printWindow.print();
-    }
-  </script>
 {% endblock %}

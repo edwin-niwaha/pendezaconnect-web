@@ -2,31 +2,33 @@ import logging
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db import transaction
 from django.db.models import Q
 from django.http import HttpResponseRedirect
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from openpyxl import load_workbook
 
 logger = logging.getLogger(__name__)
 
+from api.v1.selectors import is_internal_user, linked_client_id
 from apps.users.decorators import (
     admin_or_manager_or_staff_required,
     admin_or_manager_required,
     admin_required,
 )
 
-from .forms import ClientForm, ImportClientsForm, SevenHillsRegistrationForm
-from .models import Client, SevenHillsRegistration
+from .forms import ClientForm, ClientPhotoForm, ImportClientsForm, SevenHillsRegistrationForm
+from .models import Client, ClientProfilePicture, SevenHillsRegistration
 
 
 # =================================== Fetch and display all clients details ===================================
 @login_required
 @admin_or_manager_or_staff_required
 def client_list(request):
-    base_queryset = Client.objects.prefetch_related("loans__documents").order_by("id")
+    base_queryset = Client.objects.prefetch_related("loans__documents", "profile_pictures").order_by("id")
     queryset = base_queryset
 
     search_query = request.GET.get("search", "").strip()
@@ -69,6 +71,105 @@ def client_list(request):
     )
 
 
+# =================================== Upload Client Photo ===================================
+
+
+@login_required
+@transaction.atomic
+def upload_client_photo(request):
+    if is_internal_user(request.user):
+        clients = Client.objects.order_by("full_name", "id")
+    else:
+        client_id = linked_client_id(request.user)
+        if not client_id:
+            raise PermissionDenied("You do not have access to client photo records.")
+        clients = Client.objects.filter(pk=client_id)
+    form = ClientPhotoForm(request.POST or None, request.FILES or None)
+
+    if request.method == "POST" and form.is_valid():
+        client = get_object_or_404(clients, pk=request.POST.get("id"))
+        remove_requested = request.POST.get("remove_picture") == "1"
+        uploaded_picture = form.cleaned_data.get("picture")
+
+        if remove_requested and not uploaded_picture:
+            ClientProfilePicture.objects.filter(client=client, is_current=True).update(
+                is_current=False
+            )
+            client.picture = None
+            client.save(update_fields=["picture", "updated_at"])
+            messages.success(
+                request,
+                f"Current profile picture removed from {client.full_name}.",
+                extra_tags="bg-success",
+            )
+            return redirect("upload_client_photo")
+
+        if uploaded_picture:
+            ClientProfilePicture.objects.filter(client=client, is_current=True).update(
+                is_current=False
+            )
+            photo = ClientProfilePicture.objects.create(
+                client=client,
+                picture=uploaded_picture,
+                is_current=True,
+            )
+            client.picture = photo.picture
+            client.save(update_fields=["picture", "updated_at"])
+            messages.success(
+                request,
+                f"Photo updated for {client.full_name}.",
+                extra_tags="bg-success",
+            )
+            return redirect("upload_client_photo")
+
+        form.add_error("picture", "Take a photo, choose one from the gallery, or remove the current picture.")
+
+    if request.method == "POST":
+        messages.error(
+            request,
+            "The photo could not be uploaded. Check the selected client and photo.",
+            extra_tags="bg-danger",
+        )
+
+    return render(
+        request,
+        "client/client_photo.html",
+        {
+            "form": form,
+            "clients": clients,
+            "form_name": "Upload Client Photo",
+            "allow_current_photo_removal": True,
+        },
+    )
+
+
+@login_required
+@admin_or_manager_required
+@transaction.atomic
+def delete_client_profile_picture(request, pk):
+    if request.method != "POST":
+        messages.error(request, "Use the Delete button to remove a client photo.")
+        return redirect("client_list")
+
+    photo = get_object_or_404(ClientProfilePicture.objects.select_related("client"), pk=pk)
+    client = photo.client
+    was_current = photo.is_current or str(client.picture) == str(photo.picture)
+    photo.delete()
+
+    if was_current:
+        replacement = ClientProfilePicture.objects.filter(client=client).first()
+        if replacement:
+            replacement.is_current = True
+            replacement.save(update_fields=["is_current"])
+            client.picture = replacement.picture
+        else:
+            client.picture = None
+        client.save(update_fields=["picture", "updated_at"])
+
+    messages.info(request, f"Photo removed from {client.full_name}.", extra_tags="bg-danger")
+    return redirect("client_list")
+
+
 # =================================== Register Client  ===================================
 
 
@@ -80,7 +181,16 @@ def register_client(request):
         form = ClientForm(request.POST, request.FILES)
 
         if form.is_valid():
-            form.save()
+            client = form.save()
+            if client.picture:
+                ClientProfilePicture.objects.filter(client=client, is_current=True).update(
+                    is_current=False
+                )
+                ClientProfilePicture.objects.create(
+                    client=client,
+                    picture=client.picture,
+                    is_current=True,
+                )
             messages.success(
                 request, "Record saved successfully!", extra_tags="bg-success"
             )
@@ -117,7 +227,28 @@ def update_client(request, pk, template_name="client/client_update.html"):
     if request.method == "POST":
         form = ClientForm(request.POST, request.FILES, instance=client_record)
         if form.is_valid():
-            form.save()
+            uploaded_picture = request.FILES.get("picture")
+            remove_picture = (
+                request.POST.get("remove_picture") == "1" and not uploaded_picture
+            )
+            client = form.save(commit=False)
+            if remove_picture:
+                client.picture = None
+            client.save()
+
+            if uploaded_picture and client.picture:
+                ClientProfilePicture.objects.filter(client=client, is_current=True).update(
+                    is_current=False
+                )
+                ClientProfilePicture.objects.create(
+                    client=client,
+                    picture=client.picture,
+                    is_current=True,
+                )
+            elif remove_picture:
+                ClientProfilePicture.objects.filter(client=client, is_current=True).update(
+                    is_current=False
+                )
 
             messages.success(
                 request, "Client record updated successfully!", extra_tags="bg-success"
@@ -127,7 +258,12 @@ def update_client(request, pk, template_name="client/client_update.html"):
         # Pre-populate the form with existing data
         form = ClientForm(instance=client_record)
 
-    context = {"form_name": "Client Registration", "form": form}
+    context = {
+        "form_name": "Client Registration",
+        "form": form,
+        "current_photo_url": client_record.picture.url if client_record.picture else "",
+        "photo_subject": client_record.full_name,
+    }
     return render(request, template_name, context)
 
 

@@ -2,151 +2,195 @@
 {% block title %}Pendeza Connect | Signed Out{% endblock %}
 
 {% block content %}
-  <style>
-    .logout-shell {
-      margin: 24px auto;
-      max-width: 920px;
+<style>
+  .public-content-shell {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .signedout-page {
+    align-items: center;
+    background:
+      radial-gradient(circle at 12% 12%, rgba(242, 184, 75, .18), transparent 25rem),
+      radial-gradient(circle at 88% 88%, rgba(22, 128, 104, .12), transparent 24rem),
+      #f3f7f6;
+    display: flex;
+    justify-content: center;
+    min-height: calc(100vh - 76px);
+    padding: 44px 20px;
+  }
+
+  .signedout-card {
+    background: #fff;
+    border: 1px solid #dbe5e2;
+    border-radius: 20px;
+    box-shadow: 0 24px 60px rgba(23, 59, 52, .13);
+    max-width: 560px;
+    overflow: hidden;
+    width: 100%;
+  }
+
+  .signedout-accent {
+    background: linear-gradient(90deg, #123d35, #168068 70%, #f2b84b);
+    height: 6px;
+  }
+
+  .signedout-body {
+    padding: 42px;
+  }
+
+  .signedout-header {
+    align-items: center;
+    display: flex;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .signedout-mark {
+    align-items: center;
+    background: #edf7f4;
+    border: 1px solid #d4e9e2;
+    border-radius: 14px;
+    color: #13745d;
+    display: inline-flex;
+    flex: 0 0 52px;
+    font-size: 1.5rem;
+    height: 52px;
+    justify-content: center;
+    width: 52px;
+  }
+
+  .signedout-title {
+    color: #173b34;
+    font-size: 1.75rem;
+    font-weight: 900;
+    letter-spacing: -.025em;
+    margin: 0 0 5px;
+  }
+
+  .signedout-subtitle {
+    color: #667085;
+    line-height: 1.55;
+    margin: 0;
+  }
+
+  .signedout-actions {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .signedout-actions .btn {
+    align-items: center;
+    border-radius: 10px;
+    display: inline-flex;
+    font-weight: 900;
+    justify-content: center;
+    min-height: 50px;
+    transition: box-shadow .18s ease, transform .18s ease;
+  }
+
+  .signedout-primary {
+    background: #173b34;
+    border-color: #173b34;
+    box-shadow: 0 10px 22px rgba(23, 59, 52, .18);
+  }
+
+  .signedout-primary:hover,
+  .signedout-primary:focus {
+    background: #0f705a;
+    border-color: #0f705a;
+    transform: translateY(-1px);
+  }
+
+  .signedout-secondary {
+    border-color: #b9c9c5;
+    color: #173b34;
+  }
+
+  .signedout-secondary:hover,
+  .signedout-secondary:focus {
+    background: #edf7f4;
+    border-color: #168068;
+    color: #0f705a;
+    transform: translateY(-1px);
+  }
+
+  .signedout-actions .btn:active {
+    box-shadow: none;
+    transform: translateY(0) scale(.99);
+  }
+
+  .signedout-note {
+    border-top: 1px solid #e5ebe9;
+    color: #7a8794;
+    font-size: .82rem;
+    margin: 26px 0 0;
+    padding-top: 18px;
+    text-align: center;
+  }
+
+  @media (max-width: 575.98px) {
+    .signedout-page {
+      align-items: flex-start;
+      min-height: calc(100vh - 64px);
+      padding: 18px 12px 30px;
     }
 
-    .logout-panel {
-      background: #fff;
-      border: 1px solid #d9dee5;
-      border-radius: 8px;
-      overflow: hidden;
+    .signedout-card {
+      border-radius: 15px;
     }
 
-    .logout-status {
-      background: #123d35;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      min-height: 100%;
-      padding: 34px;
+    .signedout-body {
+      padding: 30px 22px 26px;
     }
 
-    .logout-icon {
-      align-items: center;
-      background: rgba(255, 255, 255, .1);
-      border: 1px solid rgba(255, 255, 255, .18);
-      border-radius: 8px;
-      display: flex;
-      font-size: 1.35rem;
-      height: 54px;
-      justify-content: center;
-      margin-bottom: 22px;
-      width: 54px;
+    .signedout-header {
+      align-items: flex-start;
+      margin-bottom: 24px;
     }
 
-    .logout-status h1 {
-      font-size: 1.85rem;
-      font-weight: 800;
-      letter-spacing: 0;
-      margin-bottom: 10px;
+    .signedout-mark {
+      flex-basis: 46px;
+      height: 46px;
+      width: 46px;
     }
 
-    .logout-status p {
-      color: rgba(255, 255, 255, .82);
-      margin: 0;
-    }
-
-    .logout-content {
-      padding: 34px;
-    }
-
-    .logout-title {
-      color: #26384d;
+    .signedout-title {
       font-size: 1.5rem;
-      font-weight: 800;
-      margin-bottom: 6px;
     }
 
-    .logout-note {
-      background: #f6f8fb;
-      border: 1px solid #e3e8ef;
-      border-radius: 8px;
-      color: #516173;
-      padding: 14px 16px;
+    .signedout-actions {
+      grid-template-columns: 1fr;
     }
+  }
+</style>
 
-    .logout-actions {
-      display: grid;
-      gap: 12px;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .logout-actions .btn {
-      align-items: center;
-      display: flex;
-      font-weight: 800;
-      justify-content: center;
-      min-height: 46px;
-    }
-
-    .logout-help {
-      border-top: 1px solid #e3e8ef;
-      color: #667085;
-      font-size: .9rem;
-      margin-top: 26px;
-      padding-top: 18px;
-    }
-
-    @media (max-width: 768px) {
-      .logout-status,
-      .logout-content {
-        padding: 22px;
-      }
-
-      .logout-status h1 {
-        font-size: 1.45rem;
-      }
-
-      .logout-actions {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
-
-  <main class="logout-shell">
-    <div class="logout-panel shadow-sm">
-      <div class="row no-gutters">
-        <div class="col-lg-5">
-          <section class="logout-status">
-            <div class="logout-icon" aria-hidden="true">
-              <i class="fas fa-check"></i>
-            </div>
-            <h1>You are signed out</h1>
-            <p>Your session has ended securely. You can sign in again whenever you need to continue.</p>
-          </section>
+<main class="signedout-page">
+  <section class="signedout-card" aria-labelledby="signedout-title">
+    <div class="signedout-accent" aria-hidden="true"></div>
+    <div class="signedout-body">
+      <header class="signedout-header">
+        <div class="signedout-mark" aria-hidden="true">
+          <i class="fas fa-check"></i>
         </div>
-
-        <div class="col-lg-7">
-          <section class="logout-content">
-            <div class="mb-4">
-              <div class="logout-title">See you again, {{ user.username.title|default:'Guest' }}</div>
-              <div class="text-muted small">Thanks for using the Sponsorship Management System.</div>
-            </div>
-
-            <div class="logout-note mb-4">
-              For privacy, close this browser tab if you are using a shared computer.
-            </div>
-
-            <div class="logout-actions">
-              <a href="{% url 'login' %}" class="btn btn-dark">
-                <i class="fas fa-sign-in-alt mr-2"></i> Sign in
-              </a>
-              <a href="{% url 'users-register' %}" class="btn btn-outline-dark">
-                <i class="fas fa-user-plus mr-2"></i> Register
-              </a>
-            </div>
-
-            <div class="logout-help">
-              Need help or want to share feedback?
-              <a href="{% url 'contact_us' %}">Contact us</a>.
-            </div>
-          </section>
+        <div>
+          <h1 class="signedout-title" id="signedout-title">You’re signed out</h1>
+          <p class="signedout-subtitle">Your session ended successfully. Sign in again whenever you’re ready.</p>
         </div>
+      </header>
+
+      <div class="signedout-actions">
+        <a href="{% url 'login' %}" class="btn btn-dark signedout-primary">
+          <i class="fas fa-sign-in-alt mr-2" aria-hidden="true"></i>Sign in
+        </a>
+        <a href="{% url 'users-home' %}" class="btn btn-outline-dark signedout-secondary">
+          <i class="fas fa-home mr-2" aria-hidden="true"></i>Back to home
+        </a>
       </div>
+
+      <p class="signedout-note">On a shared device, close this browser tab for added privacy.</p>
     </div>
-  </main>
+  </section>
+</main>
 {% endblock content %}

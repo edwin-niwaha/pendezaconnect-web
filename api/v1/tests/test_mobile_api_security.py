@@ -1,5 +1,6 @@
 from datetime import date
 from decimal import Decimal
+import base64
 from uuid import uuid4
 
 from django.contrib.auth.models import User
@@ -207,11 +208,27 @@ class MobileApiOwnershipTests(APITestCase):
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             self.assertGreaterEqual(len(response.data["results"]), 1)
 
+    def test_client_cannot_change_own_profile_photo(self):
+        self.client.force_authenticate(self.client_user)
+        url = reverse("mobile-clients-photos", args=[self.client_a.id])
+
+        upload_response = self.client.post(url, {}, format="multipart")
+        delete_response = self.client.delete(url)
+
+        self.assertEqual(upload_response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(delete_response.status_code, status.HTTP_403_FORBIDDEN)
+
     @patch("apps.staff.models.cloudinary.uploader.upload")
     def test_staff_can_upload_staff_photo(self, mock_upload):
         mock_upload.return_value = {"url": "https://res.cloudinary.com/demo/staff/photo.jpg"}
         self.client.force_authenticate(self.staff_user)
-        image = SimpleUploadedFile("staff.jpg", b"fake-image-data", content_type="image/jpeg")
+        image = SimpleUploadedFile(
+            "staff.png",
+            base64.b64decode(
+                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
+            ),
+            content_type="image/png",
+        )
 
         response = self.client.post(
             reverse("mobile-staff-photos", args=[self.staff_record.id]),
@@ -222,6 +239,19 @@ class MobileApiOwnershipTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["current_picture_url"], "https://res.cloudinary.com/demo/staff/photo.jpg")
         mock_upload.assert_called_once()
+
+    def test_staff_photo_upload_rejects_invalid_image(self):
+        self.client.force_authenticate(self.staff_user)
+        image = SimpleUploadedFile("staff.jpg", b"fake-image-data", content_type="image/jpeg")
+
+        response = self.client.post(
+            reverse("mobile-staff-photos", args=[self.staff_record.id]),
+            {"picture": image},
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("picture", response.data)
 
     def test_staff_photo_upload_requires_picture(self):
         self.client.force_authenticate(self.staff_user)

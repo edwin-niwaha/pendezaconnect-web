@@ -100,7 +100,7 @@ class Staff(models.Model):
             upload_result = cloudinary.uploader.upload(
                 self.picture.file, folder="staff_profiles"
             )
-            self.picture = upload_result["url"]
+            self.picture = upload_result.get("secure_url") or upload_result["url"]
         super().save(*args, **kwargs)
 
     @property

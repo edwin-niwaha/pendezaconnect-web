@@ -53,19 +53,7 @@ def is_sponsor_user(user):
 
 
 def get_login_redirect_url(user, redirect_to=None):
+    """Return an explicit destination or keep normal sign-ins on the landing page."""
     if redirect_to:
         return redirect_to
-    if getattr(user, "is_superuser", False):
-        return reverse("main-dashboard")
-
-    profile = get_profile(user)
-    if not profile:
-        return reverse("users-home")
-
-    if profile.resolved_account_type == "staff":
-        return reverse("main-dashboard")
-    if profile.resolved_account_type == "client":
-        return reverse("client_savings_dashboard")
-    if profile.resolved_account_type == "sponsor":
-        return reverse("sponsor_portal")
     return reverse("users-home")

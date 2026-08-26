@@ -1,6 +1,8 @@
 from django import forms
 from django.core.exceptions import ValidationError
 
+from core.profile_photos import normalize_profile_photo
+
 from .models import (
     Child,
     ChildCorrespondence,
@@ -34,6 +36,17 @@ class UploadForm(forms.Form):
 
 
 class ChildForm(forms.ModelForm):
+    picture = forms.ImageField(
+        required=False,
+        label="Profile photo",
+        widget=forms.FileInput(
+            attrs={
+                "accept": "image/jpeg,image/png,image/webp",
+                "data-photo-input": "true",
+            }
+        ),
+    )
+
     class Meta:
         model = Child
         exclude = ("is_departed", "is_sponsored")
@@ -87,6 +100,12 @@ class ChildForm(forms.ModelForm):
 
         return self.cleaned_data
 
+    def clean_picture(self):
+        try:
+            return normalize_profile_photo(self.cleaned_data.get("picture"))
+        except ValueError as exc:
+            raise forms.ValidationError(str(exc)) from exc
+
 
 # =================================== CHILD PROFILE ===================================
 class ChildProfilePictureForm(forms.ModelForm):
@@ -102,10 +121,10 @@ class ChildProfilePictureForm(forms.ModelForm):
         apply_standard_widgets(self)
 
     def clean_picture(self):
-        picture = self.cleaned_data.get("picture")
-        if picture and picture.size > 10 * 1024 * 1024:  # 10 MB
-            raise forms.ValidationError("Image size should not exceed 10 MB.")
-        return picture
+        try:
+            return normalize_profile_photo(self.cleaned_data.get("picture"))
+        except ValueError as exc:
+            raise forms.ValidationError(str(exc)) from exc
 
 
 # =================================== CHILD  PROGRESS===================================

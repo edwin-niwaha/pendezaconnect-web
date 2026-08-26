@@ -2,6 +2,8 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import ButtonHolder, Fieldset, Layout, Submit
 from django import forms
 
+from core.profile_photos import normalize_profile_photo
+
 from .models import Client, SevenHillsRegistration
 
 
@@ -9,6 +11,19 @@ class ClientForm(forms.ModelForm):
     class Meta:
         model = Client
         fields = "__all__"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["picture"].required = False
+        self.fields["picture"].widget.attrs.update(
+            {"accept": "image/jpeg,image/png,image/webp", "data-photo-input": "true"}
+        )
+
+    def clean_picture(self):
+        try:
+            return normalize_profile_photo(self.cleaned_data.get("picture"))
+        except ValueError as exc:
+            raise forms.ValidationError(str(exc)) from exc
 
     def clean_full_name(self):
         full_name = self.cleaned_data.get("full_name")
@@ -20,13 +35,32 @@ class ClientForm(forms.ModelForm):
         cleaned_data = super().clean()
         full_name = cleaned_data.get("full_name")
 
-        if len(full_name) < 3:
+        if full_name and len(full_name) < 3:
             self.add_error("full_name", "Full name must be at least 3 characters long.")
             self.fields["full_name"].widget.attrs.update(
                 {"class": "form-control is-invalid"}
             )
 
         return cleaned_data
+
+
+class ClientPhotoForm(forms.Form):
+    picture = forms.ImageField(
+        label="Photo",
+        required=False,
+        widget=forms.FileInput(
+            attrs={
+                "accept": "image/jpeg,image/png,image/webp",
+                "data-photo-input": "true",
+            }
+        ),
+    )
+
+    def clean_picture(self):
+        try:
+            return normalize_profile_photo(self.cleaned_data.get("picture"))
+        except ValueError as exc:
+            raise forms.ValidationError(str(exc)) from exc
 
 
 # Import form

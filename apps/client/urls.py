@@ -4,7 +4,13 @@ from . import views
 
 urlpatterns = [
     path("add/", views.register_client, name="register_client"),
+    path("photo/", views.upload_client_photo, name="upload_client_photo"),
     path("list/", views.client_list, name="client_list"),
+    path(
+        "photo/<int:pk>/delete/",
+        views.delete_client_profile_picture,
+        name="delete_client_profile_picture",
+    ),
     path("update/<int:pk>", views.update_client, name="update_client"),
     path("delete/<int:pk>", views.delete_client, name="delete_client"),
     path("import/", views.import_client_data, name="import_client_data"),

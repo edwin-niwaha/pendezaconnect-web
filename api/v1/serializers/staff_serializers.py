@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from apps.staff.models import Staff
+from .media import absolute_media_url, thumbnail_url
 
 
 class StaffSerializer(serializers.ModelSerializer):
@@ -41,7 +42,7 @@ class StaffSerializer(serializers.ModelSerializer):
         return str(obj).strip()
 
     def get_current_picture_url(self, obj):
-        return str(obj.picture) if obj.picture else None
+        return absolute_media_url(self, obj.picture)
 
     def get_picture_url(self, obj):
         return self.get_current_picture_url(obj)
@@ -50,7 +51,7 @@ class StaffSerializer(serializers.ModelSerializer):
         return self.get_current_picture_url(obj)
 
     def get_thumbnail_url(self, obj):
-        return self.get_current_picture_url(obj)
+        return thumbnail_url(self, obj.picture)
 
     def get_departure_date(self, obj):
         departures = list(obj.departures.all())

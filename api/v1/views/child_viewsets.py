@@ -26,4 +26,7 @@ class ChildViewSet(viewsets.ReadOnlyModelViewSet):
         serializer.is_valid(raise_exception=True)
         ChildProfilePicture.objects.filter(child=child, is_current=True).update(is_current=False)
         photo = serializer.save(child=child, is_current=True)
-        return Response(ChildPhotoUploadSerializer(photo).data, status=status.HTTP_201_CREATED)
+        return Response(
+            ChildPhotoUploadSerializer(photo, context={"request": request}).data,
+            status=status.HTTP_201_CREATED,
+        )

@@ -107,10 +107,10 @@ class PublicLandingTests(TestCase):
             {"username": "member@example.com", "password": "pass12345"},
         )
 
-        self.assertRedirects(response, "/dashboard/")
+        self.assertRedirects(response, reverse("users-home"))
         self.assertEqual(int(self.client.session["_auth_user_id"]), user.pk)
 
-    def test_linked_client_login_redirects_to_client_dashboard(self):
+    def test_linked_client_login_redirects_to_landing_page(self):
         client_record = Client.objects.create(
             full_name="Client Member",
             email="member@example.com",
@@ -131,10 +131,10 @@ class PublicLandingTests(TestCase):
             {"username": "member@example.com", "password": "pass12345"},
         )
 
-        self.assertRedirects(response, reverse("client_savings_dashboard"))
+        self.assertRedirects(response, reverse("users-home"))
         self.assertEqual(int(self.client.session["_auth_user_id"]), user.pk)
 
-    def test_login_redirects_staff_client_and_sponsor_by_profile_type(self):
+    def test_login_redirects_all_account_types_to_landing_page(self):
         login_view = CustomLoginView()
         staff = User.objects.create_user(username="staff-member", password="pass12345")
         client_user = User.objects.create_user(
@@ -187,13 +187,13 @@ class PublicLandingTests(TestCase):
         )
 
         self.assertEqual(
-            login_view.get_success_url_for_user(staff), reverse("main-dashboard")
+            login_view.get_success_url_for_user(staff), reverse("users-home")
         )
         self.assertEqual(
             login_view.get_success_url_for_user(client_user),
-            reverse("client_savings_dashboard"),
+            reverse("users-home"),
         )
         self.assertEqual(
             login_view.get_success_url_for_user(sponsor_user),
-            reverse("sponsor_portal"),
+            reverse("users-home"),
         )

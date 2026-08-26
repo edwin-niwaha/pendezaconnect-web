@@ -30,6 +30,7 @@
       <form method="post" enctype="multipart/form-data" novalidate>
         {% csrf_token %}
         {{ form|crispy }}
+                {% include '_partials/profile_photo_picker.html' %}
         <div class="ops-submit-row">
           <button type="submit" class="btn btn-dark" onclick="return confirm('Save this child profile?')">
             Register Child

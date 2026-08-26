@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+{% include '_partials/operations_page_styles.html' %}
+<style>
+  .client-photo-page { max-width: 1180px; margin: 0 auto; }
+  .client-photo-page .ops-card { border-radius: 18px; box-shadow: 0 14px 34px rgba(31, 52, 77, .09); overflow: visible; }
+  .client-search-panel { background: linear-gradient(135deg, #f5faf8, #f8fbff); border: 1px solid #dce8e4; border-radius: 14px; padding: 18px; }
+  .client-search-heading { align-items: center; display: flex; gap: 12px; margin-bottom: 12px; }
+  .client-search-icon { align-items: center; background: #e3f3eb; border-radius: 12px; color: #18794e; display: inline-flex; flex: 0 0 42px; font-size: 1.3rem; height: 42px; justify-content: center; }
+  .client-search-heading strong { color: #213547; display: block; font-size: 1rem; }
+  .client-search-heading small { color: #667085; display: block; margin-top: 2px; }
+  .client-search-panel label { color: #344054; display: block; font-size: .82rem; font-weight: 800; margin-bottom: 7px; }
+  .client-search-panel select, .client-search-panel .chosen-container { width: 100% !important; }
+  .client-search-panel .chosen-container-single .chosen-single { align-items: center; background: #fff; border: 1px solid #cfd9e4; border-radius: 10px; box-shadow: none; display: flex; font-size: .95rem; height: 48px; padding: 0 42px 0 14px; }
+  .client-search-panel .chosen-container-single .chosen-single div { top: 11px; }
+  .client-search-panel .chosen-container-active .chosen-single { border-color: #2f9e68; box-shadow: 0 0 0 3px rgba(47, 158, 104, .14); }
+  .client-search-panel .chosen-drop { border: 1px solid #cfd9e4; border-radius: 10px; box-shadow: 0 12px 28px rgba(31, 52, 77, .16); margin-top: 5px; overflow: hidden; }
+  .client-search-panel .chosen-search input { border: 1px solid #cfd9e4 !important; border-radius: 8px; min-height: 42px; padding: 8px 34px 8px 10px !important; }
+  .client-photo-step { align-items: center; background: #edf5ff; border-radius: 999px; color: #315fbb; display: inline-flex; font-size: .72rem; font-weight: 900; margin-right: 7px; padding: 4px 9px; }
+  @media (max-width: 575.98px) {
+    .client-photo-page { padding-left: 4px; padding-right: 4px; }
+    .client-search-panel { padding: 14px; }
+    .client-search-heading { align-items: flex-start; }
+    .client-photo-page .ops-card-body { padding: 14px; }
+    .client-photo-page .ops-submit-row .btn { min-height: 48px; width: 100%; }
+  }
+</style>
+<div class="container-fluid ops-page client-photo-page">
+  <div class="ops-hero">
+    <div>
+      <div class="ops-kicker">Client Media</div>
+      <h3>Upload Client Photo</h3>
+      <p>Select a client, then take a photo or choose one from the phone gallery.</p>
+    </div>
+    <div class="ops-actions">
+      <a class="btn btn-outline-secondary" href="{% url 'client_list' %}">
+        <i class="mdi mdi-account-group mr-1"></i>Client List
+      </a>
+    </div>
+  </div>
+  <div class="ops-card">
+    <div class="ops-card-header">
+      <h4>Client Profile Photo</h4>
+      <span class="ops-muted">JPG, PNG, or WebP up to 8 MB</span>
+    </div>
+    <div class="ops-card-body">
+      <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        <div class="client-search-panel mb-4">
+          <div class="client-search-heading">
+            <span class="client-search-icon"><i class="mdi mdi-account-search-outline"></i></span>
+            <div><strong><span class="client-photo-step">Step 1</span>Find the client</strong><small>Search by name or registration number. The current picture appears automatically.</small></div>
+          </div>
+          <label for="client-photo-client">Select client</label>
+          <select name="id" id="client-photo-client" class="chzn-select" data-photo-record-select required data-placeholder="Type a client name or registration number">
+            <option value="" {% if clients|length != 1 %}selected{% endif %} disabled>Search by client name or registration number…</option>
+            {% for client in clients %}
+              <option value="{{ client.id }}" data-photo-url="{% if client.picture %}{{ client.picture.url }}{% endif %}" {% if clients|length == 1 %}selected{% endif %}>{{ client.full_name }} — {% if client.reg_number %}{{ client.reg_number }}{% else %}Client #{{ client.id }}{% endif %}</option>
+            {% endfor %}
+          </select>
+        </div>
+        {{ form|crispy }}
+        {% include '_partials/profile_photo_picker.html' %}
+        <div class="ops-submit-row">
+          <button type="submit" class="btn btn-dark">
+            <i class="mdi mdi-cloud-upload mr-1"></i>Save Photo Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

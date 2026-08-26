@@ -1,0 +1,70 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/profile-photo-picker.css' %}">
+<section class="photo-picker" data-photo-picker data-current-photo="{{ current_photo_url|default:'' }}"{% if allow_current_photo_removal %} data-allow-current-remove="true"{% endif %}>
+  <div class="photo-picker__heading">
+    <div>
+      <strong>Profile photo</strong>
+      <small>Capture a new photo or choose one from the gallery.</small>
+    </div>
+    <span class="photo-picker__status" data-photo-status aria-live="polite">Optional</span>
+  </div>
+
+  <div class="photo-picker__workspace">
+    <div class="photo-picker__preview">
+      <img data-photo-preview alt="Photo preview for {{ photo_subject|default:'this record' }}" hidden>
+      <span data-photo-placeholder><i class="mdi mdi-account-circle-outline"></i>No photo selected</span>
+      <div class="photo-picker__processing" data-photo-processing hidden>
+        <span class="spinner-border spinner-border-sm" aria-hidden="true"></span> Preparing photo…
+      </div>
+    </div>
+
+    <div class="photo-picker__side">
+      <div class="photo-picker__controls">
+        <button type="button" class="btn btn-success" data-photo-action="camera">
+          <i class="mdi mdi-camera mr-1"></i>Take Photo
+        </button>
+        <button type="button" class="btn btn-outline-secondary" data-photo-action="gallery">
+          <i class="mdi mdi-image-multiple mr-1"></i>Upload from Gallery
+        </button>
+        <button type="button" class="btn btn-outline-danger" data-photo-action="remove" hidden>
+          <i class="mdi mdi-delete-outline mr-1"></i>Remove Picture
+        </button>
+      </div>
+
+      <label class="photo-picker__crop-option">
+        <input type="checkbox" data-auto-crop checked>
+        <span>
+          <strong>Auto crop and resize</strong>
+          <small>Centre-crops to a square profile photo and reduces upload size.</small>
+        </span>
+      </label>
+
+      <p class="photo-picker__help" data-photo-help>
+        Select a name to see the current photo. Camera access is requested only when you tap Take Photo.
+      </p>
+      <div class="progress photo-picker__progress" data-upload-progress hidden>
+        <div class="progress-bar progress-bar-striped progress-bar-animated"
+             role="progressbar" style="width:0%" aria-valuemin="0" aria-valuemax="100">0%</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="photo-camera" data-camera-stage hidden role="dialog" aria-modal="true" aria-label="Take profile photo">
+    <div class="photo-camera__panel">
+      <div class="photo-camera__view">
+        <video data-camera-video autoplay muted playsinline></video>
+      </div>
+      <p class="photo-camera__message" data-camera-message aria-live="polite">Starting camera…</p>
+      <div class="photo-camera__actions">
+        <button type="button" class="btn btn-success" data-camera-capture disabled>
+          <i class="mdi mdi-camera mr-1"></i>Capture Photo
+        </button>
+        <button type="button" class="btn btn-outline-secondary" data-camera-cancel>Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <input type="file" accept="image/*" data-gallery-input hidden>
+  <input type="hidden" name="remove_picture" value="0" data-remove-photo>
+</section>
+<script src="{% static 'js/profile-photo-picker.js' %}?v=20260825-native-upload-7" defer></script>

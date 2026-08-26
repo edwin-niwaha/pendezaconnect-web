@@ -83,6 +83,59 @@
     padding: 14px 28px;
   }
 
+  .photo-shortcuts {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 18px;
+    max-width: 650px;
+  }
+
+  .photo-shortcut {
+    align-items: center;
+    background: rgba(255, 255, 255, .12);
+    border: 1px solid rgba(255, 255, 255, .3);
+    border-radius: 12px;
+    color: #fff;
+    display: flex;
+    gap: 12px;
+    min-height: 76px;
+    padding: 13px 16px;
+    text-decoration: none;
+    transition: transform .18s ease, background .18s ease, box-shadow .18s ease;
+  }
+
+  .photo-shortcut:hover,
+  .photo-shortcut:focus {
+    background: rgba(255, 255, 255, .2);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, .2);
+    color: #fff;
+    text-decoration: none;
+    transform: translateY(-2px);
+  }
+
+  .photo-shortcut:active { transform: translateY(0) scale(.98); }
+  .photo-shortcut:only-child { grid-column: 1 / -1; }
+  .photo-shortcut i {
+    align-items: center;
+    background: #f2b84b;
+    border-radius: 10px;
+    color: #20344b;
+    display: inline-flex;
+    flex: 0 0 46px;
+    font-size: 1.5rem;
+    height: 46px;
+    justify-content: center;
+  }
+  .photo-shortcut strong,.photo-shortcut small { display: block; }
+  .photo-shortcut strong { font-size: .96rem; font-weight: 900; }
+  .photo-shortcut small { color: rgba(255,255,255,.76); font-size: .76rem; margin-top: 2px; }
+
+  @media (max-width: 575.98px) {
+    .photo-shortcuts { grid-template-columns: 1fr; }
+    .photo-shortcut { min-height: 70px; width: 100%; }
+  }
+
   .hero-carousel-wrap {
     position: relative;
     border-radius: 24px;
@@ -159,11 +212,11 @@
   .service-grid {
     display: grid;
     gap: 16px;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .service-grid.is-expanded {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .service-card {
@@ -248,33 +301,6 @@
     line-height: 1;
   }
 
-  .portal-band {
-    background: #fff;
-    border-top: 1px solid #e2e8f0;
-    border-bottom: 1px solid #e2e8f0;
-    padding: 44px 0;
-  }
-
-  .portal-row {
-    align-items: center;
-    display: flex;
-    gap: 22px;
-    justify-content: space-between;
-  }
-
-  .portal-row h2 {
-    color: #26384d;
-    font-size: 1.45rem;
-    font-weight: 900;
-    margin-bottom: 8px;
-  }
-
-  .portal-row p {
-    color: #667085;
-    margin: 0;
-    max-width: 650px;
-  }
-
   @media (max-width: 991.98px) {
     .landing-hero {
       min-height: auto;
@@ -304,9 +330,8 @@
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .portal-row {
-      align-items: flex-start;
-      flex-direction: column;
+    .service-card:last-child:nth-child(odd) {
+      grid-column: 1 / -1;
     }
   }
 
@@ -350,6 +375,10 @@
     .service-grid {
       gap: 14px;
       grid-template-columns: 1fr;
+    }
+
+    .service-card:last-child:nth-child(odd) {
+      grid-column: auto;
     }
 
     .service-card {
@@ -409,7 +438,9 @@
 
           <div class="landing-actions">
             {% if user.is_authenticated %}
-              {% if user.profile.resolved_account_type == 'staff' %}
+              {% if user.is_superuser %}
+                <a href="{% url 'main-dashboard' %}" class="btn btn-warning">Open Dashboard</a>
+              {% elif user.profile.resolved_account_type == 'staff' %}
                 <a href="{% url 'main-dashboard' %}" class="btn btn-warning">Open Dashboard</a>
               {% elif user.profile.resolved_account_type == 'sponsor' %}
                 <a href="{% url 'sponsor_portal' %}" class="btn btn-warning">Open Sponsor Portal</a>
@@ -424,6 +455,21 @@
 
             <a href="{% url 'initiate_payment' %}" class="btn btn-outline-light">Donate</a>
           </div>
+
+          {% if user.is_authenticated and user.profile.resolved_account_type == 'staff' or user.is_authenticated and user.profile.resolved_account_type == 'client' %}
+            <nav class="photo-shortcuts" aria-label="Photo upload shortcuts">
+              <a href="{% url 'upload_client_photo' %}" class="photo-shortcut">
+                <i class="fas fa-camera-retro" aria-hidden="true"></i>
+                <span><strong>Upload Client Photo</strong><small>Capture or choose a client photo</small></span>
+              </a>
+              {% if user.profile.resolved_account_type == 'staff' %}
+                <a href="{% url 'update_picture' %}" class="photo-shortcut">
+                  <i class="fas fa-child" aria-hidden="true"></i>
+                  <span><strong>Upload Child Photo</strong><small>Capture or choose a child photo</small></span>
+                </a>
+              {% endif %}
+            </nav>
+          {% endif %}
         </div>
 
         <div class="hero-carousel-wrap">
@@ -507,13 +553,6 @@
           </div>
         </a>
 
-        <a href="{% if user.is_authenticated and user.profile.resolved_account_type == 'staff' %}{% url 'inventory-dashboard' %}{% else %}{% url 'login' %}{% endif %}" class="service-card">
-          <span class="service-icon"><i class="fas fa-warehouse"></i></span>
-          <div>
-            <h3>Inventory</h3>
-            <p>Manage products, stock, sales, and inventory activity.</p>
-          </div>
-        </a>
       </div>
 
       <div class="service-toggle-wrap" hidden>
@@ -531,22 +570,6 @@
     </div>
   </section>
 
-  <section class="portal-band">
-    <div class="landing-inner portal-row">
-      <div>
-        <h2>Tools for Staff and Program Teams</h2>
-        <p>
-          Manage programs, records, reports, and daily operations.
-        </p>
-      </div>
-
-      {% if user.is_authenticated and user.profile.resolved_account_type == 'staff' %}
-        <a href="{% url 'main-dashboard' %}" class="btn btn-dark">Go to Dashboard</a>
-      {% else %}
-        <a href="{% url 'login' %}" class="btn btn-dark">Staff Sign In</a>
-      {% endif %}
-    </div>
-  </section>
 </main>
 <script>
   (function () {

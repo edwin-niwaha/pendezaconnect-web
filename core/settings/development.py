@@ -12,6 +12,17 @@ stdout.write(
 
 DEBUG = True
 SITE_URL = "http://localhost:8000"
+
+# Local development should not require a Redis service merely to render pages.
+# Set USE_REDIS_CACHE_IN_DEV=true only when intentionally testing Redis locally.
+if not env_bool("USE_REDIS_CACHE_IN_DEV", False):  # noqa: F405
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "pendeza-connect-development-cache",
+            "TIMEOUT": 300,
+        }
+    }
 SOCIAL_AUTH_GOOGLE_OAUTH2_REDIRECT_URI = (
     "http://localhost:8000/oauth/complete/google-oauth2/"
 )

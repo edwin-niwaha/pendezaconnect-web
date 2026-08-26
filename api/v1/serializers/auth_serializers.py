@@ -3,6 +3,7 @@ from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 
 from apps.users.models import Profile
+from .media import absolute_media_url
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -69,16 +70,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         avatar = getattr(profile, "avatar", None)
         if not avatar:
             return None
-        try:
-            url = avatar.url
-        except Exception:
-            url = str(avatar)
-        if not url or url == "default.jpg":
-            return None
-        request = self.context.get("request")
-        if request and url.startswith("/"):
-            return request.build_absolute_uri(url)
-        return url
+        return absolute_media_url(self, avatar)
 
     def get_bio(self, obj):
         profile = self._profile(obj)
