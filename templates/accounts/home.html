@@ -458,14 +458,19 @@
 
           {% if user.is_authenticated and user.profile.resolved_account_type == 'staff' or user.is_authenticated and user.profile.resolved_account_type == 'client' %}
             <nav class="photo-shortcuts" aria-label="Photo upload shortcuts">
-              <a href="{% url 'upload_client_photo' %}" class="photo-shortcut">
-                <i class="fas fa-camera-retro" aria-hidden="true"></i>
-                <span><strong>Upload Client Photo</strong><small>Capture or choose a client photo</small></span>
-              </a>
               {% if user.profile.resolved_account_type == 'staff' %}
+                <a href="{% url 'upload_client_photo' %}" class="photo-shortcut">
+                  <i class="fas fa-camera-retro" aria-hidden="true"></i>
+                  <span><strong>Upload Client Photo</strong><small>Capture or choose a client photo</small></span>
+                </a>
                 <a href="{% url 'update_picture' %}" class="photo-shortcut">
                   <i class="fas fa-child" aria-hidden="true"></i>
                   <span><strong>Upload Child Photo</strong><small>Capture or choose a child photo</small></span>
+                </a>
+              {% else %}
+                <a href="{% url 'users-profile' %}" class="photo-shortcut">
+                  <i class="fas fa-camera-retro" aria-hidden="true"></i>
+                  <span><strong>Update Profile Photo</strong><small>Choose a photo for your user profile</small></span>
                 </a>
               {% endif %}
             </nav>

@@ -2,7 +2,6 @@ import logging
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db import transaction
 from django.db.models import Q
@@ -13,7 +12,6 @@ from openpyxl import load_workbook
 
 logger = logging.getLogger(__name__)
 
-from api.v1.selectors import is_internal_user, linked_client_id
 from apps.users.decorators import (
     admin_or_manager_or_staff_required,
     admin_or_manager_required,
@@ -76,14 +74,9 @@ def client_list(request):
 
 @login_required
 @transaction.atomic
+@admin_or_manager_or_staff_required
 def upload_client_photo(request):
-    if is_internal_user(request.user):
-        clients = Client.objects.order_by("full_name", "id")
-    else:
-        client_id = linked_client_id(request.user)
-        if not client_id:
-            raise PermissionDenied("You do not have access to client photo records.")
-        clients = Client.objects.filter(pk=client_id)
+    clients = Client.objects.order_by("full_name", "id")
     form = ClientPhotoForm(request.POST or None, request.FILES or None)
 
     if request.method == "POST" and form.is_valid():

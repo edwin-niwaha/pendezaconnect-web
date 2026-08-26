@@ -13,20 +13,32 @@
           {% if client %}{{ client.full_name }}{% else %}Client account not linked{% endif %}
         </div>
       </div>
-      {% if account %}
+      {% if client %}
         <div class="savings-actions">
-          <a href="{% url 'client_savings_statement' %}" class="btn btn-outline-secondary btn-sm">
-            <i class="mdi mdi-file-document-outline"></i> Statement
-          </a>
-          <button type="button" class="btn btn-outline-dark btn-sm" data-bs-toggle="modal" data-bs-target="#depositRequestModal">
-            <i class="mdi mdi-cellphone-arrow-down"></i> MoMo Deposit
-          </button>
-          <button type="button" class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#directDepositModal">
-            <i class="mdi mdi-cash-plus"></i> Direct Deposit
-          </button>
-          <button type="button" class="btn btn-dark btn-sm" data-bs-toggle="modal" data-bs-target="#withdrawalRequestModal">
-            <i class="mdi mdi-cash-minus"></i> Withdraw
-          </button>
+          <div class="client-photo-action">
+            {% if user.profile.avatar %}
+              <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }} profile photo">
+            {% else %}
+              <span class="client-photo-placeholder" aria-hidden="true"><i class="mdi mdi-account"></i></span>
+            {% endif %}
+            <a href="{% url 'users-profile' %}" class="btn btn-outline-primary btn-sm">
+              <i class="mdi mdi-camera"></i> Update Profile Photo
+            </a>
+          </div>
+          {% if account %}
+            <a href="{% url 'client_savings_statement' %}" class="btn btn-outline-secondary btn-sm">
+              <i class="mdi mdi-file-document-outline"></i> Statement
+            </a>
+            <button type="button" class="btn btn-outline-dark btn-sm" data-bs-toggle="modal" data-bs-target="#depositRequestModal">
+              <i class="mdi mdi-cellphone-arrow-down"></i> MoMo Deposit
+            </button>
+            <button type="button" class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#directDepositModal">
+              <i class="mdi mdi-cash-plus"></i> Direct Deposit
+            </button>
+            <button type="button" class="btn btn-dark btn-sm" data-bs-toggle="modal" data-bs-target="#withdrawalRequestModal">
+              <i class="mdi mdi-cash-minus"></i> Withdraw
+            </button>
+          {% endif %}
         </div>
       {% endif %}
     </div>
@@ -405,10 +417,33 @@
     }
 
     .savings-actions {
+      align-items: center;
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
       justify-content: flex-end;
+    }
+
+    .client-photo-action {
+      align-items: center;
+      display: flex;
+      gap: 8px;
+    }
+
+    .client-photo-action img,
+    .client-photo-placeholder {
+      align-items: center;
+      background: #edf7f4;
+      border: 2px solid #cfe8e0;
+      border-radius: 50%;
+      color: #13745d;
+      display: inline-flex;
+      flex: 0 0 44px;
+      font-size: 1.35rem;
+      height: 44px;
+      justify-content: center;
+      object-fit: cover;
+      width: 44px;
     }
 
     .savings-summary-strip {
