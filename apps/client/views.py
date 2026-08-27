@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import F, Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -26,7 +26,9 @@ from .models import Client, ClientProfilePicture, SevenHillsRegistration
 @login_required
 @admin_or_manager_or_staff_required
 def client_list(request):
-    base_queryset = Client.objects.prefetch_related("loans__documents", "profile_pictures").order_by("id")
+    base_queryset = Client.objects.prefetch_related(
+        "loans__documents", "profile_pictures"
+    ).order_by(F("reg_number").asc(nulls_last=True), "id")
     queryset = base_queryset
 
     search_query = request.GET.get("search", "").strip()
