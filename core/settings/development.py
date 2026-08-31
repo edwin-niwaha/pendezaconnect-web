@@ -6,9 +6,7 @@ from colorama import Fore, Style
 from .base import *  # noqa: F403
 
 colorama.init(autoreset=True)
-stdout.write(
-    f"{Fore.GREEN}{Style.BRIGHT}================ Loading Development Settings =====================\n"
-)
+stdout.write(f"{Fore.GREEN}{Style.BRIGHT}================ Loading Development Settings =====================\n")
 
 DEBUG = True
 SITE_URL = "http://localhost:8000"
@@ -23,9 +21,7 @@ if not env_bool("USE_REDIS_CACHE_IN_DEV", False):  # noqa: F405
             "TIMEOUT": 300,
         }
     }
-SOCIAL_AUTH_GOOGLE_OAUTH2_REDIRECT_URI = (
-    "http://localhost:8000/oauth/complete/google-oauth2/"
-)
+SOCIAL_AUTH_GOOGLE_OAUTH2_REDIRECT_URI = "http://localhost:8000/oauth/complete/google-oauth2/"
 
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", *ALLOWED_HOSTS]  # noqa: F405
 CSRF_TRUSTED_ORIGINS = [  # noqa: F405
@@ -44,9 +40,7 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 if env_bool("USE_DATABASE_URL_IN_DEV", False):  # noqa: F405
-    DATABASES = database_config(
-        ssl_require=env_bool("DATABASE_SSL_REQUIRE", False)
-    )  # noqa: F405
+    DATABASES = database_config(ssl_require=env_bool("DATABASE_SSL_REQUIRE", False))  # noqa: F405
 else:
     DATABASES = {
         "default": {

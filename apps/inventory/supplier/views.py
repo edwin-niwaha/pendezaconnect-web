@@ -32,9 +32,7 @@ from .models import Supplier
 @login_required
 @admin_or_manager_or_staff_required
 def supplier_list(request):
-    search_query = request.GET.get(
-        "search", ""
-    )  # Get the search query from the GET request
+    search_query = request.GET.get("search", "")  # Get the search query from the GET request
 
     # Filter suppliers based on search query
     if search_query:
@@ -98,9 +96,7 @@ def supplier_update(request, supplier_id):
     if request.method == "POST" and form.is_valid():
         with transaction.atomic():
             form.save()
-            messages.success(
-                request, "Supplier updated successfully!", extra_tags="bg-success"
-            )
+            messages.success(request, "Supplier updated successfully!", extra_tags="bg-success")
             return redirect("supplier:supplier_list")
 
     return render(
@@ -118,13 +114,9 @@ def supplier_delete(request, supplier_id):
 
     try:
         supplier.delete()
-        messages.success(
-            request, f"Supplier: {supplier.name} deleted!", extra_tags="bg-danger"
-        )
+        messages.success(request, f"Supplier: {supplier.name} deleted!", extra_tags="bg-danger")
     except Exception as e:
-        messages.error(
-            request, "There was an error during the deletion!", extra_tags="bg-danger"
-        )
+        messages.error(request, "There was an error during the deletion!", extra_tags="bg-danger")
         print(e)
 
     return redirect("supplier:supplier_list")

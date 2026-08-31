@@ -6,21 +6,13 @@ from phonenumber_field.modelfields import PhoneNumberField
 # =================================== customers model ===================================
 class Customer(models.Model):
     # Optional link to the User model for online customers
-    user = models.OneToOneField(
-        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL
-    )
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
 
     # Fields for both online and offline customers
     first_name = models.CharField(max_length=50, verbose_name="First Name")
-    last_name = models.CharField(
-        max_length=50, blank=True, null=True, verbose_name="Last Name"
-    )
-    address = models.TextField(
-        max_length=50, blank=True, null=True, verbose_name="Address"
-    )
-    email = models.EmailField(
-        max_length=30, blank=True, null=True, verbose_name="Email"
-    )
+    last_name = models.CharField(max_length=50, blank=True, null=True, verbose_name="Last Name")
+    address = models.TextField(max_length=50, blank=True, null=True, verbose_name="Address")
+    email = models.EmailField(max_length=30, blank=True, null=True, verbose_name="Email")
     phone = PhoneNumberField(
         null=True,
         blank=True,

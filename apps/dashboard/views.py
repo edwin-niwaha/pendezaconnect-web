@@ -5,7 +5,14 @@ from decimal import Decimal
 
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
-from django.db.models.functions import Coalesce, ExtractMonth, ExtractYear, Greatest
+from django.db.models import (
+    Count,
+    F,
+    FloatField,
+    Q,
+    Sum,
+)
+from django.db.models.functions import Coalesce, ExtractMonth, ExtractYear
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
@@ -19,12 +26,6 @@ from apps.loans.services.reporting import loan_financial_row, portfolio_at_risk_
 from apps.sponsor.models import Sponsor
 from apps.sponsorship.models import ChildSponsorship, StaffSponsorship
 from apps.users.decorators import admin_or_manager_or_staff_required
-from django.core.cache import cache
-from django.db.models import (
-    Case, Count, DecimalField, F, FloatField, OuterRef, Q, Subquery, Sum, Value, When,
-)
-
-import logging
 
 CACHE_KEY = "loans_dashboard_main_v1"
 CACHE_TTL = 300  # 5 minutes — matches the other dashboard view's cadence
@@ -58,20 +59,14 @@ def get_loan_dashboard_summary(force_refresh=False):
 
     today = timezone.now().date()
 
-    loans = Loan.objects.filter(status__in=["disbursed", "overdue"]).prefetch_related(
-        "repayments", "penalties"
-    )
+    loans = Loan.objects.filter(status__in=["disbursed", "overdue"]).prefetch_related("repayments", "penalties")
 
     due_loans = []
     overdue_loans = []
 
     for loan in loans:
         balances = loan.calculate_remaining_balances()
-        total_balance = (
-            balances["principal_balance"]
-            + balances["interest_balance"]
-            + balances["penalty_balance"]
-        )
+        total_balance = balances["principal_balance"] + balances["interest_balance"] + balances["penalty_balance"]
 
         if total_balance <= 0:
             continue
@@ -92,8 +87,7 @@ def get_loan_dashboard_summary(force_refresh=False):
         due_today = [
             p
             for p in schedule
-            if p["payment_due_date"] == today
-            and (p["principal_payment"] + p["interest_payment"]) > 0
+            if p["payment_due_date"] == today and (p["principal_payment"] + p["interest_payment"]) > 0
         ]
 
         if due_today:
@@ -151,15 +145,9 @@ def dashboard(request):
                 is_departed=False,
                 is_sponsored=False,
             ).count(),
-            "top_sponsors_with_counts": list(
-                zip(top_sponsors["sponsors"], top_sponsors["counts"])
-            ),
-            "top_children_with_counts": list(
-                zip(top_children["children"], top_children["counts"])
-            ),
-            "top_staff_with_counts": list(
-                zip(top_staff["staff_active"], top_staff["counts"])
-            ),
+            "top_sponsors_with_counts": list(zip(top_sponsors["sponsors"], top_sponsors["counts"])),
+            "top_children_with_counts": list(zip(top_children["children"], top_children["counts"])),
+            "top_staff_with_counts": list(zip(top_staff["staff_active"], top_staff["counts"])),
         }
         cache.set(DASHBOARD_OVERVIEW_CACHE_KEY, context, 300)
 
@@ -175,10 +163,7 @@ def get_top_sponsors():
         .order_by("-total_sponsored")[:5]
     )
 
-    sponsors = [
-        f"{sponsor['sponsor__first_name']} {sponsor['sponsor__last_name']}"
-        for sponsor in top_sponsors
-    ]
+    sponsors = [f"{sponsor['sponsor__first_name']} {sponsor['sponsor__last_name']}" for sponsor in top_sponsors]
     counts = [sponsor["total_sponsored"] for sponsor in top_sponsors]
 
     return {
@@ -190,9 +175,7 @@ def get_top_sponsors():
 def get_top_children_sponsored():
     # Get the top children with the most sponsors
     top_children = (
-        ChildSponsorship.objects.values(
-            "child__full_name"
-        )  # Use the correct reference to child model
+        ChildSponsorship.objects.values("child__full_name")  # Use the correct reference to child model
         .annotate(total_sponsors=Count("sponsor"))
         .order_by("-total_sponsors")[:5]
     )
@@ -216,10 +199,7 @@ def get_top_staff_sponsored():
     )
 
     # Extract staff names and sponsor counts
-    staff_active = [
-        f"{staff['staff__first_name']} {staff['staff__last_name']}"
-        for staff in top_staff
-    ]
+    staff_active = [f"{staff['staff__first_name']} {staff['staff__last_name']}" for staff in top_staff]
     counts = [staff["total_sponsors"] for staff in top_staff]
 
     return {
@@ -239,10 +219,7 @@ def sponsorship_chart(request):
         ("General Donors", Sponsor.objects.general_donors()),
         ("One-time Donors", Sponsor.objects.one_time_donors()),
     )
-    data = [
-        {"sponsorship_type": label, "count": queryset.active().count()}
-        for label, queryset in categories
-    ]
+    data = [{"sponsorship_type": label, "count": queryset.active().count()} for label, queryset in categories]
     return JsonResponse(data, safe=False)
 
 
@@ -268,9 +245,7 @@ def get_sponsors_data(request):
 
     except Exception:
         # Log the exception here if logging is set up
-        return JsonResponse(
-            {"error": "An error occurred while fetching the data"}, status=500
-        )
+        return JsonResponse({"error": "An error occurred while fetching the data"}, status=500)
 
 
 # =================================== Children Graph ===================================
@@ -294,9 +269,7 @@ def get_children_data(request):
 
     except Exception:
         # Log the exception here if logging is set up
-        return JsonResponse(
-            {"error": "An error occurred while fetching the data"}, status=500
-        )
+        return JsonResponse({"error": "An error occurred while fetching the data"}, status=500)
 
 
 # =================================== Sponsors & Children ===================================
@@ -336,9 +309,7 @@ def get_combined_data(request):
 
     except Exception:
         # Log the exception here if logging is set up
-        return JsonResponse(
-            {"error": "An error occurred while fetching the data"}, status=500
-        )
+        return JsonResponse({"error": "An error occurred while fetching the data"}, status=500)
 
 
 # =================================== Children Birthday Graph ===================================
@@ -405,9 +376,9 @@ def get_payments_staff(request):
 @admin_or_manager_or_staff_required
 def get_total_sales_for_period(start_date, end_date):
     return (
-        Sale.objects.filter(trans_date__range=[start_date, end_date]).aggregate(
-            total_sales=Sum("grand_total")
-        )["total_sales"]
+        Sale.objects.filter(trans_date__range=[start_date, end_date]).aggregate(total_sales=Sum("grand_total"))[
+            "total_sales"
+        ]
         or 0
     )
 
@@ -439,24 +410,19 @@ def inventory_dashboard(request):
 
     # Get total sales for today, week, and month
     total_sales_today = get_total_sales_for_period(today, today)
-    total_sales_week = get_total_sales_for_period(
-        today - timedelta(days=today.weekday()), today
-    )
+    total_sales_week = get_total_sales_for_period(today - timedelta(days=today.weekday()), today)
     total_sales_month = get_total_sales_for_period(today.replace(day=1), today)
 
     # Get top-selling products using the new method
     top_products = get_top_selling_products()
 
     # Total stock from Inventory
-    total_stock = Product.objects.filter(status="ACTIVE").aggregate(
-        total=Coalesce(Sum("inventory__quantity"), 0)
-    )["total"]
+    total_stock = Product.objects.filter(status="ACTIVE").aggregate(total=Coalesce(Sum("inventory__quantity"), 0))[
+        "total"
+    ]
 
     # Calculate total profit from all sales
-    total_profit = sum(
-        sum(detail.calculate_profit() for detail in sale.items.all())
-        for sale in Sale.objects.all()
-    )
+    total_profit = sum(sum(detail.calculate_profit() for detail in sale.items.all()) for sale in Sale.objects.all())
 
     context = {
         "products": Product.objects.filter(status="ACTIVE").count(),
@@ -485,11 +451,7 @@ def monthly_earnings_view(request):
     for month in range(1, 13):
         earning = (
             Sale.objects.filter(trans_date__year=year, trans_date__month=month)
-            .aggregate(
-                total_variable=Coalesce(
-                    Sum(F("grand_total")), 0.0, output_field=FloatField()
-                )
-            )
+            .aggregate(total_variable=Coalesce(Sum(F("grand_total")), 0.0, output_field=FloatField()))
             .get("total_variable")
         )
         monthly_earnings.append(earning)
@@ -909,7 +871,6 @@ def sales_data_api(request):
 #     return render(request, "main/loans_dashboard.html", context)
 
 
-
 @login_required
 @admin_or_manager_or_staff_required
 def loans_dashboard(request):
@@ -938,12 +899,8 @@ def _build_loans_dashboard_context():
             "id",
             filter=Q(status__in=["approved", "boo_approved", "hof_approved", "ed_approved"]),
         ),
-        rejected_loans=Count(
-            "id", filter=Q(status__in=["rejected", "ed_rejected", "hof_rejected"])
-        ),
-        disbursed_loans=Count(
-            "id", filter=Q(status__in=["disbursed", "overdue", "repaid"])
-        ),
+        rejected_loans=Count("id", filter=Q(status__in=["rejected", "ed_rejected", "hof_rejected"])),
+        disbursed_loans=Count("id", filter=Q(status__in=["disbursed", "overdue", "repaid"])),
         closed_loans=Count("id", filter=Q(status="closed")),
         repaid_loans=Count("id", filter=Q(status="repaid")),
     )
@@ -984,11 +941,7 @@ def _build_loans_dashboard_context():
             if not loan.disbursement_date or loan.loan_period_months <= 0:
                 continue
             balances = loan.calculate_remaining_balances()
-            total_balance = (
-                balances["principal_balance"]
-                + balances["interest_balance"]
-                + balances["penalty_balance"]
-            )
+            total_balance = balances["principal_balance"] + balances["interest_balance"] + balances["penalty_balance"]
             if total_balance <= 0:
                 continue
 
@@ -1014,10 +967,7 @@ def _build_loans_dashboard_context():
             ]
             if due_payments:
                 total_amount_due = min(
-                    sum(
-                        p["principal_payment"] + p["interest_payment"]
-                        for p in due_payments
-                    ),
+                    sum(p["principal_payment"] + p["interest_payment"] for p in due_payments),
                     total_balance,
                 )
                 total_amount_due_balance = loan.calculate_total_amount_due_balance(
@@ -1049,10 +999,7 @@ def _build_loans_dashboard_context():
                     total_balance
                     if (loan.due_date and loan.due_date < today)
                     else min(
-                        sum(
-                            p["principal_payment"] + p["interest_payment"]
-                            for p in overdue_payments
-                        ),
+                        sum(p["principal_payment"] + p["interest_payment"] for p in overdue_payments),
                         total_balance,
                     )
                 )
@@ -1073,18 +1020,12 @@ def _build_loans_dashboard_context():
 
     # Aggregates for due/overdue
     due_loans_count = len(due_loans)
-    due_loans_total_due_balance = sum(
-        loan["total_amount_due_balance"] for loan in due_loans
-    )
+    due_loans_total_due_balance = sum(loan["total_amount_due_balance"] for loan in due_loans)
     due_loans_total_penalty_balance = sum(loan["penalty_balance"] for loan in due_loans)
     due_loans_total_balance = sum(loan["total_balance"] for loan in due_loans)
     overdue_loans_count = len(overdue_loans)
-    overdue_loans_total_due_balance = sum(
-        loan["total_amount_due_balance"] for loan in overdue_loans
-    )
-    overdue_loans_total_penalty_balance = sum(
-        loan["penalty_balance"] for loan in overdue_loans
-    )
+    overdue_loans_total_due_balance = sum(loan["total_amount_due_balance"] for loan in overdue_loans)
+    overdue_loans_total_penalty_balance = sum(loan["penalty_balance"] for loan in overdue_loans)
     overdue_loans_total_balance = sum(loan["total_balance"] for loan in overdue_loans)
 
     # Repayments
@@ -1110,9 +1051,7 @@ def _build_loans_dashboard_context():
         "total_interest_receivable": max(total_interest_receivable, Decimal("0.00")),
         "total_penalty_receivable": max(total_penalty_receivable, Decimal("0.00")),
         "total_outstanding": max(
-            total_principal_receivable
-            + total_interest_receivable
-            + total_penalty_receivable,
+            total_principal_receivable + total_interest_receivable + total_penalty_receivable,
             Decimal("0.00"),
         ),
     }
@@ -1122,24 +1061,28 @@ def _build_loans_dashboard_context():
     # prefetch_related("repayments","penalties") — that's exactly what
     # active_loans already has, so it's reused directly instead of
     # issuing a second identical query.
-    portfolio_rows = [
-        loan_financial_row(loan, today=today) for loan in active_loans
-    ]
+    portfolio_rows = [loan_financial_row(loan, today=today) for loan in active_loans]
     par_summary = portfolio_at_risk_summary(portfolio_rows)
     par_30_band = next(
         (band for band in par_summary["bands"] if band["bucket"] == "PAR 30+"),
         None,
     )
-    portfolio_at_risk_rate = (
-        par_30_band["portfolio_percent"] if par_30_band else Decimal("0.00")
-    )
-    portfolio_at_risk_amount = (
-        par_30_band["outstanding_amount"] if par_30_band else Decimal("0.00")
-    )
+    portfolio_at_risk_rate = par_30_band["portfolio_percent"] if par_30_band else Decimal("0.00")
+    portfolio_at_risk_amount = par_30_band["outstanding_amount"] if par_30_band else Decimal("0.00")
 
     months = [
-        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
     ]
     monthly_disbursements = [0 for _ in range(12)]
     for item in (
@@ -1158,9 +1101,7 @@ def _build_loans_dashboard_context():
         .values("month")
         .annotate(
             total=Coalesce(
-                Sum("principal_payment")
-                + Sum("interest_payment")
-                + Sum("penalty_payment"),
+                Sum("principal_payment") + Sum("interest_payment") + Sum("penalty_payment"),
                 Decimal("0.00"),
             )
         )
@@ -1169,16 +1110,9 @@ def _build_loans_dashboard_context():
             monthly_repayments[item["month"] - 1] = float(item["total"] or 0)
 
     purpose_labels = dict(Loan.LOAN_PURPOSE_CHOICES)
-    purpose_mix = (
-        Loan.objects.values("loan_purpose")
-        .annotate(count=Count("id"))
-        .order_by("-count")
-    )
+    purpose_mix = Loan.objects.values("loan_purpose").annotate(count=Count("id")).order_by("-count")
     loan_purpose_chart = {
-        "labels": [
-            purpose_labels.get(item["loan_purpose"], item["loan_purpose"] or "Unknown")
-            for item in purpose_mix
-        ],
+        "labels": [purpose_labels.get(item["loan_purpose"], item["loan_purpose"] or "Unknown") for item in purpose_mix],
         "data": [item["count"] for item in purpose_mix],
     }
 
@@ -1226,16 +1160,10 @@ def _build_loans_dashboard_context():
     # recent repayments/disbursements globally (not scoped to
     # active_loans), so they legitimately need their own queries.
     recent_activity = []
-    for repayment in LoanRepayment.objects.select_related("loan").order_by(
-        "-repayment_date"
-    )[:5]:
+    for repayment in LoanRepayment.objects.select_related("loan").order_by("-repayment_date")[:5]:
         try:
             balances = repayment.loan.calculate_remaining_balances()
-            total_balance = (
-                balances["principal_balance"]
-                + balances["interest_balance"]
-                + balances["penalty_balance"]
-            )
+            total_balance = balances["principal_balance"] + balances["interest_balance"] + balances["penalty_balance"]
             recent_activity.append(
                 {
                     "type": "Repayment",
@@ -1247,23 +1175,15 @@ def _build_loans_dashboard_context():
                 }
             )
         except Exception as e:
-            logger.error(
-                f"Error processing repayment for loan {repayment.loan.id}: {e}"
-            )
+            logger.error(f"Error processing repayment for loan {repayment.loan.id}: {e}")
             continue
 
-    for disbursement in LoanDisbursement.objects.select_related("loan").order_by(
-        "-loan__disbursement_date"
-    )[:5]:
+    for disbursement in LoanDisbursement.objects.select_related("loan").order_by("-loan__disbursement_date")[:5]:
         try:
             if not disbursement.loan.disbursement_date:
                 continue
             balances = disbursement.loan.calculate_remaining_balances()
-            total_balance = (
-                balances["principal_balance"]
-                + balances["interest_balance"]
-                + balances["penalty_balance"]
-            )
+            total_balance = balances["principal_balance"] + balances["interest_balance"] + balances["penalty_balance"]
             recent_activity.append(
                 {
                     "type": "Disbursement",
@@ -1275,9 +1195,7 @@ def _build_loans_dashboard_context():
                 }
             )
         except Exception as e:
-            logger.error(
-                f"Error processing disbursement for loan {disbursement.loan.id}: {e}"
-            )
+            logger.error(f"Error processing disbursement for loan {disbursement.loan.id}: {e}")
             continue
     recent_activity = sorted(recent_activity, key=lambda x: x["date"], reverse=True)[:5]
 

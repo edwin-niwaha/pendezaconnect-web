@@ -54,13 +54,9 @@ class ChildPayments(models.Model):
             MaxValueValidator(limit_value=date.today),
         ],
     )
-    month = models.CharField(
-        _("Month of payment"), max_length=20, choices=MONTH_CHOICES
-    )
+    month = models.CharField(_("Month of payment"), max_length=20, choices=MONTH_CHOICES)
     payment_year = models.IntegerField(_("Year of payment"), default=2018)
-    amount = models.DecimalField(
-        _("Amount"), max_digits=10, decimal_places=2, default=0
-    )
+    amount = models.DecimalField(_("Amount"), max_digits=10, decimal_places=2, default=0)
     # amount = models.IntegerField(_('Amount'), default=0)
     is_valid = models.BooleanField(
         default=False,
@@ -132,9 +128,7 @@ class PaymentQuerySet(models.QuerySet):
 
     def one_time_only(self):
         sponsor_ids = (
-            Payment.objects.for_real_support_programs()
-            .filter(sponsor=models.OuterRef("sponsor"))
-            .values("sponsor")
+            Payment.objects.for_real_support_programs().filter(sponsor=models.OuterRef("sponsor")).values("sponsor")
         )
         return self.one_time_donations().exclude(models.Exists(sponsor_ids))
 
@@ -213,9 +207,7 @@ class DonorPayment(models.Model):
             MaxValueValidator(limit_value=date.today),
         ],
     )
-    amount = models.DecimalField(
-        _("Amount"), max_digits=10, decimal_places=2, default=0
-    )
+    amount = models.DecimalField(_("Amount"), max_digits=10, decimal_places=2, default=0)
     created_at = models.DateTimeField(_("Created At"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Updated At"), auto_now=True)
 
@@ -249,13 +241,9 @@ class StaffPayments(models.Model):
             MaxValueValidator(limit_value=date.today),
         ],
     )
-    month = models.CharField(
-        _("Month of payment"), max_length=20, choices=MONTH_CHOICES
-    )
+    month = models.CharField(_("Month of payment"), max_length=20, choices=MONTH_CHOICES)
     payment_year = models.IntegerField(_("Year of payment"), default=2018)
-    amount = models.DecimalField(
-        _("Amount"), max_digits=10, decimal_places=2, default=0
-    )
+    amount = models.DecimalField(_("Amount"), max_digits=10, decimal_places=2, default=0)
     is_valid = models.BooleanField(
         default=False,
         verbose_name=_("Valid?"),

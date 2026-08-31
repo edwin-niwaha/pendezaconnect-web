@@ -40,6 +40,8 @@ python manage.py collectstatic
 LINTING
 ruff check .
 ruff check . --fix
+ruff format .
+ruff check .
 
 Format using black
 black .

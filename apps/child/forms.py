@@ -55,27 +55,15 @@ class ChildForm(forms.ModelForm):
             "date_of_birth": forms.DateInput(attrs={"type": "date"}),
             "registration_date": forms.DateInput(attrs={"type": "date"}),
             "siblings": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
-            "background_info": forms.Textarea(
-                attrs={"class": "form-control", "rows": 3}
-            ),
-            "responsibility": forms.Textarea(
-                attrs={"class": "form-control", "rows": 3}
-            ),
-            "mother_description": forms.Textarea(
-                attrs={"class": "form-control", "rows": 3}
-            ),
+            "background_info": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+            "responsibility": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+            "mother_description": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
             "staff_comment": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
-            "father_description": forms.Textarea(
-                attrs={"class": "form-control", "rows": 3}
-            ),
+            "father_description": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
             "c_interest": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
             "gender": forms.Select(attrs={"class": "form-control", "required": True}),
-            "is_father_alive": forms.Select(
-                attrs={"class": "form-control", "required": True}
-            ),
-            "is_mother_alive": forms.Select(
-                attrs={"class": "form-control", "required": True}
-            ),
+            "is_father_alive": forms.Select(attrs={"class": "form-control", "required": True}),
+            "is_mother_alive": forms.Select(attrs={"class": "form-control", "required": True}),
             "religion": forms.Select(attrs={"class": "form-control", "required": True}),
             "is_child_in_school": forms.CheckboxInput(attrs={"class": "form-control"}),
         }
@@ -91,12 +79,8 @@ class ChildForm(forms.ModelForm):
         full_name = self.cleaned_data.get("full_name")
 
         if full_name and len(full_name) < 3:
-            self.add_error(
-                "full_name", "Can not save first name less than 3 characters long"
-            )
-            self.fields["full_name"].widget.attrs.update(
-                {"class": "form-control  is-invalid"}
-            )
+            self.add_error("full_name", "Can not save first name less than 3 characters long")
+            self.fields["full_name"].widget.attrs.update({"class": "form-control  is-invalid"})
 
         return self.cleaned_data
 
@@ -135,25 +119,17 @@ class ChildProgressForm(forms.ModelForm):
 
         widgets = {
             "name_of_school": forms.TextInput(attrs={"class": "form-control"}),
-            "previous_schools": forms.Textarea(
-                attrs={"class": "form-control", "rows": 2}
-            ),
-            "year": forms.NumberInput(
-                attrs={"class": "form-control", "placeholder": "e.g. 2025"}
-            ),
+            "previous_schools": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
+            "year": forms.NumberInput(attrs={"class": "form-control", "placeholder": "e.g. 2025"}),
             "term": forms.Select(attrs={"class": "form-select"}),
             "education_level": forms.Select(attrs={"class": "form-select"}),
             "child_class": forms.Select(attrs={"class": "form-select"}),
             "best_subject": forms.TextInput(attrs={"class": "form-control"}),
             "score": forms.NumberInput(attrs={"class": "form-control"}),
             "co_curricular_activity": forms.TextInput(attrs={"class": "form-control"}),
-            "responsibility_at_school": forms.TextInput(
-                attrs={"class": "form-control"}
-            ),
+            "responsibility_at_school": forms.TextInput(attrs={"class": "form-control"}),
             "future_plans": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
-            "responsibility_at_home": forms.Textarea(
-                attrs={"class": "form-control", "rows": 2}
-            ),
+            "responsibility_at_home": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
             "notes": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
         }
 
@@ -225,9 +201,7 @@ class ChildDepartForm(forms.ModelForm):
         exclude = ("child",)
         widgets = {
             "depart_date": forms.DateInput(attrs={"type": "date", "required": True}),
-            "depart_reason": forms.Textarea(
-                attrs={"class": "form-control", "required": True, "rows": 2}
-            ),
+            "depart_reason": forms.Textarea(attrs={"class": "form-control", "required": True, "rows": 2}),
         }
 
     def __init__(self, *args, **kwargs):

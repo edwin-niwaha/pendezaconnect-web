@@ -25,9 +25,9 @@ def customers_list_view(request):
     search_query = request.GET.get("search", "")  # Default to empty string if no search
     if search_query:
         # Search in both first_name and last_name
-        customers = customers.filter(
-            first_name__icontains=search_query
-        ) | customers.filter(last_name__icontains=search_query)
+        customers = customers.filter(first_name__icontains=search_query) | customers.filter(
+            last_name__icontains=search_query
+        )
 
     # Add pagination
     paginator = Paginator(customers, 25)  # Show 25 customers per page
@@ -59,9 +59,7 @@ def customers_add_view(request):
             # Check for existing customer with the same attributes
             attributes = form.cleaned_data
             if Customer.objects.filter(**attributes).exists():
-                messages.error(
-                    request, "Customer already exists!", extra_tags="bg-warning"
-                )
+                messages.error(request, "Customer already exists!", extra_tags="bg-warning")
                 return redirect("customers:customers_add")
 
             try:
@@ -82,9 +80,7 @@ def customers_add_view(request):
                 print(e)
                 return redirect("customers:customers_add")
         else:
-            messages.error(
-                request, "Please correct the errors below.", extra_tags="bg-danger"
-            )
+            messages.error(request, "Please correct the errors below.", extra_tags="bg-danger")
     else:
         form = CustomerForm()
 
@@ -121,9 +117,7 @@ def customers_update_view(request, customer_id):
                 print(e)
                 return redirect("customers:customers_update", customer_id=customer_id)
         else:
-            messages.error(
-                request, "Please correct the errors below.", extra_tags="bg-danger"
-            )
+            messages.error(request, "Please correct the errors below.", extra_tags="bg-danger")
     else:
         form = CustomerForm(instance=customer)
 

@@ -5,9 +5,7 @@ from social_core.pipeline.social_auth import associate_by_email
 from .models import Profile
 
 
-def associate_verified_google_email(
-    backend, details, response, user=None, *args, **kwargs
-):
+def associate_verified_google_email(backend, details, response, user=None, *args, **kwargs):
     if getattr(backend, "name", "") != "google-oauth2" or user is not None:
         return None
     if not response.get("email_verified"):

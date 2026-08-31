@@ -2,32 +2,55 @@
 {% load static %}
 {% load humanize %}
 
-{% block title %}Pendeza Connect | Inventory Management Dashboard{% endblock %}
+{% block title %}Pendeza Connect | Inventory Management{% endblock %}
 
 {% block content %}
 <style>
   .inventory-dashboard {
     color: #243447;
+    margin-top: -10px;
+    padding-bottom: 32px;
+    --inventory-green: #13745d;
+    --inventory-ink: #172b3f;
+    --inventory-border: #e3e9ef;
+    --inventory-shadow: 0 12px 30px rgba(31, 50, 70, .07);
   }
 
   .inventory-header {
-    align-items: flex-end;
+    align-items: center;
+    background: linear-gradient(125deg, #123b36 0%, #176b59 58%, #21836c 100%);
+    border-radius: 18px;
+    box-shadow: 0 16px 36px rgba(18, 59, 54, .18);
     display: flex;
     gap: 16px;
     justify-content: space-between;
     margin-bottom: 18px;
+    overflow: hidden;
+    padding: 24px 26px;
+    position: relative;
+  }
+
+  .inventory-header::after {
+    border: 24px solid rgba(255, 255, 255, .06);
+    border-radius: 50%;
+    content: '';
+    height: 180px;
+    position: absolute;
+    right: -35px;
+    top: -72px;
+    width: 180px;
   }
 
   .inventory-title h1 {
-    color: #1f2933;
-    font-size: 1.55rem;
+    color: #fff;
+    font-size: clamp(1.45rem, 2.2vw, 2rem);
     font-weight: 900;
     letter-spacing: 0;
     margin: 0 0 4px;
   }
 
   .inventory-title p {
-    color: #667085;
+    color: rgba(255, 255, 255, .76);
     margin: 0;
   }
 
@@ -38,11 +61,24 @@
     justify-content: flex-end;
   }
 
+  .inventory-title,
+  .inventory-actions { position: relative; z-index: 1; }
+
   .inventory-actions .btn {
-    border-radius: 6px;
+    align-items: center;
+    background: rgba(255,255,255,.08);
+    border-color: rgba(255,255,255,.36);
+    border-radius: 10px;
+    color: #fff;
+    display: inline-flex;
     font-size: .84rem;
     font-weight: 800;
+    min-height: 38px;
+    padding: 8px 12px;
   }
+
+  .inventory-actions .btn-dark { background: #fff; border-color: #fff; color: #135b4c; }
+  .inventory-actions .btn:hover { transform: translateY(-1px); }
 
   .metric-grid {
     display: grid;
@@ -53,16 +89,26 @@
 
   .metric-card {
     background: #fff;
-    border: 1px solid #dfe5ec;
-    border-radius: 8px;
-    min-height: 122px;
+    border: 1px solid var(--inventory-border);
+    border-radius: 14px;
+    box-shadow: var(--inventory-shadow);
+    min-height: 132px;
+    overflow: hidden;
     padding: 18px;
+    position: relative;
   }
 
   .metric-card i {
+    align-items: center;
+    background: #e9f6f1;
+    border-radius: 10px;
     color: #13745d;
+    display: flex;
     float: right;
-    font-size: 1.35rem;
+    font-size: 1.1rem;
+    height: 36px;
+    justify-content: center;
+    width: 36px;
   }
 
   .metric-card span {
@@ -106,9 +152,10 @@
 
   .dash-panel {
     background: #fff;
-    border: 1px solid #dfe5ec;
-    border-radius: 8px;
-    padding: 18px;
+    border: 1px solid var(--inventory-border);
+    border-radius: 14px;
+    box-shadow: var(--inventory-shadow);
+    padding: 20px;
   }
 
   .span-4 { grid-column: span 4; }
@@ -209,9 +256,22 @@
 
   .sales-card {
     background: #fff;
-    border: 1px solid #dfe5ec;
-    border-radius: 8px;
-    padding: 15px;
+    border: 1px solid var(--inventory-border);
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(31,50,70,.05);
+    padding: 16px;
+    position: relative;
+  }
+
+  .sales-card::before {
+    background: var(--inventory-green);
+    border-radius: 0 0 5px 5px;
+    content: '';
+    height: 4px;
+    left: 16px;
+    position: absolute;
+    top: 0;
+    width: 30px;
   }
 
   .sales-card span {
@@ -237,6 +297,26 @@
     padding: 12px 0;
   }
 
+  .section-kicker {
+    align-items: center;
+    color: #536273;
+    display: flex;
+    font-size: .76rem;
+    font-weight: 900;
+    gap: 8px;
+    letter-spacing: .07em;
+    margin: 0 0 9px 2px;
+    text-transform: uppercase;
+  }
+
+  .section-kicker::before {
+    background: var(--inventory-green);
+    border-radius: 4px;
+    content: '';
+    height: 7px;
+    width: 7px;
+  }
+
   @media (max-width: 1180px) {
     .metric-grid,
     .sales-strip {
@@ -254,6 +334,7 @@
     .inventory-header {
       align-items: flex-start;
       flex-direction: column;
+      padding: 20px;
     }
 
     .inventory-actions {
@@ -263,6 +344,7 @@
 
     .inventory-actions .btn {
       flex: 1 1 150px;
+      justify-content: center;
     }
 
     .metric-grid,
@@ -288,7 +370,7 @@
 <main class="inventory-dashboard">
   <header class="inventory-header">
     <div class="inventory-title">
-      <h1>Inventory Management Dashboard</h1>
+      <h1>Inventory Management</h1>
       <p>Sales, product movement, stock value, and inventory health.</p>
     </div>
     <nav class="inventory-actions" aria-label="Inventory dashboard actions">
@@ -307,6 +389,7 @@
     </nav>
   </header>
 
+  <p class="section-kicker">Business overview</p>
   <section class="metric-grid">
     <div class="metric-card">
       <i class="mdi mdi-calendar"></i>
@@ -334,6 +417,7 @@
     </div>
   </section>
 
+  <p class="section-kicker">Current performance</p>
   <section class="sales-strip">
     <div class="sales-card">
       <span>Sales Today</span>
@@ -353,6 +437,7 @@
     </div>
   </section>
 
+  <p class="section-kicker">Sales insights</p>
   <section class="dashboard-grid">
     <div class="dash-panel span-8">
       <div class="panel-head">

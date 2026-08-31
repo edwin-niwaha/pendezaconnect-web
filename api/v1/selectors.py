@@ -1,8 +1,6 @@
-﻿from django.db.models import Count, Q
-
 from decimal import Decimal
 
-from django.db.models import DecimalField, ExpressionWrapper, F, OuterRef, Prefetch, Subquery, Sum, Value
+from django.db.models import Count, DecimalField, ExpressionWrapper, F, OuterRef, Prefetch, Q, Subquery, Sum, Value
 from django.db.models.functions import Coalesce
 
 from apps.child.models import Child, ChildProfilePicture
@@ -70,12 +68,24 @@ def clients_for_user(user):
         SavingsAccount.objects.filter(client_id=OuterRef("pk"))
         .annotate(
             credits=Coalesce(
-                Sum("transactions__amount", filter=Q(transactions__status="approved", transactions__transaction_type__in=SavingsTransaction.CREDIT_TYPES)),
+                Sum(
+                    "transactions__amount",
+                    filter=Q(
+                        transactions__status="approved",
+                        transactions__transaction_type__in=SavingsTransaction.CREDIT_TYPES,
+                    ),
+                ),
                 Value(Decimal("0.00")),
                 output_field=money_field,
             ),
             debits=Coalesce(
-                Sum("transactions__amount", filter=Q(transactions__status="approved", transactions__transaction_type__in=SavingsTransaction.DEBIT_TYPES)),
+                Sum(
+                    "transactions__amount",
+                    filter=Q(
+                        transactions__status="approved",
+                        transactions__transaction_type__in=SavingsTransaction.DEBIT_TYPES,
+                    ),
+                ),
                 Value(Decimal("0.00")),
                 output_field=money_field,
             ),

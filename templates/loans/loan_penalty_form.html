@@ -1,118 +1,27 @@
 {% extends 'loans/base.html' %}
-{% load humanize %}
+{% load static humanize %}
 
 {% block content %}
-  <div class="container-fluid">
-    <div class="row mb-3">
-      <div class="col-md-12 d-flex justify-content-between align-items-center">
-        <a href="{% url 'loans:loan_reports_dashboard' %}">
-          <button type="button" class="btn btn-info font-weight-bold">
-            <i class="mdi mdi-arrow-left-bold mr-2"></i>
-            Go back
-          </button>
-        </a>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-12">
-        <div class="card card-secondary">
-          <div class="card-header">
-            <h3>{{ form_title|upper }}</h3>
-          </div>
-          <div class="card-body">
-            <div class="alert alert-info">
-              Penalties are posted to penalty receivable and income together. Penalty dates cannot be before loan disbursement or in the future.
-            </div>
-            <form method="post">
-              {% csrf_token %}
-              <!-- Loan Field -->
-              <div class="form-group">
-                <label for="{{ form.loan.id_for_label }}">{{ form.loan.label }}</label>
-                <div class="d-flex align-items-center">
-                  {{ form.loan }}
-                  <a id="view-loan-details" href="#" class="btn btn-info btn-sm ml-2" disabled><i class="mdi mdi-eye mr-1"></i> View Loan Details</a>
-                </div>
-                {% if form.loan.errors %}
-                  <div class="text-danger">
-                    {% for error in form.loan.errors %}
-                      <small>{{ error }}</small>
-                    {% endfor %}
-                  </div>
-                {% endif %}
-                <!-- Display Principal, Interest, Penalty, and Total Balances -->
-                <div id="loan-balances" class="mt-2 d-flex flex-wrap justify-content-start align-items-center bg-light p-2 rounded border">
-                  <div class="me-4 mb-2">
-                    <strong>Principal:</strong> <span id="principal-balance" class="badge bg-primary text-white">Select a loan</span>
-                  </div>
-                  <div class="me-4 mb-2">
-                    <strong>Interest:</strong> <span id="interest-balance" class="badge bg-info text-white">Select a loan</span>
-                  </div>
-                  <div class="me-4 mb-2">
-                    <strong>Penalty:</strong> <span id="penalty-balance" class="badge bg-warning text-dark">Select a loan</span>
-                  </div>
-                  <div class="mb-2">
-                    <strong>Total:</strong> <span id="total-balance" class="badge bg-primary text-white">Select a loan</span>
-                  </div>
-                </div>
-              </div>
-              <!-- Penalty Date Field -->
-              <div class="form-group">
-                <label for="{{ form.penalty_date.id_for_label }}">{{ form.penalty_date.label }}</label>
-                {{ form.penalty_date }}
-                {% if form.penalty_date.errors %}
-                  <div class="text-danger">
-                    {% for error in form.penalty_date.errors %}
-                      <small>{{ error }}</small>
-                    {% endfor %}
-                  </div>
-                {% endif %}
-              </div>
-              <!-- Penalty Amount Field -->
-              <div class="form-group">
-                <label for="{{ form.penalty_amount.id_for_label }}">{{ form.penalty_amount.label }}</label>
-                {{ form.penalty_amount }}
-                {% if form.penalty_amount.errors %}
-                  <div class="text-danger">
-                    {% for error in form.penalty_amount.errors %}
-                      <small>{{ error }}</small>
-                    {% endfor %}
-                  </div>
-                {% endif %}
-              </div>
-              <!-- Penalty Reason Field -->
-              <div class="form-group">
-                <label for="{{ form.reason.id_for_label }}">{{ form.reason.label }}</label>
-                {{ form.reason }}
-                {% if form.reason.errors %}
-                  <div class="text-danger">
-                    {% for error in form.reason.errors %}
-                      <small>{{ error }}</small>
-                    {% endfor %}
-                  </div>
-                {% endif %}
-              </div>
-              <!-- Account Field -->
-              <div class="form-group">
-                <label for="{{ form.account.id_for_label }}">{{ form.account.label }}</label>
-                {{ form.account }}
-                {% if form.account.errors %}
-                  <div class="text-danger">
-                    {% for error in form.account.errors %}
-                      <small>{{ error }}</small>
-                    {% endfor %}
-                  </div>
-                {% endif %}
-              </div>
-              <!-- Submit Button -->
-              <div class="form-group mt-4 mb-0">
-                <button type="submit" class="btn btn-dark btn-block" onclick="return confirm('Are you sure you want to add this penalty?')">Add Penalty</button>
-              </div>
-            </form>
-          </div>
+  <link rel="stylesheet" href="{% static 'css/loan-operations.css' %}">
+  <main class="loan-operation penalty">
+    <header class="operation-header"><div class="operation-heading"><p class="operation-eyebrow">Loan servicing</p><h1>Add a loan penalty</h1><p>Record a justified charge against an active loan.</p></div><nav class="operation-actions"><a href="{% url 'loans:loan_penalty_management' %}" class="btn primary-light"><i class="mdi mdi-format-list-checks"></i> Manage penalties</a><a href="{% url 'loans:loan_reports_dashboard' %}" class="btn"><i class="mdi mdi-arrow-left"></i> Reports</a></nav></header>
+    <div class="operation-layout">
+      <form method="post" class="operation-card">
+        {% csrf_token %}
+        <div class="operation-card-head"><h2>Penalty details</h2><p>Select a loan and provide the charge date, amount, and reason.</p></div>
+        {% if form.non_field_errors %}<div class="operation-errors">{{ form.non_field_errors }}</div>{% endif %}
+        <div class="operation-grid">
+          <div class="operation-field full"><label for="{{ form.loan.id_for_label }}">{{ form.loan.label }}</label><div class="operation-select-row">{{ form.loan }}<a id="view-loan-details" href="#" class="btn btn-outline-secondary" aria-disabled="true"><i class="mdi mdi-eye"></i> View loan</a></div>{% if form.loan.errors %}<div class="text-danger">{{ form.loan.errors }}</div>{% endif %}</div>
+          <div class="operation-field"><label for="{{ form.penalty_date.id_for_label }}">{{ form.penalty_date.label }}</label>{{ form.penalty_date }}{% if form.penalty_date.errors %}<div class="text-danger">{{ form.penalty_date.errors }}</div>{% endif %}</div>
+          <div class="operation-field"><label for="{{ form.penalty_amount.id_for_label }}">Penalty amount</label>{{ form.penalty_amount }}{% if form.penalty_amount.errors %}<div class="text-danger">{{ form.penalty_amount.errors }}</div>{% endif %}</div>
+          <div class="operation-field"><label for="{{ form.account.id_for_label }}">Penalty account</label>{{ form.account }}{% if form.account.errors %}<div class="text-danger">{{ form.account.errors }}</div>{% endif %}</div>
+          <div class="operation-field full"><label for="{{ form.reason.id_for_label }}">Reason</label>{{ form.reason }}{% if form.reason.errors %}<div class="text-danger">{{ form.reason.errors }}</div>{% endif %}</div>
         </div>
-      </div>
+        <div class="operation-submit"><small>The date cannot precede disbursement or be in the future.</small><button type="submit" class="btn btn-warning"><i class="mdi mdi-alert-plus"></i> Add penalty</button></div>
+      </form>
+      <aside class="operation-side-card"><div class="operation-side-head"><i class="mdi mdi-scale-balance"></i> Current loan balance</div><div class="operation-side-body"><div id="loan-balances" class="balance-list"><div class="balance-item"><span>Principal</span><strong id="principal-balance">Select a loan</strong></div><div class="balance-item"><span>Interest</span><strong id="interest-balance">—</strong></div><div class="balance-item"><span>Existing penalties</span><strong id="penalty-balance">—</strong></div><div class="balance-item total"><span>Total due</span><strong id="total-balance">—</strong></div></div><div class="operation-note">Use a short, specific reason that will be clear in the client’s audit trail.</div></div></aside>
     </div>
-  </div>
+  </main>
   <script>
     $(document).ready(function() {
       // Loan balances data from Django

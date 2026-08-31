@@ -18,9 +18,7 @@ def main():
     # Always derive the settings module from DJANGO_ENV for management
     # commands. A stale shell-level DJANGO_SETTINGS_MODULE must not make the
     # local runserver use production settings (including HTTPS redirects).
-    os.environ["DJANGO_SETTINGS_MODULE"] = get_settings_module(
-        os.environ.get("DJANGO_ENV"), command
-    )
+    os.environ["DJANGO_SETTINGS_MODULE"] = get_settings_module(os.environ.get("DJANGO_ENV"), command)
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

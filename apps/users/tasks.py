@@ -1,30 +1,52 @@
-import logging
-
 from celery import shared_task
 
-from apps.users.notifications import send_user_notification
-from apps.users.notifications import EVENT_TEMPLATES
 from apps.users.models import UserNotification
-
-logger = logging.getLogger(__name__)
+from apps.users.notification_recipients import NotificationRecipients
+from apps.users.notification_service import notification_service
+from apps.users.notifications import send_user_notification
 
 
 @shared_task(autoretry_for=(Exception,), retry_backoff=True, retry_jitter=True, max_retries=3)
-def send_user_notification_task(user_ids, event, record_id=None):
-    return send_user_notification(user_ids, event, record_id)
-
-
-def queue_user_notification(user_ids, event, record_id=None):
-    ids = list(dict.fromkeys(int(user_id) for user_id in user_ids if user_id))
-    if not ids:
-        return
-    if event not in EVENT_TEMPLATES:
-        raise ValueError("Unsupported notification event.")
-    title, body = EVENT_TEMPLATES[event]
-    UserNotification.objects.bulk_create(
-        [UserNotification(user_id=user_id, event=event, record_id=record_id, title=title, body=body) for user_id in ids]
+def deliver_user_notifications(notification_ids):
+    notifications = list(UserNotification.objects.filter(id__in=notification_ids).order_by("id"))
+    if not notifications:
+        return {"sent": 0, "failed": 0}
+    first = notifications[0]
+    return send_user_notification(
+        [notification.user_id for notification in notifications],
+        first.event,
+        first.record_id,
+        title=first.title,
+        body=first.body,
     )
-    try:
-        send_user_notification_task.delay(ids, event, record_id)
-    except Exception:
-        logger.exception("Could not queue Firebase notification event=%s", event)
+
+
+def queue_user_notification(
+    user_ids,
+    event,
+    record_id=None,
+    *,
+    title=None,
+    body=None,
+    deduplication_key="",
+):
+    return notification_service.notify(
+        user_ids,
+        event,
+        record_id,
+        title=title,
+        body=body,
+        deduplication_key=deduplication_key,
+    )
+
+
+def staff_notification_user_ids():
+    return NotificationRecipients.staff()
+
+
+def client_notification_user_ids(client_id):
+    return NotificationRecipients.clients(client_id)
+
+
+def sponsor_notification_user_ids(sponsor_id):
+    return NotificationRecipients.sponsors(sponsor_id)

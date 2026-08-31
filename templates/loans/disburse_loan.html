@@ -1,96 +1,27 @@
 {% extends 'loans/base.html' %}
+{% load static %}
 
 {% block content %}
-  <div class="container-fluid">
-    <div class="row mb-3">
-      <div class="col-md-12 d-flex justify-content-between align-items-center">
-        <a href="{% url 'loans:disbursed_loans' %}">
-          <button type="button" class="btn btn-info font-weight-bold">
-            <i class="mdi mdi-arrow-left-bold mr-2"></i>
-            Go back
-          </button>
-        </a>
-        <a href="{% url 'loans:disburse_all_loans' %}" class="btn btn-success" title="Disburse All Loans"><i class="mdi mdi-check-circle mr-2"></i>Disburse All Loans</a>
-
-        <a title="View List..." class="btn btn-sm ml-3 btn-success" href="{% url 'loans:disbursed_loans' %}"><i class="mdi mdi-chart-line btn-icon-prepend"></i></a>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-12">
-        <div class="card card-secondary">
-          <div class="card-header">
-            <h3>{{ form_title|upper }}</h3>
-          </div>
-          <div class="card-body">
-            <div class="alert alert-info">
-              Disbursement posts the loan receivable, cash or bank movement, and interest receivable together. If any journal entry fails, the loan remains unchanged.
-            </div>
-            <div class="row mb-3">
-              <div class="col-md-4">
-                <div class="border rounded p-3 bg-light">
-                  <small class="text-muted d-block">Approved loans waiting</small>
-                  <strong>{{ approved_loans.count }}</strong>
-                </div>
-              </div>
-            </div>
-            <form method="post">
-              {% csrf_token %}
-              <!-- Loan Field -->
-              <div class="form-group">
-                <label for="{{ form.loan.id_for_label }}">{{ form.loan.label }}</label>
-                {{ form.loan }}
-                {% if form.loan.errors %}
-                  <div class="text-danger">
-                    {% for error in form.loan.errors %}
-                      <small>{{ error }}</small>
-                    {% endfor %}
-                  </div>
-                {% endif %}
-              </div>
-              <!-- Account Field -->
-              <div class="form-group">
-                <label for="{{ form.account.id_for_label }}">{{ form.account.label }}</label>
-                {{ form.account }}
-                {% if form.account.errors %}
-                  <div class="text-danger">
-                    {% for error in form.account.errors %}
-                      <small>{{ error }}</small>
-                    {% endfor %}
-                  </div>
-                {% endif %}
-              </div>
-              <!-- Disbursement Date Field -->
-              <div class="form-group">
-                <label for="{{ form.disbursement_date.id_for_label }}">{{ form.disbursement_date.label }}</label>
-                {{ form.disbursement_date }}
-                {% if form.disbursement_date.errors %}
-                  <div class="text-danger">
-                    {% for error in form.disbursement_date.errors %}
-                      <small>{{ error }}</small>
-                    {% endfor %}
-                  </div>
-                {% endif %}
-              </div>
-              <!-- Payment Method Field -->
-              <div class="form-group">
-                <label for="{{ form.payment_method.id_for_label }}">{{ form.payment_method.label }}</label>
-                {{ form.payment_method }}
-                {% if form.payment_method.errors %}
-                  <div class="text-danger">
-                    {% for error in form.payment_method.errors %}
-                      <small>{{ error }}</small>
-                    {% endfor %}
-                  </div>
-                {% endif %}
-              </div>
-              <!-- Submit Button -->
-              <div class="form-group mt-4 mb-0">
-                <button type="submit" class="btn btn-dark btn-block" onclick="return confirm('Are you sure you want to proceed?') && validateForm()">Submit</button>
-              </div>
-            </form>
-          </div>
+  <link rel="stylesheet" href="{% static 'css/loan-operations.css' %}">
+  <main class="loan-operation">
+    <header class="operation-header">
+      <div class="operation-heading"><p class="operation-eyebrow">Loan operations</p><h1>Disburse an approved loan</h1><p>Confirm the funding account, date, and payment method.</p></div>
+      <nav class="operation-actions"><a href="{% url 'loans:disbursed_loans' %}" class="btn"><i class="mdi mdi-format-list-bulleted"></i> Register</a><a href="{% url 'loans:disburse_all_loans' %}" class="btn primary-light"><i class="mdi mdi-layers-plus"></i> Bulk disbursement</a></nav>
+    </header>
+    <div class="operation-layout">
+      <form method="post" class="operation-card">
+        {% csrf_token %}
+        <div class="operation-card-head"><h2>Disbursement details</h2><p>Only fully approved loans are available for selection.</p></div>
+        {% if form.non_field_errors %}<div class="operation-errors">{{ form.non_field_errors }}</div>{% endif %}
+        <div class="operation-grid">
+          <div class="operation-field full"><label for="{{ form.loan.id_for_label }}">Approved loan</label>{{ form.loan }}{% if form.loan.errors %}<div class="text-danger">{{ form.loan.errors }}</div>{% endif %}</div>
+          <div class="operation-field"><label for="{{ form.account.id_for_label }}">Funding account</label>{{ form.account }}{% if form.account.errors %}<div class="text-danger">{{ form.account.errors }}</div>{% endif %}</div>
+          <div class="operation-field"><label for="{{ form.payment_method.id_for_label }}">Payment method</label>{{ form.payment_method }}{% if form.payment_method.errors %}<div class="text-danger">{{ form.payment_method.errors }}</div>{% endif %}</div>
+          <div class="operation-field"><label for="{{ form.disbursement_date.id_for_label }}">Disbursement date</label>{{ form.disbursement_date }}{% if form.disbursement_date.errors %}<div class="text-danger">{{ form.disbursement_date.errors }}</div>{% endif %}</div>
         </div>
-      </div>
+        <div class="operation-submit"><small>This action posts the disbursement to the ledger.</small><button type="submit" class="btn btn-success" onclick="return validateForm()"><i class="mdi mdi-bank-transfer-out"></i> Disburse loan</button></div>
+      </form>
+      <aside class="operation-side-card"><div class="operation-side-head"><i class="mdi mdi-check-decagram"></i> Ready to disburse</div><div class="operation-side-body"><strong class="operation-count">{{ approved_loans.count }}</strong><span class="operation-count-label">approved loan{{ approved_loans.count|pluralize }} waiting</span><div class="operation-note">Choose bulk disbursement only when the same processing date and controls apply to every eligible loan.</div></div></aside>
     </div>
-  </div>
+  </main>
 {% endblock %}

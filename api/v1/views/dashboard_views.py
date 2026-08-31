@@ -1,6 +1,6 @@
-﻿from rest_framework import permissions, viewsets
-from rest_framework.response import Response
 from django.core.cache import cache
+from rest_framework import permissions, viewsets
+from rest_framework.response import Response
 
 from api.v1.selectors import dashboard_for_user
 

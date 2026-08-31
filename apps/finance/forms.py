@@ -60,9 +60,7 @@ class ChildPaymentForm(forms.ModelForm):
 
         # Example custom validation: Ensure payment_year is within a specific range
         if payment_year < 2018 or payment_year > self.current_year:
-            raise forms.ValidationError(
-                f"Payment year must be between 2018 and {self.current_year}."
-            )
+            raise forms.ValidationError(f"Payment year must be between 2018 and {self.current_year}.")
 
         # Add more validation as needed
 
@@ -73,7 +71,6 @@ class ChildPaymentForm(forms.ModelForm):
 
 
 class DonorPaymentForm(forms.ModelForm):
-
     class Meta:
         model = DonorPayment
         exclude = ("donor",)
@@ -152,9 +149,7 @@ class StaffPaymentForm(forms.ModelForm):
 
         # Example custom validation: Ensure payment_year is within a specific range
         if payment_year < 2023 or payment_year > self.current_year:
-            raise forms.ValidationError(
-                f"Payment year must be between 2023 and {self.current_year}."
-            )
+            raise forms.ValidationError(f"Payment year must be between 2023 and {self.current_year}.")
 
         # Add more validation as needed
 

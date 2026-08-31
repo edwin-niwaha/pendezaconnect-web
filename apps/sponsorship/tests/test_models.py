@@ -9,7 +9,6 @@ from apps.sponsorship.models import MoMoTransaction
 
 
 class MoMoTransactionModelTests(TestCase):
-
     def test_create_transaction_with_all_fields(self):
         txn = MoMoTransaction.objects.create(
             reference_id="fake_ref",
@@ -39,14 +38,10 @@ class MoMoTransactionModelTests(TestCase):
         self.assertIsNotNone(txn.updated_at)
 
         # Test __str__ output
-        self.assertEqual(
-            str(txn), f"{txn.donor_name} - {txn.amount} UGX ({txn.status})"
-        )
+        self.assertEqual(str(txn), f"{txn.donor_name} - {txn.amount} UGX ({txn.status})")
 
     def test_create_transaction_with_minimal_fields(self):
-        txn = MoMoTransaction.objects.create(
-            reference_id="minimal_ref", phone_number="0712345678", amount=5000
-        )
+        txn = MoMoTransaction.objects.create(reference_id="minimal_ref", phone_number="0712345678", amount=5000)
         # Defaults should be applied
         self.assertEqual(txn.status, "PENDING")
         self.assertEqual(txn.currency, "UGX")
@@ -54,23 +49,15 @@ class MoMoTransactionModelTests(TestCase):
         self.assertIsNone(txn.donor_email)
 
         # __str__ should fall back to phone_number
-        self.assertEqual(
-            str(txn), f"{txn.phone_number} - {txn.amount} UGX ({txn.status})"
-        )
+        self.assertEqual(str(txn), f"{txn.phone_number} - {txn.amount} UGX ({txn.status})")
 
     def test_unique_reference_id(self):
-        MoMoTransaction.objects.create(
-            reference_id="unique_ref", phone_number="0700000000", amount=1000
-        )
+        MoMoTransaction.objects.create(reference_id="unique_ref", phone_number="0700000000", amount=1000)
         with self.assertRaises(IntegrityError):
-            MoMoTransaction.objects.create(
-                reference_id="unique_ref", phone_number="0711111111", amount=2000
-            )
+            MoMoTransaction.objects.create(reference_id="unique_ref", phone_number="0711111111", amount=2000)
 
     def test_status_choices(self):
-        txn = MoMoTransaction.objects.create(
-            reference_id="status_test", phone_number="0700000001", amount=100
-        )
+        txn = MoMoTransaction.objects.create(reference_id="status_test", phone_number="0700000001", amount=100)
         self.assertIn(txn.status, ["PENDING", "SUCCESSFUL", "FAILED"])
 
         # Attempting invalid status should raise ValidationError

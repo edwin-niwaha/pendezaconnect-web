@@ -46,9 +46,7 @@ logger = logging.getLogger(__name__)
 @admin_or_manager_or_staff_required
 def child_list(request):
     # Subquery to get the latest profile picture for each child
-    latest_picture = ChildProfilePicture.objects.filter(
-        child=OuterRef("pk"), is_current=True
-    ).values("picture")[:1]
+    latest_picture = ChildProfilePicture.objects.filter(child=OuterRef("pk"), is_current=True).values("picture")[:1]
 
     # Get all children who have not departed and annotate them with their profile picture
     active_children = Child.objects.filter(is_departed=False)
@@ -84,15 +82,9 @@ def child_list(request):
             "table_title": "Children List",
             "search_query": search_query,
             "active_children_count": active_children.count(),
-            "sponsored_children_count": active_children.filter(
-                is_sponsored=True
-            ).count(),
-            "non_sponsored_children_count": active_children.filter(
-                is_sponsored=False
-            ).count(),
-            "in_school_children_count": active_children.filter(
-                is_child_in_school=True
-            ).count(),
+            "sponsored_children_count": active_children.filter(is_sponsored=True).count(),
+            "non_sponsored_children_count": active_children.filter(is_sponsored=False).count(),
+            "in_school_children_count": active_children.filter(is_child_in_school=True).count(),
         },
     )
 
@@ -134,15 +126,9 @@ def child_list_detailed(request):
             "table_title": "Detailed Child Master List",
             "search_query": search_query,
             "active_children_count": active_children.count(),
-            "sponsored_children_count": active_children.filter(
-                is_sponsored=True
-            ).count(),
-            "non_sponsored_children_count": active_children.filter(
-                is_sponsored=False
-            ).count(),
-            "in_school_children_count": active_children.filter(
-                is_child_in_school=True
-            ).count(),
+            "sponsored_children_count": active_children.filter(is_sponsored=True).count(),
+            "non_sponsored_children_count": active_children.filter(is_sponsored=False).count(),
+            "in_school_children_count": active_children.filter(is_child_in_school=True).count(),
         },
     )
 
@@ -178,9 +164,7 @@ def register_child(request):
             if picture:
                 ChildProfilePicture.objects.filter(child=child, is_current=True).update(is_current=False)
                 ChildProfilePicture.objects.create(child=child, picture=picture, is_current=True)
-            messages.success(
-                request, "Record saved successfully!", extra_tags="bg-success"
-            )
+            messages.success(request, "Record saved successfully!", extra_tags="bg-success")
             return redirect("register_child")
         else:
             # Display an error message if the form is not valid
@@ -222,9 +206,7 @@ def update_child(request, pk, template_name="child/child_update.html"):
             elif request.POST.get("remove_picture") == "1":
                 ChildProfilePicture.objects.filter(child=child, is_current=True).update(is_current=False)
 
-            messages.success(
-                request, "Child record updated successfully!", extra_tags="bg-success"
-            )
+            messages.success(request, "Child record updated successfully!", extra_tags="bg-success")
             return redirect("child_list")
         else:
             # Display an error message if the form is not valid
@@ -241,9 +223,7 @@ def update_child(request, pk, template_name="child/child_update.html"):
     context = {
         "form_name": "Child Registration",
         "form": form,
-        "current_photo_url": (
-            current_picture.picture.url if current_picture and current_picture.picture else ""
-        ),
+        "current_photo_url": (current_picture.picture.url if current_picture and current_picture.picture else ""),
         "photo_subject": child_record.full_name,
     }
     return render(request, template_name, context)
@@ -272,24 +252,18 @@ def update_picture(request):
         if form.is_valid():
             child_id = request.POST.get("id")
             if not child_id:
-                messages.error(
-                    request, "Please select a child.", extra_tags="bg-danger"
-                )
+                messages.error(request, "Please select a child.", extra_tags="bg-danger")
                 return redirect("update_picture")
             try:
                 # Attempt to retrieve the child profile
                 child_profile = Child.objects.get(id=child_id)
             except Child.DoesNotExist:
                 # Handle the case where the child doesn't exist
-                messages.error(
-                    request, "Child profile not found.", extra_tags="bg-danger"
-                )
+                messages.error(request, "Child profile not found.", extra_tags="bg-danger")
                 return redirect("update_picture")
 
             # Create a ChildProfilePicture instance
-            ChildProfilePicture.objects.filter(
-                child=child_profile, is_current=True
-            ).update(is_current=False)
+            ChildProfilePicture.objects.filter(child=child_profile, is_current=True).update(is_current=False)
             new_picture = form.save(commit=False)
             new_picture.child = child_profile
             new_picture.is_current = True
@@ -314,15 +288,17 @@ def update_picture(request):
         form = ChildProfilePictureForm()
 
     # Retrieve active children and their current photo in one query.
-    children = Child.objects.filter(is_departed=False).prefetch_related(
-        Prefetch(
-            "profile_picture",
-            queryset=ChildProfilePicture.objects.filter(is_current=True).order_by(
-                "-uploaded_at", "-id"
-            ),
-            to_attr="current_profile_pictures",
+    children = (
+        Child.objects.filter(is_departed=False)
+        .prefetch_related(
+            Prefetch(
+                "profile_picture",
+                queryset=ChildProfilePicture.objects.filter(is_current=True).order_by("-uploaded_at", "-id"),
+                to_attr="current_profile_pictures",
+            )
         )
-    ).order_by("full_name", "id")
+        .order_by("full_name", "id")
+    )
 
     return render(
         request,
@@ -346,9 +322,7 @@ def profile_pictures(request):
 
     if child_id:
         selected_child = get_object_or_404(Child, id=child_id)
-        profile_picture = ChildProfilePicture.objects.filter(
-            child_id=child_id
-        ).order_by("-uploaded_at", "-id")
+        profile_picture = ChildProfilePicture.objects.filter(child_id=child_id).order_by("-uploaded_at", "-id")
     elif request.method == "POST":
         messages.error(request, "No child selected.", extra_tags="bg-danger")
 
@@ -387,9 +361,7 @@ def child_progress(request):
         if form.is_valid():
             child_id = request.POST.get("id")
             if not child_id:
-                messages.error(
-                    request, "Please select a child.", extra_tags="bg-danger"
-                )
+                messages.error(request, "Please select a child.", extra_tags="bg-danger")
                 return redirect("child_progress")
             child_instance = get_object_or_404(Child, pk=child_id)
 
@@ -405,16 +377,10 @@ def child_progress(request):
             child_progress.child_class = form.cleaned_data["child_class"]
             child_progress.best_subject = form.cleaned_data["best_subject"]
             child_progress.score = form.cleaned_data["score"]
-            child_progress.co_curricular_activity = form.cleaned_data[
-                "co_curricular_activity"
-            ]
-            child_progress.responsibility_at_school = form.cleaned_data[
-                "responsibility_at_school"
-            ]
+            child_progress.co_curricular_activity = form.cleaned_data["co_curricular_activity"]
+            child_progress.responsibility_at_school = form.cleaned_data["responsibility_at_school"]
             child_progress.future_plans = form.cleaned_data["future_plans"]
-            child_progress.responsibility_at_home = form.cleaned_data[
-                "responsibility_at_home"
-            ]
+            child_progress.responsibility_at_home = form.cleaned_data["responsibility_at_home"]
             child_progress.notes = form.cleaned_data["notes"]
             child_progress.save()
 
@@ -521,9 +487,7 @@ def child_progress_report(request):
 @admin_or_manager_or_staff_required
 @transaction.atomic
 def update_progress(request, pk):
-    progress_record = get_object_or_404(
-        ChildProgress.objects.select_related("child"), pk=pk
-    )
+    progress_record = get_object_or_404(ChildProgress.objects.select_related("child"), pk=pk)
 
     if request.method == "POST":
         form = ChildProgressForm(request.POST, instance=progress_record)
@@ -534,9 +498,7 @@ def update_progress(request, pk):
                 "Child progress updated successfully!",
                 extra_tags="bg-success",
             )
-            return redirect(
-                f"{reverse('child_progress_report')}?id={progress_record.child_id}"
-            )
+            return redirect(f"{reverse('child_progress_report')}?id={progress_record.child_id}")
         messages.error(request, "Form is invalid.", extra_tags="bg-danger")
     else:
         form = ChildProgressForm(instance=progress_record)
@@ -581,21 +543,15 @@ def child_correspondence(request):
         if form.is_valid():
             child_id = request.POST.get("id")
             if not child_id:
-                messages.error(
-                    request, "Please select a child.", extra_tags="bg-danger"
-                )
+                messages.error(request, "Please select a child.", extra_tags="bg-danger")
                 return redirect("child_correspondence")
             child_instance = get_object_or_404(Child, pk=child_id)
 
             # Always create a new correspondence record explicitly
-            child_correspondence = ChildCorrespondence.objects.create(
-                child=child_instance
-            )
+            child_correspondence = ChildCorrespondence.objects.create(child=child_instance)
 
             # Populate correspondence data
-            child_correspondence.correspondence_type = form.cleaned_data[
-                "correspondence_type"
-            ]
+            child_correspondence.correspondence_type = form.cleaned_data["correspondence_type"]
             child_correspondence.source = form.cleaned_data["source"]
             child_correspondence.attachment = form.cleaned_data["attachment"]
             child_correspondence.comment = form.cleaned_data["comment"]
@@ -631,9 +587,7 @@ def child_correspondence_report(request):
 
     if child_id:
         selected_child = get_object_or_404(Child, id=child_id)
-        child_correspondence = ChildCorrespondence.objects.filter(
-            child_id=child_id
-        ).order_by("-created_at", "-id")
+        child_correspondence = ChildCorrespondence.objects.filter(child_id=child_id).order_by("-created_at", "-id")
     elif request.method == "POST":
         messages.error(request, "No child selected.", extra_tags="bg-danger")
 
@@ -674,9 +628,7 @@ def child_incident(request):
         if form.is_valid():
             child_id = request.POST.get("id")
             if not child_id:
-                messages.error(
-                    request, "Please select a child.", extra_tags="bg-danger"
-                )
+                messages.error(request, "Please select a child.", extra_tags="bg-danger")
                 return redirect("child_incident")
             child_instance = get_object_or_404(Child, pk=child_id)
 
@@ -723,9 +675,7 @@ def child_incident_report(request):
 
     if child_id:
         selected_child = get_object_or_404(Child, id=child_id)
-        child_incident = ChildIncident.objects.filter(child_id=child_id).order_by(
-            "-incident_date", "-id"
-        )
+        child_incident = ChildIncident.objects.filter(child_id=child_id).order_by("-incident_date", "-id")
     elif request.method == "POST":
         messages.error(request, "No child selected.", extra_tags="bg-danger")
 
@@ -768,9 +718,7 @@ def child_departure(request):
         if form.is_valid():
             child_id = request.POST.get("id")
             if not child_id:
-                messages.error(
-                    request, "Please select a child.", extra_tags="bg-danger"
-                )
+                messages.error(request, "Please select a child.", extra_tags="bg-danger")
                 return redirect("child_departure")
             child_instance = get_object_or_404(Child, pk=child_id)
 
@@ -786,13 +734,9 @@ def child_departure(request):
             child_instance.save()
 
             # Update related ChildSponsorship records to inactive
-            ChildSponsorship.objects.filter(child=child_instance).update(
-                is_active=False
-            )
+            ChildSponsorship.objects.filter(child=child_instance).update(is_active=False)
 
-            messages.success(
-                request, "Child departed successfully!", extra_tags="bg-success"
-            )
+            messages.success(request, "Child departed successfully!", extra_tags="bg-success")
             return redirect("child_departure")
         else:
             messages.error(request, "Form is invalid.", extra_tags="bg-danger")
@@ -817,12 +761,7 @@ def child_departure(request):
 @login_required
 @admin_or_manager_or_staff_required
 def child_depature_list(request):
-    queryset = (
-        Child.objects.all()
-        .filter(is_departed=True)
-        .order_by("id")
-        .prefetch_related("departures")
-    )
+    queryset = Child.objects.all().filter(is_departed=True).order_by("id").prefetch_related("departures")
 
     search_query = request.GET.get("search", "").strip()
     if search_query:
@@ -867,9 +806,7 @@ def reinstate_child(request, pk):
     if request.method == "POST":
         child.is_departed = False
         child.save()
-        messages.success(
-            request, "Child reinstated successfully!", extra_tags="bg-success"
-        )
+        messages.success(request, "Child reinstated successfully!", extra_tags="bg-success")
 
         return redirect("child_depature_list")
 
@@ -888,9 +825,7 @@ def import_child_data(request):
             try:
                 # Call process_and_import_data function
                 process_and_import_data(excel_file)
-                messages.success(
-                    request, "Data imported successfully!", extra_tags="bg-success"
-                )
+                messages.success(request, "Data imported successfully!", extra_tags="bg-success")
             except Exception as e:
                 messages.error(
                     request, f"Error importing data: {e}", extra_tags="bg-danger"
@@ -972,9 +907,7 @@ def process_and_import_data(excel_file):
             obj = Child(**data)
             obj.save()
     except Exception as e:
-        logger.error(
-            f"Error importing data: {e}", exc_info=True
-        )  # Log error with traceback
+        logger.error(f"Error importing data: {e}", exc_info=True)  # Log error with traceback
         raise e
 
 
@@ -998,9 +931,7 @@ def update_guardian_contacts(request):
     if request.method == "POST":
         # Call the management command and handle success or failure
         try:
-            call_command(
-                "gurdian_contacts"
-            )  # Replace "gurdian_contacts" with your actual command name
+            call_command("gurdian_contacts")  # Replace "gurdian_contacts" with your actual command name
             messages.success(
                 request,
                 "Guardian contacts updated successfully!",
@@ -1050,14 +981,10 @@ def delete_confirmation(request):
 def birthday_list(request):
     # Annotate the queryset with the birth month
     children_with_birthday = (
-        Child.objects.filter(
-            is_sponsored=True, is_departed=False, date_of_birth__isnull=False
-        )
+        Child.objects.filter(is_sponsored=True, is_departed=False, date_of_birth__isnull=False)
         .annotate(
             birth_month=ExtractMonth("date_of_birth"),
-            month_name=Concat(
-                Value("Month: "), F("birth_month"), output_field=CharField()
-            ),
+            month_name=Concat(Value("Month: "), F("birth_month"), output_field=CharField()),
         )
         .order_by("birth_month", "date_of_birth")
     )

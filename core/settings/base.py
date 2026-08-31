@@ -4,6 +4,7 @@ from datetime import timedelta
 from pathlib import Path
 
 import dj_database_url
+from celery.schedules import crontab
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -16,6 +17,12 @@ def env_bool(name, default=False):
     return os.environ.get(name, str(default)).lower() == "true"
 
 
+NOTIFICATION_DELIVERY_ENABLED = env_bool(
+    "NOTIFICATION_DELIVERY_ENABLED",
+    not IS_TESTING,
+)
+
+
 def env_float(name, default):
     try:
         return float(os.environ.get(name, default))
@@ -24,9 +31,7 @@ def env_float(name, default):
 
 
 def env_list(name):
-    return [
-        item.strip() for item in os.environ.get(name, "").split(",") if item.strip()
-    ]
+    return [item.strip() for item in os.environ.get(name, "").split(",") if item.strip()]
 
 
 def database_config(ssl_require=False):
@@ -265,7 +270,17 @@ if not CELERY_RESULT_BACKEND:
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
-CELERY_TIMEZONE = "Africa/Nairobi"
+CELERY_TIMEZONE = "Africa/Kampala"
+CELERY_BEAT_SCHEDULE = {
+    "daily-push-loan-reminders": {
+        "task": "apps.loans.tasks.send_push_loan_reminders",
+        "schedule": crontab(hour=8, minute=0),
+    },
+    "monthly-push-sponsorship-reminders": {
+        "task": "apps.sponsorship.tasks.send_push_sponsorship_reminders",
+        "schedule": crontab(day_of_month="5", hour=9, minute=0),
+    },
+}
 CELERY_TASK_DEFAULT_QUEUE = os.environ.get(
     "CELERY_TASK_DEFAULT_QUEUE",
     "pendeza_connect",
@@ -274,15 +289,9 @@ CELERY_TASK_DEFAULT_EXCHANGE = CELERY_TASK_DEFAULT_QUEUE
 CELERY_TASK_DEFAULT_ROUTING_KEY = CELERY_TASK_DEFAULT_QUEUE
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 CELERY_WORKER_CONCURRENCY = int(os.environ.get("CELERY_WORKER_CONCURRENCY", "1"))
-CELERY_WORKER_PREFETCH_MULTIPLIER = int(
-    os.environ.get("CELERY_WORKER_PREFETCH_MULTIPLIER", "1")
-)
-CELERY_WORKER_MAX_TASKS_PER_CHILD = int(
-    os.environ.get("CELERY_WORKER_MAX_TASKS_PER_CHILD", "50")
-)
-CELERY_WORKER_MAX_MEMORY_PER_CHILD = int(
-    os.environ.get("CELERY_WORKER_MAX_MEMORY_PER_CHILD", "300000")
-)
+CELERY_WORKER_PREFETCH_MULTIPLIER = int(os.environ.get("CELERY_WORKER_PREFETCH_MULTIPLIER", "1"))
+CELERY_WORKER_MAX_TASKS_PER_CHILD = int(os.environ.get("CELERY_WORKER_MAX_TASKS_PER_CHILD", "50"))
+CELERY_WORKER_MAX_MEMORY_PER_CHILD = int(os.environ.get("CELERY_WORKER_MAX_MEMORY_PER_CHILD", "300000"))
 CELERY_TASK_SOFT_TIME_LIMIT = int(os.environ.get("CELERY_TASK_SOFT_TIME_LIMIT", "300"))
 CELERY_TASK_TIME_LIMIT = int(os.environ.get("CELERY_TASK_TIME_LIMIT", "360"))
 CELERY_RESULT_EXPIRES = int(os.environ.get("CELERY_RESULT_EXPIRES", "3600"))
@@ -304,11 +313,7 @@ if not RESEND_FROM_EMAIL:
     RESEND_FROM_EMAIL = DEFAULT_FROM_EMAIL
 EMAIL_BACKEND = os.getenv(
     "EMAIL_BACKEND",
-    (
-        "core.email_backends.ResendEmailBackend"
-        if RESEND_API_KEY
-        else "django.core.mail.backends.smtp.EmailBackend"
-    ),
+    ("core.email_backends.ResendEmailBackend" if RESEND_API_KEY else "django.core.mail.backends.smtp.EmailBackend"),
 )
 
 BOO_EMAIL = os.getenv("BOO_EMAIL", "")
@@ -327,9 +332,7 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ),
-    "DEFAULT_PERMISSION_CLASSES": (
-        "rest_framework.permissions.IsAuthenticated",
-    ),
+    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 20,
     "DEFAULT_THROTTLE_CLASSES": (

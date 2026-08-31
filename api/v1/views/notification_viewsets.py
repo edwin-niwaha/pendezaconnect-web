@@ -3,6 +3,7 @@ from rest_framework import mixins, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from api.v1.notification_queues import notification_work_queues
 from api.v1.serializers.notification_serializers import UserNotificationSerializer
 from apps.users.models import UserNotification
 
@@ -10,6 +11,10 @@ from apps.users.models import UserNotification
 class UserNotificationViewSet(mixins.ListModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
     serializer_class = UserNotificationSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    @action(detail=False, methods=["get"], url_path="work-queues")
+    def work_queues(self, request):
+        return Response({"queues": notification_work_queues(request.user)})
 
     def get_queryset(self):
         if getattr(self, "swagger_fake_view", False):

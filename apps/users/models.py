@@ -133,9 +133,7 @@ class Profile(models.Model):
             self.account_type = "staff"
 
         if self.account_type == "staff" and not self.staff_role:
-            self.staff_role = (
-                self.role if self.role in self.STAFF_LEGACY_ROLES else "staff"
-            )
+            self.staff_role = self.role if self.role in self.STAFF_LEGACY_ROLES else "staff"
         elif self.account_type != "staff":
             self.staff_role = ""
 
@@ -228,6 +226,7 @@ class UserNotification(models.Model):
     record_id = models.PositiveBigIntegerField(null=True, blank=True)
     title = models.CharField(max_length=160)
     body = models.TextField(max_length=500)
+    deduplication_key = models.CharField(max_length=160, blank=True, default="")
     read_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -236,6 +235,13 @@ class UserNotification(models.Model):
         indexes = [
             models.Index(fields=("user", "read_at"), name="users_notif_user_read_idx"),
             models.Index(fields=("user", "created_at"), name="users_notif_user_date_idx"),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                condition=~models.Q(deduplication_key=""),
+                fields=("user", "deduplication_key"),
+                name="unique_user_notification_deduplication_key",
+            )
         ]
 
     def __str__(self):
@@ -265,11 +271,7 @@ class Policy(models.Model):
 
     @property
     def needs_document_reupload(self):
-        return bool(
-            self.upload
-            and "/image/upload/" in self.upload.url
-            and self.upload.url.lower().endswith(".pdf")
-        )
+        return bool(self.upload and "/image/upload/" in self.upload.url and self.upload.url.lower().endswith(".pdf"))
 
     def __str__(self):
         return self.title
@@ -292,9 +294,7 @@ class PolicyRead(models.Model):
 class Ebook(models.Model):
     title = models.CharField(max_length=200)
     author = models.CharField(max_length=200)
-    ebook_file = CloudinaryField(
-        "ebook_file", resource_type="auto"
-    )  # Handles PDF uploads
+    ebook_file = CloudinaryField("ebook_file", resource_type="auto")  # Handles PDF uploads
     upload_date = models.DateField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -315,9 +315,7 @@ def validate_file_extension(value):
     ext = os.path.splitext(value.name)[1]
     valid_extensions = [".pdf", ".xls", ".xlsx"]
     if ext.lower() not in valid_extensions:
-        raise ValidationError(
-            "Unsupported file extension. Only PDF and Excel files are allowed."
-        )
+        raise ValidationError("Unsupported file extension. Only PDF and Excel files are allowed.")
 
 
 class DocumentUpload(models.Model):

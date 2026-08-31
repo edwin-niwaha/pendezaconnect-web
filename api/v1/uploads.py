@@ -12,7 +12,10 @@ DOCUMENT_CONTENT_TYPES = {"image/jpeg", "image/png", "application/pdf"}
 def validate_image_upload(upload):
     if getattr(upload, "size", 0) > MAX_IMAGE_BYTES:
         raise serializers.ValidationError({"picture": ["Image files must be 8 MB or smaller."]})
-    serializers.ImageField().run_validation(upload)
+    try:
+        serializers.ImageField().run_validation(upload)
+    except DjangoValidationError as exc:
+        raise serializers.ValidationError({"picture": exc.messages}) from exc
     if hasattr(upload, "seek"):
         upload.seek(0)
     return upload

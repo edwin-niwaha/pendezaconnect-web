@@ -1,104 +1,184 @@
 {% extends '_partials/guest_base.html' %}
 {% load humanize %}
-{% load crispy_forms_tags %}
+
+{% block title %}Pendeza Connect | Repayment Schedule{% endblock %}
+
 {% block content %}
-  <div class="container mt-5 pt-4">
-    <div id="printMe">
-      <div class="col-md-12">
-        <h2 class="text-left text-primary">Repayment Schedule for Loan ID: {{ loan.id }}</h2>
-        <hr class="bg-info" style="height: 3px;" />
-        <div class="row mb-4">
-          <div class="col-12">
-            <table class="table table-bordered table-striped">
-              <tbody>
-                <tr>
-                  <th scope="row">Borrower</th>
-                  <td>{{ loan.borrower }}</td>
-                  <th scope="row">Interest Rate</th>
-                  <td>{{ loan.interest_rate|floatformat:1 }}%</td>
-                </tr>
-                <tr>
-                  <th scope="row">Principal Amount</th>
-                  <td class="text-end">{{ loan.principal_amount|floatformat:'2'|intcomma }}</td>
-                  <th scope="row">Loan Period</th>
-                  <td>{{ loan_period_years|floatformat:1 }} years ({{ loan.loan_period_months }} months) | {{ loan.interest_method|title }}</td>
-                </tr>
-                <tr>
-                  <th scope="row">Total Interest</th>
-                  <td class="text-end">{{ total_interest|floatformat:'2'|intcomma }}</td>
-                  <th scope="row">Monthly Payment</th>
-                  <td>{{ monthly_payment|floatformat:'2'|intcomma }}</td>
-                </tr>
-                <tr>
-                  <th scope="row">Total Cost of Loan</th>
-                  <td class="text-end">{{ total_cost_of_loan|floatformat:'2'|intcomma }}</td>
-                  <th scope="row">Loan Purpose</th>
-                  <td>{{ loan.loan_purpose|default:'No purpose provided' }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-        <hr class="bg-info" style="height: 3px;" />
-      </div>
+  <style>
+    body { background: #f4f7f6; }
+    .schedule-shell { color: #172235; margin: 28px auto 44px; max-width: 1240px; padding: 0 16px; }
+    .schedule-header {
+      align-items: center;
+      background: linear-gradient(125deg, #0b4635, #116149 62%, #17785b);
+      border-radius: 18px;
+      box-shadow: 0 16px 38px rgba(16, 78, 59, .17);
+      color: #fff;
+      display: flex;
+      gap: 18px;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      overflow: hidden;
+      padding: 22px 24px;
+      position: relative;
+    }
+    .schedule-header::after {
+      background: rgba(255,255,255,.07);
+      border-radius: 50%;
+      content: "";
+      height: 190px;
+      position: absolute;
+      right: -45px;
+      top: -100px;
+      width: 190px;
+    }
+    .schedule-header > * { position: relative; z-index: 1; }
+    .schedule-eyebrow { color: #bce7d7; font-size: .7rem; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
+    .schedule-title { color: #fff; font-size: clamp(1.35rem, 3vw, 1.85rem); font-weight: 800; letter-spacing: -.025em; margin: 3px 0 0; }
+    .schedule-subtitle { color: rgba(255,255,255,.75); font-size: .85rem; margin-top: 5px; }
+    .schedule-actions { display: flex; flex-wrap: wrap; gap: 7px; }
+    .schedule-actions .btn { border-color: rgba(255,255,255,.3); border-radius: 8px; color: #fff; font-weight: 700; }
+    .schedule-actions .btn:hover { background: #fff; border-color: #fff; color: #0b4635; }
+    .schedule-metrics { display: grid; gap: 9px; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 10px; }
+    .schedule-metric {
+      background: #fff;
+      border: 1px solid #e2e8e5;
+      border-radius: 12px;
+      box-shadow: 0 5px 16px rgba(31,45,61,.04);
+      padding: 12px 14px;
+    }
+    .schedule-metric.primary { background: #123e32; border-color: #123e32; }
+    .schedule-metric span { color: #748075; display: block; font-size: .66rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+    .schedule-metric strong { color: #172235; display: block; font-size: 1rem; margin-top: 4px; }
+    .schedule-metric.primary span { color: #bce7d7; }
+    .schedule-metric.primary strong { color: #fff; }
+    .schedule-terms {
+      align-items: center;
+      background: #fff;
+      border: 1px solid #e2e8e5;
+      border-radius: 11px;
+      color: #66736c;
+      display: flex;
+      flex-wrap: wrap;
+      font-size: .8rem;
+      gap: 8px 18px;
+      margin-bottom: 10px;
+      padding: 10px 13px;
+    }
+    .schedule-terms strong { color: #34453c; }
+    .schedule-card { background: #fff; border: 1px solid #e2e8e5; border-radius: 13px; box-shadow: 0 7px 22px rgba(31,45,61,.05); overflow: hidden; }
+    .schedule-card-head { align-items: center; background: #fbfcfb; border-bottom: 1px solid #e8ecea; display: flex; justify-content: space-between; padding: 11px 14px; }
+    .schedule-card-head h2 { color: #20342a; font-size: .9rem; font-weight: 800; margin: 0; }
+    .schedule-count { color: #748075; font-size: .75rem; font-weight: 700; }
+    .schedule-table { font-size: .82rem; margin: 0; min-width: 740px; }
+    .schedule-table thead th { background: #f0f4f2; border-color: #e2e8e5; color: #53625a; font-size: .66rem; letter-spacing: .055em; padding: 10px; text-transform: uppercase; white-space: nowrap; }
+    .schedule-table tbody td { border-color: #edf0ee; padding: 10px; vertical-align: middle; }
+    .schedule-table tbody tr:hover { background: #f7fbf9; }
+    .installment-number { background: #eaf6f1; border-radius: 50%; color: #116149; display: inline-flex; font-size: .72rem; font-weight: 800; height: 26px; justify-content: center; line-height: 26px; width: 26px; }
+    .payment-total { color: #0b5942; font-weight: 800; }
+    .schedule-empty { color: #68748a; padding: 40px 20px; text-align: center; }
+    @media (max-width: 900px) { .schedule-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 650px) {
+      .schedule-shell { margin: 14px auto 28px; padding: 0 10px; }
+      .schedule-header { align-items: flex-start; border-radius: 14px; flex-direction: column; padding: 19px 17px; }
+      .schedule-actions { width: 100%; }
+      .schedule-actions .btn { flex: 1; }
+      .schedule-metrics { grid-template-columns: 1fr 1fr; }
+      .schedule-metric { padding: 10px; }
+      .schedule-metric strong { font-size: .88rem; }
+    }
+    @media print {
+      body { background: #fff; }
+      .schedule-shell { margin: 0; max-width: none; padding: 0; }
+      .print-hide { display: none !important; }
+      .schedule-header { background: #fff !important; border: 1px solid #bbb; box-shadow: none; color: #111; padding: 12px; }
+      .schedule-title, .schedule-header .schedule-subtitle { color: #111; }
+      .schedule-eyebrow { color: #555; }
+      .schedule-card, .schedule-metric { box-shadow: none; }
+      .table-responsive { overflow: visible; }
+      .schedule-table { min-width: 0; width: 100%; }
+    }
+  </style>
 
-      <!-- Repayment Schedule Table -->
-      <div class="card shadow-sm mb-4">
-        <div class="card-header py-3 bg-primary text-white">
-          <h5 class="m-0 font-weight-bold">Repayment Schedule</h5>
-        </div>
-        <div class="card-body">
-          {% if schedule_unavailable_reason %}
-            <div class="alert alert-info mb-0">
-              <strong>Schedule not ready.</strong> {{ schedule_unavailable_reason }}
-            </div>
-          {% else %}
-          <div class="table-responsive">
-            <table class="table table-bordered table-striped">
-              <thead class="thead-light">
-                <tr>
-                  <th>#</th>
-                  <th>Payment Due Date</th>
-                  <th>Principal Payment</th>
-                  <th>Interest Payment</th>
-                  <th>Total Payment</th>
-                  <th>Remaining Balance</th>
-                </tr>
-              </thead>
-              <tbody>
-                <!-- Starting Amount Row -->
-                <tr>
-                  <td>0</td>
-                  <td>Starting Amount</td>
-                  <td class="text-end">-</td>
-                  <td class="text-end">-</td>
-                  <td class="text-end">-</td>
-                  <td class="text-end">{{ loan.principal_amount|floatformat:'2'|intcomma }}</td>
-                </tr>
-
-                <!-- Payment Rows -->
-                {% for payment in repayment_schedule %}
-                  <tr>
-                    <td>{{ forloop.counter }}</td>
-                    <td>{{ payment.payment_due_date|date:'d/m/Y' }}</td>
-                    <td class="text-end">{{ payment.principal_payment|floatformat:'2'|intcomma }}</td>
-                    <td class="text-end">{{ payment.interest_payment|floatformat:'2'|intcomma }}</td>
-                    <td class="text-end">{{ payment.total_payment|floatformat:'2'|intcomma }}</td>
-                    <td class="text-end">{{ payment.remaining_balance|floatformat:'2'|intcomma }}</td>
-                  </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-          {% endif %}
-        </div>
+  <main class="schedule-shell">
+    <header class="schedule-header">
+      <div>
+        <div class="schedule-eyebrow">Loan #{{ loan.id }}</div>
+        <h1 class="schedule-title">Repayment Schedule</h1>
+        <div class="schedule-subtitle">{{ loan.borrower }} · {{ loan.get_loan_purpose_display|default:loan.loan_purpose }}</div>
       </div>
+      <div class="schedule-actions print-hide">
+        <a href="{% url 'loans:loan_detail' loan.id %}" class="btn btn-outline-light btn-sm"><i class="mdi mdi-arrow-left"></i> Loan Details</a>
+        <button type="button" class="btn btn-outline-light btn-sm" onclick="window.print()"><i class="mdi mdi-printer"></i> Print</button>
+      </div>
+    </header>
+
+    <section class="schedule-metrics">
+      <div class="schedule-metric primary">
+        <span>Monthly Payment</span>
+        <strong>UGX {{ monthly_payment|floatformat:'2'|intcomma }}</strong>
+      </div>
+      <div class="schedule-metric">
+        <span>Principal</span>
+        <strong>UGX {{ loan.principal_amount|floatformat:'2'|intcomma }}</strong>
+      </div>
+      <div class="schedule-metric">
+        <span>Total Interest</span>
+        <strong>UGX {{ total_interest|floatformat:'2'|intcomma }}</strong>
+      </div>
+      <div class="schedule-metric">
+        <span>Total Repayable</span>
+        <strong>UGX {{ total_cost_of_loan|floatformat:'2'|intcomma }}</strong>
+      </div>
+    </section>
+
+    <div class="schedule-terms">
+      <span><strong>{{ loan.loan_period_months }}</strong> months</span>
+      <span><strong>{{ loan.interest_rate|floatformat:1 }}%</strong> interest</span>
+      <span><strong>{{ loan.interest_method|title }}</strong> method</span>
+      {% if loan.due_date %}<span>Final due date <strong>{{ loan.due_date|date:'d M Y' }}</strong></span>{% endif %}
     </div>
 
-    <!-- Action Buttons -->
-    <div class="d-flex justify-content-between mt-4">
-      <a href="{% url 'loans:loan_applications' %}" class="btn btn-outline-secondary"><i class="mdi mdi-arrow-left"></i> Back</a>
-      <button class="btn btn-success" onclick="printDiv('printMe')"><i class="mdi mdi-printer"></i> Print Schedule</button>
-    </div>
-  </div>
+    <section class="schedule-card">
+      <div class="schedule-card-head">
+        <h2>Installments</h2>
+        {% if not schedule_unavailable_reason %}<span class="schedule-count">{{ repayment_schedule|length }} payment{{ repayment_schedule|length|pluralize }}</span>{% endif %}
+      </div>
+      {% if schedule_unavailable_reason %}
+        <div class="schedule-empty">
+          <i class="mdi mdi-calendar-alert d-block fs-3 mb-2"></i>
+          <strong>Schedule not ready</strong>
+          <div class="small mt-1">{{ schedule_unavailable_reason }}</div>
+        </div>
+      {% else %}
+        <div class="table-responsive">
+          <table class="table schedule-table align-middle">
+            <thead>
+              <tr>
+                <th>Payment</th>
+                <th>Due Date</th>
+                <th class="text-end">Principal</th>
+                <th class="text-end">Interest</th>
+                <th class="text-end">Payment Total</th>
+                <th class="text-end">Balance After</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for payment in repayment_schedule %}
+                <tr>
+                  <td><span class="installment-number">{{ forloop.counter }}</span></td>
+                  <td class="fw-semibold">{{ payment.payment_due_date|date:'d M Y' }}</td>
+                  <td class="text-end">UGX {{ payment.principal_payment|floatformat:'2'|intcomma }}</td>
+                  <td class="text-end">UGX {{ payment.interest_payment|floatformat:'2'|intcomma }}</td>
+                  <td class="text-end payment-total">UGX {{ payment.total_payment|floatformat:'2'|intcomma }}</td>
+                  <td class="text-end">UGX {{ payment.remaining_balance|floatformat:'2'|intcomma }}</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="6" class="schedule-empty">No installments are available.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endif %}
+    </section>
+  </main>
 {% endblock %}

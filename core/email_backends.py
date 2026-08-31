@@ -15,9 +15,7 @@ class ResendEmailBackend(BaseEmailBackend):
     def __init__(self, fail_silently=False, **kwargs):
         super().__init__(fail_silently=fail_silently)
         self.api_key = getattr(settings, "RESEND_API_KEY", "")
-        self.api_url = getattr(
-            settings, "RESEND_API_URL", "https://api.resend.com/emails"
-        )
+        self.api_url = getattr(settings, "RESEND_API_URL", "https://api.resend.com/emails")
         self.timeout = getattr(settings, "EMAIL_TIMEOUT", 10)
 
     def send_messages(self, email_messages):
@@ -26,9 +24,7 @@ class ResendEmailBackend(BaseEmailBackend):
         if not self.api_key:
             if self.fail_silently:
                 return 0
-            raise ValueError(
-                "RESEND_API_KEY is required when using ResendEmailBackend."
-            )
+            raise ValueError("RESEND_API_KEY is required when using ResendEmailBackend.")
 
         sent_count = 0
         for message in email_messages:
@@ -52,9 +48,7 @@ class ResendEmailBackend(BaseEmailBackend):
                 response.raise_for_status()
                 sent_count += 1
             except Exception:
-                logger.exception(
-                    "Failed to send email through Resend: %s", message.subject
-                )
+                logger.exception("Failed to send email through Resend: %s", message.subject)
                 if not self.fail_silently:
                     raise
         return sent_count

@@ -6,7 +6,12 @@
   .loan-dashboard {
     color: #243447;
     margin-top: -14px;
-    padding: 0 0 24px;
+    padding: 0 0 32px;
+    --loan-ink: #172b3f;
+    --loan-muted: #667085;
+    --loan-border: #e3e9ef;
+    --loan-green: #13745d;
+    --loan-shadow: 0 12px 30px rgba(31, 50, 70, .07);
   }
   .loan-header,
   .panel-head,
@@ -17,11 +22,27 @@
     justify-content: space-between;
   }
   .loan-header {
-    margin-bottom: 14px;
+    background: linear-gradient(125deg, #123b36 0%, #176b59 58%, #21836c 100%);
+    border-radius: 18px;
+    box-shadow: 0 16px 36px rgba(18, 59, 54, .18);
+    margin-bottom: 18px;
+    overflow: hidden;
+    padding: 24px 26px;
+    position: relative;
+  }
+  .loan-header::after {
+    border: 24px solid rgba(255,255,255,.06);
+    border-radius: 50%;
+    content: '';
+    height: 180px;
+    position: absolute;
+    right: -35px;
+    top: -70px;
+    width: 180px;
   }
   .loan-title h1 {
-    color: #1f2933;
-    font-size: 1.48rem;
+    color: #fff;
+    font-size: clamp(1.45rem, 2.2vw, 2rem);
     font-weight: 900;
     letter-spacing: 0;
     margin: 0 0 4px;
@@ -32,12 +53,35 @@
     color: #667085;
     margin: 0;
   }
+  .loan-title p { color: rgba(255,255,255,.76); }
+  .loan-title,
+  .loan-actions { position: relative; z-index: 1; }
   .loan-actions {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
     justify-content: flex-end;
   }
+  .loan-actions .btn {
+    align-items: center;
+    border-radius: 10px;
+    display: inline-flex;
+    font-weight: 800;
+    gap: 6px;
+    min-height: 38px;
+    padding: 8px 13px;
+  }
+  .loan-actions .btn-primary {
+    background: #fff;
+    border-color: #fff;
+    color: #135b4c;
+  }
+  .loan-actions .btn-outline-secondary {
+    background: rgba(255,255,255,.08);
+    border-color: rgba(255,255,255,.35);
+    color: #fff;
+  }
+  .loan-actions .btn:hover { transform: translateY(-1px); }
   .risk-grid,
   .pipeline-grid,
   .chart-grid,
@@ -47,44 +91,63 @@
   }
   .risk-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    margin-bottom: 14px;
+    margin-bottom: 18px;
   }
   .pipeline-grid {
     grid-template-columns: repeat(6, minmax(0, 1fr));
-    margin-bottom: 14px;
+    margin-bottom: 18px;
   }
   .chart-grid {
     grid-template-columns: repeat(12, minmax(0, 1fr));
-    margin-bottom: 14px;
+    margin-bottom: 18px;
   }
   .finance-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    margin-bottom: 14px;
+    margin-bottom: 18px;
   }
   .loan-panel,
   .risk-card,
   .pipeline-card {
     background: #fff;
-    border: 1px solid #dfe5ec;
-    border-radius: 8px;
+    border: 1px solid var(--loan-border);
+    border-radius: 14px;
+    box-shadow: var(--loan-shadow);
   }
   .risk-card,
   .pipeline-card {
     color: inherit;
     display: block;
-    min-height: 112px;
-    padding: 15px;
+    min-height: 142px;
+    overflow: hidden;
+    padding: 18px 20px;
+    position: relative;
+    transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
     text-decoration: none;
   }
   .risk-card:hover,
   .pipeline-card:hover {
     border-color: #b8c2cf;
+    box-shadow: 0 16px 34px rgba(31, 50, 70, .11);
     color: inherit;
     text-decoration: none;
+    transform: translateY(-2px);
   }
-  .risk-card.warning { border-left: 5px solid #d99421; }
-  .risk-card.danger { border-left: 5px solid #d84d4d; }
-  .risk-card.primary { border-left: 5px solid #2563eb; }
+  .risk-card::after {
+    border-radius: 50%;
+    content: '';
+    height: 92px;
+    opacity: .11;
+    position: absolute;
+    right: -22px;
+    top: -24px;
+    width: 92px;
+  }
+  .risk-card.warning { border-top: 4px solid #d99421; }
+  .risk-card.warning::after { background: #d99421; }
+  .risk-card.danger { border-top: 4px solid #d84d4d; }
+  .risk-card.danger::after { background: #d84d4d; }
+  .risk-card.primary { border-top: 4px solid #2563eb; }
+  .risk-card.primary::after { background: #2563eb; }
   .eyebrow {
     color: #667085;
     display: block;
@@ -96,7 +159,7 @@
   .pipeline-card strong {
     color: #1f2933;
     display: block;
-    font-size: 1.55rem;
+    font-size: 1.8rem;
     font-weight: 900;
     line-height: 1.1;
     margin: 8px 0;
@@ -108,12 +171,20 @@
     overflow-wrap: anywhere;
   }
   .pipeline-card {
-    min-height: 98px;
+    min-height: 112px;
+    padding: 16px;
   }
   .pipeline-card i {
+    align-items: center;
+    background: #e9f6f1;
+    border-radius: 10px;
     color: #13745d;
+    display: flex;
     float: right;
-    font-size: 1.15rem;
+    font-size: 1.05rem;
+    height: 34px;
+    justify-content: center;
+    width: 34px;
   }
   .span-4 { grid-column: span 4; }
   .span-5 { grid-column: span 5; }
@@ -121,7 +192,7 @@
   .span-7 { grid-column: span 7; }
   .span-12 { grid-column: span 12; }
   .loan-panel {
-    padding: 16px;
+    padding: 20px;
   }
   .panel-head,
   .activity-header {
@@ -130,7 +201,7 @@
   .panel-head h2,
   .activity-header h2 {
     color: #26384d;
-    font-size: 1rem;
+    font-size: 1.05rem;
     font-weight: 900;
     margin: 0;
   }
@@ -176,6 +247,8 @@
     margin-bottom: 0;
   }
   .activity-table thead th {
+    background: #f8fafc;
+    border-bottom: 1px solid #e5eaf0;
     color: #667085;
     font-size: .74rem;
     font-weight: 900;
@@ -214,6 +287,26 @@
     color: #8792a2;
     text-align: center;
   }
+  .activity-table tbody td { border-color: #edf1f5; padding-bottom: 12px; padding-top: 12px; }
+  .activity-table tbody tr:hover { background: #fbfcfd; }
+  .section-kicker {
+    align-items: center;
+    color: #536273;
+    display: flex;
+    font-size: .76rem;
+    font-weight: 900;
+    gap: 8px;
+    letter-spacing: .07em;
+    margin: 0 0 9px 2px;
+    text-transform: uppercase;
+  }
+  .section-kicker::before {
+    background: var(--loan-green);
+    border-radius: 4px;
+    content: '';
+    height: 7px;
+    width: 7px;
+  }
   @media (max-width: 1200px) {
     .pipeline-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .span-4,
@@ -230,11 +323,14 @@
     .panel-head,
     .activity-header { align-items: flex-start; flex-direction: column; }
     .loan-actions { justify-content: flex-start; width: 100%; }
+    .loan-header { border-radius: 14px; padding: 20px; }
+    .loan-actions .btn { flex: 1 1 auto; justify-content: center; }
     .pipeline-grid { grid-template-columns: 1fr; }
     .chart-box,
     .chart-box.short { height: 240px; }
     .amount-list div { align-items: flex-start; flex-direction: column; gap: 4px; }
     .amount-list strong { text-align: left; }
+    .loan-panel { padding: 16px; }
   }
 </style>
 
@@ -251,6 +347,7 @@
     </nav>
   </header>
 
+  <p class="section-kicker">Portfolio watch</p>
   <section class="risk-grid" aria-label="Loan risk summary">
     <a href="{% url 'loans:due_overdue_report' %}" class="risk-card warning">
       <span class="eyebrow">Due Today</span>
@@ -273,6 +370,7 @@
     </div>
   </section>
 
+  <p class="section-kicker">Loan pipeline</p>
   <section class="pipeline-grid" aria-label="Loan pipeline">
     <a href="{% url 'loans:loan_applications' %}" class="pipeline-card"><i class="bi bi-person-plus"></i><span class="eyebrow">New</span><strong>{{ new_loan_applications|intcomma }}</strong></a>
     <a href="{% url 'loans:approved_loans' %}" class="pipeline-card"><i class="bi bi-check2-circle"></i><span class="eyebrow">Approved</span><strong>{{ approved_loans|intcomma }}</strong></a>
@@ -282,6 +380,7 @@
     <a href="{% url 'loans:rejected_loans' %}" class="pipeline-card"><i class="bi bi-x-circle"></i><span class="eyebrow">Rejected</span><strong>{{ rejected_loans|intcomma }}</strong></a>
   </section>
 
+  <p class="section-kicker">Performance overview</p>
   <section class="chart-grid">
     <div class="loan-panel span-7">
       <div class="panel-head">
@@ -320,6 +419,7 @@
     </div>
   </section>
 
+  <p class="section-kicker">Financial position</p>
   <section class="finance-grid">
     <div class="loan-panel">
       <div class="panel-head">

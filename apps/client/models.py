@@ -26,11 +26,7 @@ class Client(models.Model):
     full_name = models.CharField(
         max_length=50,
         verbose_name="Full Name",
-        validators=[
-            RegexValidator(
-                r"^[A-Za-z]+(?:\s[A-Za-z]+)*$", "Only letters and spaces are allowed"
-            )
-        ],
+        validators=[RegexValidator(r"^[A-Za-z]+(?:\s[A-Za-z]+)*$", "Only letters and spaces are allowed")],
     )
     email = models.EmailField(
         verbose_name="Email",
@@ -49,9 +45,7 @@ class Client(models.Model):
         null=True,
         blank=True,
     )
-    mobile_telephone = PhoneNumberField(
-        verbose_name="Mobile Telephone", null=True, blank=True, default="+256999999999"
-    )
+    mobile_telephone = PhoneNumberField(verbose_name="Mobile Telephone", null=True, blank=True, default="+256999999999")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created at")
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -152,9 +146,7 @@ class SevenHillsRegistration(models.Model):
     next_of_kin = models.CharField(max_length=255, blank=True, null=True)
     next_of_kin_telephone_1 = PhoneNumberField(blank=True, null=True)
     next_of_kin_telephone_2 = PhoneNumberField(blank=True, null=True)
-    relationship_with_next_of_kin = models.CharField(
-        max_length=255, blank=True, null=True
-    )
+    relationship_with_next_of_kin = models.CharField(max_length=255, blank=True, null=True)
 
     workplace = models.CharField(max_length=255, blank=True, null=True)
 
@@ -163,12 +155,8 @@ class SevenHillsRegistration(models.Model):
         ("Weekly", "Weekly"),
         ("Monthly", "Monthly"),
     ]
-    savings_frequency = models.CharField(
-        max_length=10, choices=SAVINGS_FREQUENCY_CHOICES, blank=True, null=True
-    )
-    min_savings_amount = models.DecimalField(
-        max_digits=10, decimal_places=2, blank=True, null=True
-    )
+    savings_frequency = models.CharField(max_length=10, choices=SAVINGS_FREQUENCY_CHOICES, blank=True, null=True)
+    min_savings_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     saving_goal = models.TextField(blank=True, null=True)
 
     SERVICES_INTERESTED = [
@@ -207,14 +195,10 @@ class SevenHillsRegistration(models.Model):
     def clean(self):
         # Validate that date_of_birth is not in the future
         if self.date_of_birth and self.date_of_birth > datetime.date.today():
-            raise ValidationError(
-                {"date_of_birth": "Date of birth cannot be in the future."}
-            )
+            raise ValidationError({"date_of_birth": "Date of birth cannot be in the future."})
         # Validate that registration_date is not in the future
         if self.registration_date and self.registration_date > datetime.date.today():
-            raise ValidationError(
-                {"registration_date": "Registration date cannot be in the future."}
-            )
+            raise ValidationError({"registration_date": "Registration date cannot be in the future."})
         # Call the parent clean method to ensure other validations still work
         super().clean()
 
@@ -233,12 +217,7 @@ class SevenHillsRegistration(models.Model):
         }
         if self.services_interested:
             selected_services = self.services_interested.split(",")
-            return ", ".join(
-                [
-                    services_dict.get(service.strip(), service)
-                    for service in selected_services
-                ]
-            )
+            return ", ".join([services_dict.get(service.strip(), service) for service in selected_services])
         return ""
 
     # Convert ministry_groups field (comma-separated string) to human-readable form
@@ -255,12 +234,7 @@ class SevenHillsRegistration(models.Model):
         }
         if self.ministry_groups:
             selected_ministries = self.ministry_groups.split(",")
-            return ", ".join(
-                [
-                    ministries_dict.get(ministry.strip(), ministry)
-                    for ministry in selected_ministries
-                ]
-            )
+            return ", ".join([ministries_dict.get(ministry.strip(), ministry) for ministry in selected_ministries])
         return ""
 
     @property
@@ -277,9 +251,6 @@ class SevenHillsRegistration(models.Model):
         age = (
             today.year
             - self.date_of_birth.year
-            - (
-                (today.month, today.day)
-                < (self.date_of_birth.month, self.date_of_birth.day)
-            )
+            - ((today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day))
         )
         return age

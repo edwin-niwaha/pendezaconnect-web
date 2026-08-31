@@ -65,12 +65,8 @@ class ChartOfAccounts(models.Model):
     ]
 
     account_name = models.CharField(max_length=255, verbose_name="Account Name")
-    account_type = models.CharField(
-        max_length=50, choices=ACCOUNT_TYPE_CHOICES, verbose_name="Account Type"
-    )
-    account_number = models.CharField(
-        max_length=20, unique=True, verbose_name="Account Number"
-    )
+    account_type = models.CharField(max_length=50, choices=ACCOUNT_TYPE_CHOICES, verbose_name="Account Type")
+    account_number = models.CharField(max_length=20, unique=True, verbose_name="Account Number")
     description = models.TextField(blank=True, null=True, verbose_name="Description")
 
     class Meta:
@@ -84,9 +80,7 @@ class ChartOfAccounts(models.Model):
 
     def clean(self):
         if not self.account_number.isdigit():
-            raise ValidationError(
-                "Account number must contain only numeric characters."
-            )
+            raise ValidationError("Account number must contain only numeric characters.")
         if self.account_type not in dict(self.ACCOUNT_TYPE_CHOICES):
             raise ValidationError(f"Invalid account type: {self.account_type}")
 
@@ -111,7 +105,6 @@ class ChartOfAccounts(models.Model):
 
 
 class Loan(models.Model):
-
     #  State Machine:
     #  pending → boo_approved → hof_approved → ed_approved → approved
     #  → disbursed → overdue / repaid / closed
@@ -191,9 +184,7 @@ class Loan(models.Model):
         null=True,
         verbose_name="Disbursement Date",
     )
-    loan_period_months = models.PositiveIntegerField(
-        verbose_name="Loan Period (Months)"
-    )
+    loan_period_months = models.PositiveIntegerField(verbose_name="Loan Period (Months)")
     due_date = models.DateField(blank=True, null=True, verbose_name="Due Date")
     status = models.CharField(
         max_length=20,
@@ -246,9 +237,7 @@ class Loan(models.Model):
         related_name="loans_ed_approved",
         verbose_name="ED Approved By",
     )
-    approved_date = models.DateField(
-        blank=True, null=True, verbose_name="Approval Date"
-    )
+    approved_date = models.DateField(blank=True, null=True, verbose_name="Approval Date")
     reason_for_rejection = models.TextField(
         null=True,
         blank=True,
@@ -331,27 +320,19 @@ class Loan(models.Model):
     def clean(self):
         if self.start_date and self.start_date > date.today():
             raise ValidationError({"start_date": "Start date cannot be in the future."})
-        if (
-            self.due_date
-            and self.disbursement_date
-            and self.due_date <= self.disbursement_date
-        ):
+        if self.due_date and self.disbursement_date and self.due_date <= self.disbursement_date:
             raise ValidationError("Due date must be after the disbursement date.")
         if self.loan_period_months is not None and self.loan_period_months <= 0:
             raise ValidationError("Loan period must be a positive integer.")
         if self.status == "disbursed" and not self.disbursement_date:
-            raise ValidationError(
-                {"disbursement_date": "Disbursed loans must have a disbursement date."}
-            )
+            raise ValidationError({"disbursement_date": "Disbursed loans must have a disbursement date."})
 
     # ── Computed properties ───────────────────────────────────────────────────
 
     @property
     def total_repayable(self) -> Decimal:
         """Principal + total interest. Safe when total_interest is NULL."""
-        return (self.principal_amount or Decimal("0")) + (
-            self.total_interest or Decimal("0")
-        )
+        return (self.principal_amount or Decimal("0")) + (self.total_interest or Decimal("0"))
 
     @property
     def monthly_installment(self) -> Decimal:
@@ -367,9 +348,7 @@ class Loan(models.Model):
 
     def calculate_due_date(self):
         if self.disbursement_date and self.loan_period_months:
-            self.due_date = self.disbursement_date + relativedelta(
-                months=self.loan_period_months
-            )
+            self.due_date = self.disbursement_date + relativedelta(months=self.loan_period_months)
 
     def calculate_interest(self):
         """
@@ -379,9 +358,9 @@ class Loan(models.Model):
         """
         if self.interest_method == "flat_rate":
             if self.principal_amount is not None and self.interest_rate is not None:
-                self.total_interest = (
-                    self.principal_amount * Decimal(self.interest_rate) / Decimal(100)
-                ).quantize(Decimal("0.01"), rounding=ROUND_DOWN)
+                self.total_interest = (self.principal_amount * Decimal(self.interest_rate) / Decimal(100)).quantize(
+                    Decimal("0.01"), rounding=ROUND_DOWN
+                )
 
         elif self.interest_method == "reducing_rate":
             monthly_rate = Decimal(self.interest_rate) / Decimal(100) / Decimal(12)
@@ -394,9 +373,7 @@ class Loan(models.Model):
                 )
                 total_interest += interest_payment
                 current_balance -= self.principal_amount / self.loan_period_months
-            self.total_interest = total_interest.quantize(
-                Decimal("0.01"), rounding=ROUND_DOWN
-            )
+            self.total_interest = total_interest.quantize(Decimal("0.01"), rounding=ROUND_DOWN)
 
     def calculate_monthly_payment(self):
         """Kept for backwards compatibility — delegates to monthly_installment."""
@@ -404,26 +381,18 @@ class Loan(models.Model):
             return self.monthly_installment
         elif self.interest_method == "reducing_rate":
             monthly_rate = Decimal(self.interest_rate) / Decimal(100) / Decimal(12)
-            return (self.principal_amount * monthly_rate) / (
-                1 - (1 + monthly_rate) ** -self.loan_period_months
-            )
+            return (self.principal_amount * monthly_rate) / (1 - (1 + monthly_rate) ** -self.loan_period_months)
 
     def calculate_interest_payment(self, current_balance):
         """Per-month interest used by generate_payment_schedule."""
         if self.interest_method == "flat_rate":
-            return (
-                self.principal_amount * Decimal(self.interest_rate) / Decimal(100)
-            ) / self.loan_period_months
+            return (self.principal_amount * Decimal(self.interest_rate) / Decimal(100)) / self.loan_period_months
         elif self.interest_method == "reducing_rate":
             monthly_rate = Decimal(self.interest_rate) / Decimal(100) / Decimal(12)
             return current_balance * monthly_rate
 
     def generate_payment_schedule(self):
-        if (
-            not self.disbursement_date
-            or not self.loan_period_months
-            or self.loan_period_months <= 0
-        ):
+        if not self.disbursement_date or not self.loan_period_months or self.loan_period_months <= 0:
             return []
 
         schedule = []
@@ -441,9 +410,7 @@ class Loan(models.Model):
                     "principal_payment": principal_payment,
                     "interest_payment": interest_payment,
                     "total_payment": principal_payment + interest_payment,
-                    "remaining_balance": max(
-                        current_balance - principal_payment, Decimal("0")
-                    ),
+                    "remaining_balance": max(current_balance - principal_payment, Decimal("0")),
                 }
             )
             current_balance -= principal_payment
@@ -463,17 +430,16 @@ class Loan(models.Model):
             paid_interest=Sum("interest_payment"),
             paid_penalty=Sum("penalty_payment"),
         )
-        unpaid_penalties = self.penalties.filter(
-            is_paid=False, is_deleted=False
-        ).aggregate(total=Sum("remaining_amount"))["total"] or Decimal("0.00")
+        unpaid_penalties = self.penalties.filter(is_paid=False, is_deleted=False).aggregate(
+            total=Sum("remaining_amount")
+        )["total"] or Decimal("0.00")
         return {
             "principal_balance": max(
                 self.principal_amount - (totals["paid_principal"] or Decimal("0")),
                 Decimal("0.00"),
             ),
             "interest_balance": max(
-                (self.total_interest or Decimal("0"))
-                - (totals["paid_interest"] or Decimal("0")),
+                (self.total_interest or Decimal("0")) - (totals["paid_interest"] or Decimal("0")),
                 Decimal("0.00"),
             ),
             "penalty_balance": max(
@@ -493,9 +459,7 @@ class Loan(models.Model):
         }
 
     def is_active_for_reporting(self) -> bool:
-        return (
-            self.status in self.ACTIVE_STATUSES and self.disbursement_date is not None
-        )
+        return self.status in self.ACTIVE_STATUSES and self.disbursement_date is not None
 
     @property
     def attached_documents(self):
@@ -532,16 +496,10 @@ class Loan(models.Model):
         role = getattr(getattr(user, "profile", None), "role", None)
         key = (self.status, role)
         if key not in self.APPROVAL_TRANSITIONS:
-            raise ValidationError(
-                "You are not authorized to approve this loan at this stage."
-            )
+            raise ValidationError("You are not authorized to approve this loan at this stage.")
         if not self.has_required_documents:
-            missing = ", ".join(
-                item["label"] for item in self.missing_required_documents
-            )
-            raise ValidationError(
-                f"Required supporting documents are missing: {missing}."
-            )
+            missing = ", ".join(item["label"] for item in self.missing_required_documents)
+            raise ValidationError(f"Required supporting documents are missing: {missing}.")
         new_status, approved_by_field = self.APPROVAL_TRANSITIONS[key]
         self.status = new_status
         setattr(self, approved_by_field, user)
@@ -557,9 +515,7 @@ class Loan(models.Model):
             "hof_approved": "ed_rejected",
         }
         if self.status not in rejection_map:
-            raise ValidationError(
-                f"Loan {self.id} cannot be rejected at status '{self.status}'."
-            )
+            raise ValidationError(f"Loan {self.id} cannot be rejected at status '{self.status}'.")
         self.status = rejection_map[self.status]
         self.reason_for_rejection = reason
         self.save()
@@ -571,39 +527,35 @@ class Loan(models.Model):
         if self.status in self.REJECTED_STATUSES:
             raise ValidationError("Rejected loans cannot be disbursed.")
         if not disbursement_date:
-            raise ValidationError(
-                {"disbursement_date": "Disbursement date is required."}
-            )
+            raise ValidationError({"disbursement_date": "Disbursement date is required."})
         if disbursement_date < self.start_date:
-            raise ValidationError(
-                "Disbursement date cannot be before the loan application date."
-            )
+            raise ValidationError("Disbursement date cannot be before the loan application date.")
         self.disbursement_date = disbursement_date
         self.status = "disbursed"
         if not self.account:
             try:
                 self.account = ChartOfAccounts.objects.get(account_number="1050")
             except ChartOfAccounts.DoesNotExist:
-                raise ValidationError(
-                    "Default loan account missing. Please contact support."
-                )
+                raise ValidationError("Default loan account missing. Please contact support.")
         self.calculate_due_date()
         self.calculate_interest()
         self.full_clean(exclude=["applied_by"])
-        Loan.objects.filter(pk=self.pk).update(
-            account=self.account,
-            disbursement_date=self.disbursement_date,
-            due_date=self.due_date,
-            status=self.status,
-            total_interest=self.total_interest,
-            updated_at=timezone.now(),
+        super().save(
+            update_fields=(
+                "account",
+                "disbursement_date",
+                "due_date",
+                "status",
+                "total_interest",
+                "updated_at",
+            )
         )
         return self
 
     def update_status(self):
         """
-        Uses queryset .update() to avoid calling self.save() recursively.
-        Only writes to the DB when the status actually changes.
+        Bypasses this model's save override while preserving Django signals.
+        Only writes when the status actually changes.
         """
         if self.status in self.FINAL_STATUSES:
             return
@@ -620,7 +572,7 @@ class Loan(models.Model):
 
         if new_status != self.status:
             self.status = new_status
-            Loan.objects.filter(pk=self.pk).update(status=new_status)
+            super().save(update_fields=("status", "updated_at"))
 
     def calculate_total_amount_due_balance(self, due_date, total_amount_due):
         try:
@@ -628,9 +580,7 @@ class Loan(models.Model):
                 due_date = due_date.date()
 
             if not isinstance(due_date, date):
-                logger.error(
-                    "Invalid due_date type for Loan %s: %s", self.id, type(due_date)
-                )
+                logger.error("Invalid due_date type for Loan %s: %s", self.id, type(due_date))
                 raise ValidationError("due_date must be a date object")
             if not isinstance(total_amount_due, (Decimal, int, float)):
                 logger.error(
@@ -650,13 +600,9 @@ class Loan(models.Model):
                 + (repayments["total_interest"] or Decimal("0.00"))
                 + (repayments["total_penalty"] or Decimal("0.00"))
             )
-            total_penalty = self.penalties.filter(
-                penalty_date__lte=due_date, is_paid=False
-            ).aggregate(total=Sum("penalty_amount", default=Decimal("0.00")))[
-                "total"
-            ] or Decimal(
-                "0.00"
-            )
+            total_penalty = self.penalties.filter(penalty_date__lte=due_date, is_paid=False).aggregate(
+                total=Sum("penalty_amount", default=Decimal("0.00"))
+            )["total"] or Decimal("0.00")
             return max(
                 Decimal(str(total_amount_due)) + total_penalty - total_paid,
                 Decimal("0.00"),
@@ -680,9 +626,7 @@ class Loan(models.Model):
             try:
                 self.account = ChartOfAccounts.objects.get(account_number="1050")
             except ChartOfAccounts.DoesNotExist:
-                raise ValidationError(
-                    "Default loan account missing. Please contact support."
-                )
+                raise ValidationError("Default loan account missing. Please contact support.")
 
         self.calculate_due_date()
         self.calculate_interest()
@@ -715,10 +659,7 @@ class Loan(models.Model):
 
 
 class LoanDisbursement(models.Model):
-
-    loan = models.ForeignKey(
-        Loan, on_delete=models.CASCADE, related_name="disbursements"
-    )
+    loan = models.ForeignKey(Loan, on_delete=models.CASCADE, related_name="disbursements")
     account = models.ForeignKey(
         ChartOfAccounts,
         on_delete=models.CASCADE,
@@ -761,20 +702,14 @@ class LoanDisbursement(models.Model):
         if not self.loan_id:
             errors["loan"] = "Please select a loan to disburse."
         elif self.loan.status != "disbursed":
-            errors["loan"] = (
-                "Create a disbursement only after the loan has been marked disbursed."
-            )
+            errors["loan"] = "Create a disbursement only after the loan has been marked disbursed."
         elif not self.loan.disbursement_date:
             errors["loan"] = "Disbursed loans must have a disbursement date."
-        elif (
-            LoanDisbursement.objects.filter(loan=self.loan).exclude(pk=self.pk).exists()
-        ):
+        elif LoanDisbursement.objects.filter(loan=self.loan).exclude(pk=self.pk).exists():
             errors["loan"] = "This loan already has a recorded disbursement."
 
         if self.account_id and self.account.account_type != "asset":
-            errors["account"] = (
-                "Disbursement must be paid from an asset cash or bank account."
-            )
+            errors["account"] = "Disbursement must be paid from an asset cash or bank account."
 
         if errors:
             raise ValidationError(errors)
@@ -801,12 +736,8 @@ class LoanDisbursement(models.Model):
         desc = self.description or f"Loan disbursement — Loan {self.loan.id}"
 
         # Principal legs
-        _post_transaction(
-            self.loan, self.loan.account, "debit", self.disbursed_amount, desc, d
-        )
-        _post_transaction(
-            self.loan, self.account, "credit", self.disbursed_amount, desc, d
-        )
+        _post_transaction(self.loan, self.loan.account, "debit", self.disbursed_amount, desc, d)
+        _post_transaction(self.loan, self.account, "credit", self.disbursed_amount, desc, d)
 
         # Interest legs
         try:
@@ -816,12 +747,8 @@ class LoanDisbursement(models.Model):
             raise ValueError(f"Required chart-of-accounts entry missing: {exc}")
 
         interest_desc = f"Interest receivable for Loan {self.loan.id}"
-        _post_transaction(
-            self.loan, ir, "debit", self.interest_amount, interest_desc, d
-        )
-        _post_transaction(
-            self.loan, ii, "credit", self.interest_amount, interest_desc, d
-        )
+        _post_transaction(self.loan, ir, "debit", self.interest_amount, interest_desc, d)
+        _post_transaction(self.loan, ii, "credit", self.interest_amount, interest_desc, d)
 
     # Keep old name as alias so any existing callers don't break
     def create_transaction_entries(self):
@@ -844,7 +771,6 @@ class LoanDisbursement(models.Model):
 
 
 class LoanRepayment(models.Model):
-
     loan = models.ForeignKey(
         Loan,
         on_delete=models.CASCADE,
@@ -852,12 +778,8 @@ class LoanRepayment(models.Model):
         db_index=False,  # covered by composite index below
     )
     repayment_date = models.DateField()
-    principal_payment = models.DecimalField(
-        max_digits=15, decimal_places=2, default=Decimal("0.00")
-    )
-    interest_payment = models.DecimalField(
-        max_digits=15, decimal_places=2, default=Decimal("0.00")
-    )
+    principal_payment = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal("0.00"))
+    interest_payment = models.DecimalField(max_digits=15, decimal_places=2, default=Decimal("0.00"))
     penalty_payment = models.DecimalField(
         max_digits=15,
         decimal_places=2,
@@ -883,9 +805,7 @@ class LoanRepayment(models.Model):
         ordering = ["-repayment_date"]
         indexes = [
             # NEW — core balance query: repayments for a loan up to a cutoff date
-            models.Index(
-                fields=["loan", "repayment_date"], name="repayment_loan_date_idx"
-            ),
+            models.Index(fields=["loan", "repayment_date"], name="repayment_loan_date_idx"),
             # EXISTING — kept unchanged
             models.Index(fields=["repayment_date"]),
         ]
@@ -899,40 +819,26 @@ class LoanRepayment(models.Model):
         if not self.loan_id:
             raise ValidationError("Please select a loan.")
         if self.loan.status not in Loan.ACTIVE_STATUSES:
-            raise ValidationError(
-                "Repayments can only be recorded for active disbursed or overdue loans."
-            )
+            raise ValidationError("Repayments can only be recorded for active disbursed or overdue loans.")
 
         balances = self.loan.calculate_remaining_balances()
         errors = {}
 
         total_balance = sum(balances.values())
-        total_payment = (
-            self.principal_payment + self.interest_payment + self.penalty_payment
-        )
+        total_payment = self.principal_payment + self.interest_payment + self.penalty_payment
 
         if total_payment <= 0:
-            raise ValidationError(
-                "At least one payment amount must be greater than zero."
-            )
+            raise ValidationError("At least one payment amount must be greater than zero.")
         if total_payment > total_balance:
             raise ValidationError(
                 f"Repayment of {total_payment:,.2f} exceeds remaining balance of {total_balance:,.2f}."
             )
         if self.repayment_date and self.repayment_date > timezone.localdate():
             errors["repayment_date"] = "Repayment date cannot be in the future."
-        if (
-            self.repayment_date
-            and self.loan.disbursement_date
-            and self.repayment_date < self.loan.disbursement_date
-        ):
-            errors["repayment_date"] = (
-                "Repayment date cannot be before the loan disbursement date."
-            )
+        if self.repayment_date and self.loan.disbursement_date and self.repayment_date < self.loan.disbursement_date:
+            errors["repayment_date"] = "Repayment date cannot be before the loan disbursement date."
         if self.account_id and self.account.account_type != "asset":
-            errors["account"] = (
-                "Repayment must be received into an asset cash or bank account."
-            )
+            errors["account"] = "Repayment must be received into an asset cash or bank account."
         if self.principal_payment > balances["principal_balance"]:
             errors["principal_payment"] = (
                 f"Principal payment of {self.principal_payment:,.2f} exceeds "
@@ -1001,9 +907,7 @@ class LoanRepayment(models.Model):
         which would double-post accounting entries.
         """
         remaining = self.penalty_payment
-        for penalty in self.loan.penalties.filter(is_paid=False).order_by(
-            "penalty_date"
-        ):
+        for penalty in self.loan.penalties.filter(is_paid=False).order_by("penalty_date"):
             if remaining <= 0:
                 break
             payable = penalty.remaining_amount or penalty.penalty_amount
@@ -1033,10 +937,7 @@ class LoanRepayment(models.Model):
         return ChartOfAccounts.objects.get(account_number="1071")
 
     def __str__(self):
-        return (
-            f"Repayment for Loan {self.loan.id} on {self.repayment_date}"
-            f" - Total Payment: {self.total_payment}"
-        )
+        return f"Repayment for Loan {self.loan.id} on {self.repayment_date}" f" - Total Payment: {self.total_payment}"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1052,7 +953,6 @@ class LoanRepayment(models.Model):
 
 
 class LoanPenalty(models.Model):
-
     loan = models.ForeignKey(
         Loan,
         on_delete=models.CASCADE,
@@ -1060,9 +960,7 @@ class LoanPenalty(models.Model):
         db_index=False,  # covered by composite index below
     )
     penalty_date = models.DateField(default=timezone.now, verbose_name="Penalty Date")
-    penalty_amount = models.DecimalField(
-        max_digits=15, decimal_places=2, verbose_name="Penalty Amount"
-    )
+    penalty_amount = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Penalty Amount")
     remaining_amount = models.DecimalField(
         max_digits=15,
         decimal_places=2,
@@ -1115,17 +1013,13 @@ class LoanPenalty(models.Model):
         if self.penalty_amount is not None and self.penalty_amount <= 0:
             errors["penalty_amount"] = "Penalty amount must be positive."
         if self.remaining_amount is None or self.remaining_amount < 0:
-            errors["remaining_amount"] = (
-                "Remaining penalty amount cannot be negative or null."
-            )
+            errors["remaining_amount"] = "Remaining penalty amount cannot be negative or null."
         if (
             self.remaining_amount is not None
             and self.penalty_amount is not None
             and self.remaining_amount > self.penalty_amount
         ):
-            errors["remaining_amount"] = (
-                "Remaining penalty amount cannot exceed the original penalty."
-            )
+            errors["remaining_amount"] = "Remaining penalty amount cannot exceed the original penalty."
         if self.penalty_date and self.penalty_date > timezone.localdate():
             errors["penalty_date"] = "Penalty date cannot be in the future."
         if (
@@ -1134,9 +1028,7 @@ class LoanPenalty(models.Model):
             and self.penalty_date
             and self.penalty_date < self.loan.disbursement_date
         ):
-            errors["penalty_date"] = (
-                "Penalty date cannot be before the loan disbursement date."
-            )
+            errors["penalty_date"] = "Penalty date cannot be before the loan disbursement date."
         if self.account_id and self.account.account_type != "asset":
             errors["account"] = "Penalty receivable account must be an asset account."
         if errors:
@@ -1212,7 +1104,6 @@ class LoanPenalty(models.Model):
 
 
 class TransactionHistory(models.Model):
-
     TRANSACTION_TYPE_CHOICES = [
         ("credit", "Credit"),
         ("debit", "Debit"),
@@ -1244,9 +1135,7 @@ class TransactionHistory(models.Model):
             # NEW — ledger view: all transactions for a loan ordered by date
             models.Index(fields=["loan", "transaction_date"], name="txn_loan_date_idx"),
             # NEW — account statement: all entries for a COA account
-            models.Index(
-                fields=["account", "transaction_date"], name="txn_account_date_idx"
-            ),
+            models.Index(fields=["account", "transaction_date"], name="txn_account_date_idx"),
             # NEW — debit/credit filter within a date range
             models.Index(
                 fields=["transaction_type", "transaction_date"],
@@ -1280,9 +1169,7 @@ class LoanApplicationDocument(models.Model):
     file = CloudinaryField(
         "loan_documents",
         resource_type="auto",
-        validators=[
-            FileExtensionValidator(allowed_extensions=LOAN_DOCUMENT_ALLOWED_EXTENSIONS)
-        ],
+        validators=[FileExtensionValidator(allowed_extensions=LOAN_DOCUMENT_ALLOWED_EXTENSIONS)],
     )
     description = models.CharField(max_length=255, blank=True)
     uploaded_by = models.ForeignKey(
@@ -1302,24 +1189,16 @@ class LoanApplicationDocument(models.Model):
         ordering = ["loan_id", "document_type", "-created_at"]
         indexes = [
             models.Index(fields=["loan", "document_type"], name="loan_doc_type_idx"),
-            models.Index(
-                fields=["uploaded_by", "created_at"], name="loan_doc_user_created_idx"
-            ),
+            models.Index(fields=["uploaded_by", "created_at"], name="loan_doc_user_created_idx"),
         ]
 
     def clean(self):
         super().clean()
         if self.file:
-            extension = (
-                os.path.splitext(getattr(self.file, "name", "") or "")[1]
-                .lstrip(".")
-                .lower()
-            )
+            extension = os.path.splitext(getattr(self.file, "name", "") or "")[1].lstrip(".").lower()
             if extension and extension not in LOAN_DOCUMENT_ALLOWED_EXTENSIONS:
                 raise ValidationError(
-                    {
-                        "file": "Unsupported file type. Upload PDF, JPG, JPEG, PNG, DOC, or DOCX files."
-                    }
+                    {"file": "Unsupported file type. Upload PDF, JPG, JPEG, PNG, DOC, or DOCX files."}
                 )
 
     def __str__(self):

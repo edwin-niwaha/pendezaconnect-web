@@ -24,15 +24,11 @@ SALE_TYPE_CHOICES = [
 
 # =================================== Sale model ===================================
 class Sale(models.Model):
-    sale_type = models.CharField(
-        max_length=10, choices=SALE_TYPE_CHOICES, default="offline"
-    )
+    sale_type = models.CharField(max_length=10, choices=SALE_TYPE_CHOICES, default="offline")
     date_added = models.DateTimeField(default=django.utils.timezone.now)
     trans_date = models.DateField(verbose_name="Receipt Date")
     receipt_number = models.CharField(max_length=50, unique=True, blank=True, null=True)
-    customer = models.ForeignKey(
-        Customer, related_name="sales", on_delete=models.SET_NULL, null=True, blank=True
-    )
+    customer = models.ForeignKey(Customer, related_name="sales", on_delete=models.SET_NULL, null=True, blank=True)
     sub_total = models.FloatField(default=0)
     grand_total = models.FloatField(default=0)
     tax_amount = models.FloatField(default=0)
@@ -95,11 +91,4 @@ class SaleDetail(models.Model):
         return self.variant.display_name if self.variant else self.product.name
 
     def __str__(self) -> str:
-        return (
-            "Detail ID: "
-            + str(self.id)
-            + " Sale ID: "
-            + str(self.sale.id)
-            + " Quantity: "
-            + str(self.quantity)
-        )
+        return "Detail ID: " + str(self.id) + " Sale ID: " + str(self.sale.id) + " Quantity: " + str(self.quantity)

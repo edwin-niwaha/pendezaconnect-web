@@ -11,6 +11,13 @@ logger = logging.getLogger(__name__)
 BLOCKED_BORROWER_EMAILS = {"pendezaug@gmail.com"}
 
 
+@shared_task
+def send_push_loan_reminders():
+    from apps.loans.services.push_reminders import loan_reminder_service
+
+    return loan_reminder_service.send_due_soon()
+
+
 def is_blocked_borrower_email(email):
     return (email or "").strip().lower() in BLOCKED_BORROWER_EMAILS
 
@@ -58,9 +65,7 @@ def _role_email_recipients(*roles):
 
 
 def _approval_recipients(*setting_names, roles=()):
-    configured_recipients = [
-        getattr(settings, setting_name, "") for setting_name in setting_names
-    ]
+    configured_recipients = [getattr(settings, setting_name, "") for setting_name in setting_names]
     return _valid_recipients(
         *configured_recipients,
         *_role_email_recipients(*roles),
@@ -251,9 +256,7 @@ def send_html_email_task(self, subject, html_body, recipients):
         )
         return False
 
-    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "") or getattr(
-        settings, "EMAIL_HOST_USER", ""
-    )
+    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "") or getattr(settings, "EMAIL_HOST_USER", "")
     if not from_email:
         logger.warning(
             "HTML email skipped because DEFAULT_FROM_EMAIL is not configured for subject: %s",
@@ -295,9 +298,7 @@ def _send_loan_stage_notification(loan_id, stage_status, actor_name, base_url):
         )
         return False
 
-    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "") or getattr(
-        settings, "EMAIL_HOST_USER", ""
-    )
+    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "") or getattr(settings, "EMAIL_HOST_USER", "")
     if not from_email:
         logger.warning(
             "Loan %s stage notification skipped because DEFAULT_FROM_EMAIL is not configured.",
@@ -346,9 +347,7 @@ def send_loan_stage_notification_task(self, loan_id, stage_status, actor_name, b
     retry_backoff=True,
     retry_kwargs={"max_retries": 3},
 )
-def send_loan_approval_notification_task(
-    self, loan_id, new_status, approver_name, base_url
-):
+def send_loan_approval_notification_task(self, loan_id, new_status, approver_name, base_url):
     return _send_loan_stage_notification(
         loan_id,
         new_status,
@@ -359,16 +358,10 @@ def send_loan_approval_notification_task(
 
 # Task to send loan application email
 @shared_task(ignore_result=True)
-def send_loan_application_email_task(
-    recipient_name, client_name, recipient_email, application_id, is_applicant=True
-):
+def send_loan_application_email_task(recipient_name, client_name, recipient_email, application_id, is_applicant=True):
     applicant_dashboard_url = "https://sponsorwithpendeza.org/loans/applications/"
     officer_review_url = "https://sponsorwithpendeza.org/loans/applications/"
-    subject = (
-        "Your Loan Application Submitted"
-        if is_applicant
-        else "New Loan Application for Review"
-    )
+    subject = "Your Loan Application Submitted" if is_applicant else "New Loan Application for Review"
 
     if is_applicant:
         email_body = f"""
@@ -412,9 +405,7 @@ def send_loan_application_email_task(
         )
         return False
 
-    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "") or getattr(
-        settings, "EMAIL_HOST_USER", None
-    )
+    from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "") or getattr(settings, "EMAIL_HOST_USER", None)
     to = [recipient_email]
 
     try:

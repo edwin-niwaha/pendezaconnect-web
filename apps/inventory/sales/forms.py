@@ -21,24 +21,12 @@ class SaleForm(forms.ModelForm):
             "trans_date": forms.DateInput(attrs={"type": "date", "required": True}),
             "date_added": forms.DateTimeInput(attrs={"type": "datetime-local"}),
             "customer": forms.Select(attrs={"class": "form-control"}),
-            "sub_total": forms.NumberInput(
-                attrs={"class": "form-control", "step": "0.01"}
-            ),
-            "grand_total": forms.NumberInput(
-                attrs={"class": "form-control", "step": "0.01"}
-            ),
-            "tax_amount": forms.NumberInput(
-                attrs={"class": "form-control", "step": "0.01"}
-            ),
-            "tax_percentage": forms.NumberInput(
-                attrs={"class": "form-control", "step": "0.01"}
-            ),
-            "amount_payed": forms.NumberInput(
-                attrs={"class": "form-control", "step": "0.01"}
-            ),
-            "amount_change": forms.NumberInput(
-                attrs={"class": "form-control", "step": "0.01"}
-            ),
+            "sub_total": forms.NumberInput(attrs={"class": "form-control", "step": "0.01"}),
+            "grand_total": forms.NumberInput(attrs={"class": "form-control", "step": "0.01"}),
+            "tax_amount": forms.NumberInput(attrs={"class": "form-control", "step": "0.01"}),
+            "tax_percentage": forms.NumberInput(attrs={"class": "form-control", "step": "0.01"}),
+            "amount_payed": forms.NumberInput(attrs={"class": "form-control", "step": "0.01"}),
+            "amount_change": forms.NumberInput(attrs={"class": "form-control", "step": "0.01"}),
         }
 
 
@@ -58,9 +46,7 @@ class SaleDetailForm(forms.ModelForm):
             "product": forms.Select(attrs={"class": "form-control"}),
             "price": forms.NumberInput(attrs={"class": "form-control", "step": "0.01"}),
             "quantity": forms.NumberInput(attrs={"class": "form-control"}),
-            "total_detail": forms.NumberInput(
-                attrs={"class": "form-control", "step": "0.01"}
-            ),
+            "total_detail": forms.NumberInput(attrs={"class": "form-control", "step": "0.01"}),
         }
 
 

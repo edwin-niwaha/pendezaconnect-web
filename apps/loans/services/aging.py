@@ -47,14 +47,10 @@ def compute_installment_based_days_overdue(loan: Loan, today: date) -> dict:
         total_principal=Sum("principal_payment"),
         total_interest=Sum("interest_payment"),
     )
-    total_paid_pi = (paid["total_principal"] or Decimal("0.00")) + (
-        paid["total_interest"] or Decimal("0.00")
-    )
+    total_paid_pi = (paid["total_principal"] or Decimal("0.00")) + (paid["total_interest"] or Decimal("0.00"))
 
     installments_due_by_now = sum(
-        1
-        for n in range(1, term_months + 1)
-        if disbursement_date + relativedelta(months=n) <= today
+        1 for n in range(1, term_months + 1) if disbursement_date + relativedelta(months=n) <= today
     )
 
     if installments_due_by_now == 0:
@@ -73,9 +69,7 @@ def compute_installment_based_days_overdue(loan: Loan, today: date) -> dict:
 
     first_unpaid_due_date = None
     for n in range(1, installments_due_by_now + 1):
-        cumulative_due = (monthly_installment * n).quantize(
-            Decimal("0.01"), rounding=ROUND_HALF_UP
-        )
+        cumulative_due = (monthly_installment * n).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
         if total_paid_pi + Decimal("0.01") < cumulative_due:
             first_unpaid_due_date = disbursement_date + relativedelta(months=n)
             break
@@ -98,9 +92,7 @@ def compute_installment_based_days_overdue(loan: Loan, today: date) -> dict:
             "total_paid_pi": total_paid_pi,
         }
 
-    shortfall = (total_due_by_today - total_paid_pi).quantize(
-        Decimal("0.01"), rounding=ROUND_HALF_UP
-    )
+    shortfall = (total_due_by_today - total_paid_pi).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
     days_overdue = max((today - first_unpaid_due_date).days, 0)
 
     return {

@@ -19,10 +19,10 @@ from api.v1.serializers import (
     SavingsRequestSerializer,
     SavingsTransactionSerializer,
 )
-from apps.savings.models import SavingsAccount, SavingsTransaction
-from apps.users.tasks import queue_user_notification
 from api.v1.uploads import validate_image_upload
 from apps.client.models import ClientProfilePicture
+from apps.savings.models import SavingsAccount, SavingsTransaction
+from apps.users.tasks import queue_user_notification
 
 
 class ClientViewSet(viewsets.ReadOnlyModelViewSet):
@@ -53,9 +53,7 @@ class ClientViewSet(viewsets.ReadOnlyModelViewSet):
         client = self.get_object()
 
         if request.method == "DELETE":
-            ClientProfilePicture.objects.filter(client=client, is_current=True).update(
-                is_current=False
-            )
+            ClientProfilePicture.objects.filter(client=client, is_current=True).update(is_current=False)
             client.picture = None
             client.save(update_fields=["picture", "updated_at"])
             return Response(self.get_serializer(client).data, status=status.HTTP_200_OK)
@@ -66,9 +64,7 @@ class ClientViewSet(viewsets.ReadOnlyModelViewSet):
 
         client.picture = validate_image_upload(picture)
         client.save(update_fields=["picture", "updated_at"])
-        ClientProfilePicture.objects.filter(client=client, is_current=True).update(
-            is_current=False
-        )
+        ClientProfilePicture.objects.filter(client=client, is_current=True).update(is_current=False)
         ClientProfilePicture.objects.create(
             client=client,
             picture=client.picture,
@@ -87,9 +83,7 @@ class ClientViewSet(viewsets.ReadOnlyModelViewSet):
         client = self.get_object()
         return Response(
             {
-                "accounts": SavingsAccountSerializer(
-                    savings_accounts_for_client(client), many=True
-                ).data,
+                "accounts": SavingsAccountSerializer(savings_accounts_for_client(client), many=True).data,
                 "transactions": SavingsTransactionSerializer(
                     savings_transactions_for_client(client)[:30], many=True
                 ).data,
@@ -111,9 +105,7 @@ class ClientViewSet(viewsets.ReadOnlyModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        serializer = SavingsRequestSerializer(
-            data=request.data, context={"account": account}
-        )
+        serializer = SavingsRequestSerializer(data=request.data, context={"account": account})
         serializer.is_valid(raise_exception=True)
         savings_request = SavingsTransaction.objects.create(
             account=account,

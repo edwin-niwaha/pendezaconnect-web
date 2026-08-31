@@ -12,7 +12,5 @@ class FeedbackSerializer(serializers.ModelSerializer):
     def validate_message(self, value):
         value = value.strip()
         if len(value) < 10:
-            raise serializers.ValidationError(
-                "Tell us a little more (at least 10 characters)."
-            )
+            raise serializers.ValidationError("Tell us a little more (at least 10 characters).")
         return value

@@ -31,21 +31,11 @@ class Child(models.Model):
     full_name = models.CharField(
         max_length=50,
         verbose_name="Full Name",
-        validators=[
-            RegexValidator(
-                r"^[A-Za-z]+(?:\s[A-Za-z]+)*$", "Only letters and spaces are allowed"
-            )
-        ],
+        validators=[RegexValidator(r"^[A-Za-z]+(?:\s[A-Za-z]+)*$", "Only letters and spaces are allowed")],
     )
-    preferred_name = models.CharField(
-        max_length=50, verbose_name="Preferred Name", null=True, blank=True
-    )
-    residence = models.CharField(
-        max_length=50, null=True, blank=True, verbose_name="Current Residence"
-    )
-    district = models.CharField(
-        max_length=50, null=True, blank=True, verbose_name="Home District"
-    )
+    preferred_name = models.CharField(max_length=50, verbose_name="Preferred Name", null=True, blank=True)
+    residence = models.CharField(max_length=50, null=True, blank=True, verbose_name="Current Residence")
+    district = models.CharField(max_length=50, null=True, blank=True, verbose_name="Home District")
     tribe = models.CharField(
         max_length=20,
         null=True,
@@ -57,9 +47,7 @@ class Child(models.Model):
         ("Male", "Male"),
         ("Female", "Female"),
     )
-    gender = models.CharField(
-        max_length=6, choices=GENDER_CHOICES, blank=False, verbose_name="Gender"
-    )
+    gender = models.CharField(max_length=6, choices=GENDER_CHOICES, blank=False, verbose_name="Gender")
     date_of_birth = models.DateField(
         null=True,
         blank=True,
@@ -87,12 +75,8 @@ class Child(models.Model):
         verbose_name="Height in centimeters",
     )
 
-    aspiration = models.CharField(
-        max_length=50, null=True, blank=True, verbose_name="Aspiration"
-    )
-    c_interest = models.TextField(
-        max_length=100, null=True, blank=True, verbose_name="Interest and abilities "
-    )
+    aspiration = models.CharField(max_length=50, null=True, blank=True, verbose_name="Aspiration")
+    c_interest = models.TextField(max_length=100, null=True, blank=True, verbose_name="Interest and abilities ")
 
     is_child_in_school = models.BooleanField(
         default=False,
@@ -105,9 +89,7 @@ class Child(models.Model):
     )
     # Family background
     # Parents
-    father_name = models.CharField(
-        max_length=100, null=True, blank=True, verbose_name="Father’s Name"
-    )
+    father_name = models.CharField(max_length=100, null=True, blank=True, verbose_name="Father’s Name")
     is_father_alive = models.CharField(
         choices=(("Yes", "Yes"), ("No", "No")),
         max_length=10,
@@ -120,9 +102,7 @@ class Child(models.Model):
         blank=True,
         verbose_name="if not what happened/if alive what is happening?",
     )
-    mother_name = models.CharField(
-        max_length=100, null=True, blank=True, verbose_name="Mother’s name"
-    )
+    mother_name = models.CharField(max_length=100, null=True, blank=True, verbose_name="Mother’s name")
     is_mother_alive = models.CharField(
         choices=(("Yes", "Yes"), ("No", "No")),
         max_length=10,
@@ -135,12 +115,8 @@ class Child(models.Model):
         verbose_name="if not what happened/if alive what is happening?",
     )
     # Guardian
-    guardian = models.CharField(
-        max_length=50, null=True, blank=True, verbose_name="Current guardian"
-    )
-    guardian_contact = PhoneNumberField(
-        null=True, blank=True, default="+256999999999", verbose_name="Guardian Contact"
-    )
+    guardian = models.CharField(max_length=50, null=True, blank=True, verbose_name="Current guardian")
+    guardian_contact = PhoneNumberField(null=True, blank=True, default="+256999999999", verbose_name="Guardian Contact")
     relationship_with_guardian = models.CharField(
         max_length=20,
         null=True,
@@ -155,15 +131,9 @@ class Child(models.Model):
         verbose_name="List names and age of the siblings",
     )
 
-    background_info = models.TextField(
-        blank=True, null=True, verbose_name="Other family back ground information"
-    )
-    health_status = models.CharField(
-        max_length=50, null=True, blank=True, verbose_name="General health status"
-    )
-    responsibility = models.TextField(
-        max_length=50, null=True, blank=True, verbose_name="Child’s responsibilities"
-    )
+    background_info = models.TextField(blank=True, null=True, verbose_name="Other family back ground information")
+    health_status = models.CharField(max_length=50, null=True, blank=True, verbose_name="General health status")
+    responsibility = models.TextField(max_length=50, null=True, blank=True, verbose_name="Child’s responsibilities")
     relationship_with_christ = models.CharField(
         max_length=100, null=True, blank=True, verbose_name="Relationship with Christ"
     )
@@ -181,9 +151,7 @@ class Child(models.Model):
         blank=True,
         verbose_name="Religion of the Child",
     )
-    prayer_request = models.CharField(
-        max_length=50, null=True, blank=True, verbose_name="Prayer needs/request"
-    )
+    prayer_request = models.CharField(max_length=50, null=True, blank=True, verbose_name="Prayer needs/request")
     YEAR_MAX = current_year()
     year_enrolled = models.IntegerField(
         null=True,  # Allows the field to be NULL in the database
@@ -201,12 +169,8 @@ class Child(models.Model):
     )
 
     # Other fields
-    staff_comment = models.TextField(
-        max_length=50, null=True, blank=True, verbose_name="Staff Comment "
-    )
-    compiled_by = models.CharField(
-        max_length=10, null=True, blank=True, verbose_name="Compiled by"
-    )
+    staff_comment = models.TextField(max_length=50, null=True, blank=True, verbose_name="Staff Comment ")
+    compiled_by = models.CharField(max_length=10, null=True, blank=True, verbose_name="Compiled by")
 
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created at")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated at")
@@ -219,15 +183,11 @@ class Child(models.Model):
     def clean(self):
         # Validate that date_of_birth is not in the future
         if self.date_of_birth and self.date_of_birth > datetime.date.today():
-            raise ValidationError(
-                {"date_of_birth": "Date of birth cannot be in the future."}
-            )
+            raise ValidationError({"date_of_birth": "Date of birth cannot be in the future."})
 
         # Validate that registration_date is not in the future
         if self.registration_date and self.registration_date > datetime.date.today():
-            raise ValidationError(
-                {"registration_date": "Registration date cannot be in the future."}
-            )
+            raise ValidationError({"registration_date": "Registration date cannot be in the future."})
 
         # Call the parent clean method to ensure other validations still work
         super().clean()
@@ -252,10 +212,7 @@ class Child(models.Model):
         age = (
             today.year
             - self.date_of_birth.year
-            - (
-                (today.month, today.day)
-                < (self.date_of_birth.month, self.date_of_birth.day)
-            )
+            - ((today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day))
         )
         return age
 
@@ -291,15 +248,11 @@ class ChildProfilePicture(models.Model):
         unique_together = ("child", "picture")
 
     def __str__(self):
-        return (
-            f"Profile picture of {self.child.full_name} uploaded at {self.uploaded_at}"
-        )
+        return f"Profile picture of {self.child.full_name} uploaded at {self.uploaded_at}"
 
     def save(self, *args, **kwargs):
         if self.picture and not str(self.picture).startswith("http"):
-            upload_result = cloudinary.uploader.upload(
-                self.picture.file, folder="kids_profiles"
-            )
+            upload_result = cloudinary.uploader.upload(self.picture.file, folder="kids_profiles")
             self.picture = upload_result.get("secure_url") or upload_result["url"]
         super().save(*args, **kwargs)
 
@@ -401,12 +354,8 @@ class ChildProgress(models.Model):
         max_length=200,
         verbose_name="Future Plans",
     )
-    responsibility_at_home = models.TextField(
-        verbose_name="Responsibility at Home (Optional)", null=True, blank=True
-    )
-    notes = models.TextField(
-        max_length=200, verbose_name="Notes (Optional)", null=True, blank=True
-    )
+    responsibility_at_home = models.TextField(verbose_name="Responsibility at Home (Optional)", null=True, blank=True)
+    notes = models.TextField(max_length=200, verbose_name="Notes (Optional)", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created at")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated at")
 
@@ -455,13 +404,9 @@ class ChildCorrespondence(models.Model):
         choices=SOURCE_CHOICES,
         verbose_name="Select the source of correspondence",
     )
-    attachment = CloudinaryField(
-        "correspondence_attachments", resource_type="auto", null=True, blank=True
-    )
+    attachment = CloudinaryField("correspondence_attachments", resource_type="auto", null=True, blank=True)
 
-    comment = models.CharField(
-        max_length=100, blank=True, null=True, verbose_name="Any comment?"
-    )
+    comment = models.CharField(max_length=100, blank=True, null=True, verbose_name="Any comment?")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created at")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated at")
     # sponsor = models.ForeignKey(
@@ -482,9 +427,7 @@ class ChildCorrespondence(models.Model):
 
 # =================================== CHILD INCIDENT MODEL ===================================
 class ChildIncident(models.Model):
-    child = models.ForeignKey(
-        Child, on_delete=models.CASCADE, related_name="incidents", verbose_name="Child"
-    )
+    child = models.ForeignKey(Child, on_delete=models.CASCADE, related_name="incidents", verbose_name="Child")
     incident_date = models.DateField(
         verbose_name="Incident Date",
         null=True,
@@ -494,18 +437,12 @@ class ChildIncident(models.Model):
             MaxValueValidator(limit_value=datetime.date.today),
         ],
     )
-    description = models.TextField(
-        max_length=200, verbose_name="Description of the Incident"
-    )
+    description = models.TextField(max_length=200, verbose_name="Description of the Incident")
     action_taken = models.CharField(max_length=100, verbose_name="Action Taken")
-    results = models.CharField(
-        max_length=100, verbose_name="Results after Action Taken"
-    )
+    results = models.CharField(max_length=100, verbose_name="Results after Action Taken")
     reported_by = models.CharField(max_length=25, verbose_name="Reported By")
     followed_up_by = models.CharField(max_length=25, verbose_name="Followed Up By")
-    attachment = CloudinaryField(
-        "incident_attachments", resource_type="auto", null=True, blank=True
-    )
+    attachment = CloudinaryField("incident_attachments", resource_type="auto", null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created at")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated at")

@@ -1,5 +1,12 @@
 {% load static %}
 <nav class="sidebar sidebar-offcanvas" id="sidebar">
+  <style>
+    #sidebar .sidebar-section-label { background: #f2f4f7; border-left: 3px solid #13745d; color: #344054; font-size: .68rem; font-weight: 900; letter-spacing: .075em; line-height: 1.2; margin: 12px 12px 5px; padding: 8px 14px; text-transform: uppercase; }
+    #sidebar .sidebar-divider { border-color: rgba(152, 162, 179, .2); margin: .55rem 1.5rem !important; }
+    #sidebar .menu-title { text-transform: none; }
+    body.sidebar-icon-only #sidebar .sidebar-section-label { display: none; }
+    body.sidebar-icon-only #sidebar .sidebar-divider { margin-left: .5rem !important; margin-right: .5rem !important; }
+  </style>
   <div class="text-center sidebar-brand-wrapper d-flex align-items-center">
     <a class="sidebar-brand brand-logo" href="/" style="color:#127D61;">
       <img src="{% static 'images/file.png' %}" height="40" width="30" alt="Brand Logo" loading="lazy" />
@@ -7,12 +14,12 @@
   </div>
 
   <ul class="nav">
-    <li><hr class="sidebar-divider my-3" /></li>
+    <li class="sidebar-section-label">Workspaces</li>
 
     <li class="nav-item">
       <a class="nav-link" data-toggle="collapse" href="#dashboardsMenu" aria-expanded="false" aria-controls="dashboardsMenu">
         <i class="mdi mdi-view-dashboard menu-icon"></i>
-        <span class="menu-title">DASHBOARDS</span>
+        <span class="menu-title">Dashboards</span>
         <i class="menu-arrow"></i>
       </a>
       <div class="collapse" id="dashboardsMenu">
@@ -20,12 +27,12 @@
           <li class="nav-item"><a class="nav-link" href="{% url 'main-dashboard' %}"><i class="mdi mdi-gift menu-icon"></i> Sponsorship</a></li>
           <li class="nav-item"><a class="nav-link" href="{% url 'inventory-dashboard' %}"><i class="mdi mdi-warehouse menu-icon"></i> Inventory</a></li>
           <li class="nav-item"><a class="nav-link" href="{% url 'loans-dashboard' %}"><i class="mdi mdi-cash-multiple menu-icon"></i> Loan Manager</a></li>
-          <li class="nav-item"><a class="nav-link" href="{% url 'savings_account_list' %}"><i class="mdi mdi-bank menu-icon"></i> Manage Savings</a></li>
         </ul>
       </div>
     </li>
 
-    <li><hr class="sidebar-divider my-3" /></li>
+    <li><hr class="sidebar-divider" /></li>
+    <li class="sidebar-section-label">Catalog &amp; supply</li>
 
     <li class="nav-item">
       <a class="nav-link" data-toggle="collapse" href="#supplyMenu" aria-expanded="false" aria-controls="supplyMenu">
@@ -43,6 +50,7 @@
       </div>
     </li>
 
+    <li class="sidebar-section-label">Inventory operations</li>
     <li class="nav-item">
       <a class="nav-link" data-toggle="collapse" href="#stockMenu" aria-expanded="false" aria-controls="stockMenu">
         <i class="mdi mdi-package-variant-closed menu-icon"></i>
@@ -59,6 +67,7 @@
       </div>
     </li>
 
+    <li class="sidebar-section-label">Sales &amp; customers</li>
     <li class="nav-item">
       <a class="nav-link" data-toggle="collapse" href="#salesMenu" aria-expanded="false" aria-controls="salesMenu">
         <i class="mdi mdi-trending-up menu-icon"></i>
@@ -75,7 +84,8 @@
     </li>
 
     {% if user.profile.role == 'administrator' or user.profile.role == 'manager' or user.profile.role == 'hof' or user.profile.role == 'ed' %}
-      <li><hr class="sidebar-divider my-3" /></li>
+      <li><hr class="sidebar-divider" /></li>
+      <li class="sidebar-section-label">Insights</li>
       <li class="nav-item">
         <a class="nav-link" data-toggle="collapse" href="#inventoryReportsMenu" aria-expanded="false" aria-controls="inventoryReportsMenu">
           <i class="mdi mdi-file-chart menu-icon"></i>
@@ -91,6 +101,7 @@
       </li>
     {% endif %}
 
+    <li class="sidebar-section-label">Administration</li>
     {% if user.profile.role == 'administrator' %}
       <li class="nav-item">
         <a class="nav-link" data-toggle="collapse" href="#inventorySettingsMenu" aria-expanded="false" aria-controls="inventorySettingsMenu">

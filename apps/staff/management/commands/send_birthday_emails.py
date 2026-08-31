@@ -86,9 +86,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         today = datetime.date.today()
-        birthday_staff = Staff.objects.filter(
-            date_of_birth__month=today.month, date_of_birth__day=today.day
-        )
+        birthday_staff = Staff.objects.filter(date_of_birth__month=today.month, date_of_birth__day=today.day)
 
         if not birthday_staff.exists():
             self.stdout.write(self.style.WARNING("No staff birthdays today."))
@@ -100,11 +98,7 @@ class Command(BaseCommand):
 
             first_name = staff.first_name
             org = "Pendeza Uganda"
-            status = (
-                "valued former colleague"
-                if staff.is_departed
-                else "esteemed team member"
-            )
+            status = "valued former colleague" if staff.is_departed else "esteemed team member"
 
             subject = f"Birthday Wishes from {org}"
             html_content = render_to_string(
@@ -116,22 +110,12 @@ class Command(BaseCommand):
                 },
             )
             text_content = strip_tags(html_content)
-            from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "") or getattr(
-                settings, "EMAIL_HOST_USER", ""
-            )
+            from_email = getattr(settings, "DEFAULT_FROM_EMAIL", "") or getattr(settings, "EMAIL_HOST_USER", "")
 
-            email = EmailMultiAlternatives(
-                subject, text_content, from_email, [staff.email]
-            )
+            email = EmailMultiAlternatives(subject, text_content, from_email, [staff.email])
             email.attach_alternative(html_content, "text/html")
             try:
                 email.send()
-                self.stdout.write(
-                    self.style.SUCCESS(
-                        f"Sent birthday email to {first_name} ({staff.email})"
-                    )
-                )
+                self.stdout.write(self.style.SUCCESS(f"Sent birthday email to {first_name} ({staff.email})"))
             except Exception as e:
-                self.stdout.write(
-                    self.style.ERROR(f"Failed to send email to {first_name}: {e}")
-                )
+                self.stdout.write(self.style.ERROR(f"Failed to send email to {first_name}: {e}"))

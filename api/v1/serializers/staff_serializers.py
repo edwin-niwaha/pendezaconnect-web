@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from apps.staff.models import Staff
+
 from .media import absolute_media_url, thumbnail_url
 
 
@@ -55,5 +56,7 @@ class StaffSerializer(serializers.ModelSerializer):
 
     def get_departure_date(self, obj):
         departures = list(obj.departures.all())
-        departure = max(departures, key=lambda item: (item.departure_date is not None, item.departure_date, item.id), default=None)
+        departure = max(
+            departures, key=lambda item: (item.departure_date is not None, item.departure_date, item.id), default=None
+        )
         return departure.departure_date if departure else None

@@ -38,6 +38,7 @@ schema_view = get_schema_view(
     patterns=api_patterns,
 )
 
+
 @require_GET
 @cache_page(300)
 def documentation_home(request):

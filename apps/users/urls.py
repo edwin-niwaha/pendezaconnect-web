@@ -42,9 +42,7 @@ urlpatterns = [
     path("create-policy/", upload_policy, name="upload_policy"),
     path("policy/update/<int:pk>", update_policy, name="update_policy"),
     path("policy/delete/<int:pk>", delete_policy, name="delete_policy"),
-    path(
-        "policy/document/<int:pk>/", open_policy_document, name="open_policy_document"
-    ),
+    path("policy/document/<int:pk>/", open_policy_document, name="open_policy_document"),
     path("policy/validate/<int:policy_id>/", validate_policy, name="validate_policy"),
     path("policy/read/<int:policy_id>/", read_policy, name="read_policy"),
     path("policy/read/", policy_report, name="policy_report"),

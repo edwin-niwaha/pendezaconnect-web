@@ -22,18 +22,14 @@ class Command(BaseCommand):
             timezone.activate(pytz.UTC)
 
         today = timezone.now().date()
-        disbursed_loans = Loan.objects.filter(status="disbursed").select_related(
-            "borrower"
-        )
+        disbursed_loans = Loan.objects.filter(status="disbursed").select_related("borrower")
         sent_sms = failed_sms = 0
 
         # Initialize Twilio client
         try:
             from twilio.rest import Client
 
-            twilio_client = Client(
-                settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN
-            )
+            twilio_client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
         except (AttributeError, ImportError):
             logger.error("Twilio is unavailable or credentials are not configured in settings")
             self.stdout.write(self.style.ERROR("Twilio unavailable or credentials not configured"))
@@ -45,14 +41,8 @@ class Command(BaseCommand):
         for loan in disbursed_loans.iterator(chunk_size=200):
             try:
                 balances = loan.calculate_remaining_balances()
-                total_balance = (
-                    balances["principal_balance"] + balances["interest_balance"]
-                )
-                if (
-                    total_balance <= 0
-                    or not loan.disbursement_date
-                    or loan.loan_period_months <= 0
-                ):
+                total_balance = balances["principal_balance"] + balances["interest_balance"]
+                if total_balance <= 0 or not loan.disbursement_date or loan.loan_period_months <= 0:
                     continue
 
                 schedule = loan.generate_payment_schedule()
@@ -61,11 +51,7 @@ class Command(BaseCommand):
                 borrower_phone = borrower.mobile_telephone
 
                 # Validate phone number
-                if (
-                    not borrower_phone
-                    or not borrower_phone.is_valid()
-                    or borrower_phone.as_e164 == "+256999999999"
-                ):
+                if not borrower_phone or not borrower_phone.is_valid() or borrower_phone.as_e164 == "+256999999999":
                     logger.warning(
                         f"Invalid, missing, or default mobile telephone for borrower {borrower_name} (Loan ID: {loan.id})"
                     )
@@ -87,10 +73,7 @@ class Command(BaseCommand):
                     == today
                 ]
                 if due_payments:
-                    monthly_installment = sum(
-                        p["principal_payment"] + p["interest_payment"]
-                        for p in due_payments
-                    )
+                    monthly_installment = sum(p["principal_payment"] + p["interest_payment"] for p in due_payments)
                     # Cap total_amount_due at total_balance
                     total_amount_due = min(monthly_installment, total_balance)
 
@@ -107,14 +90,10 @@ class Command(BaseCommand):
                             from_=settings.TWILIO_PHONE_NUMBER,
                             to=borrower_phone_str,
                         )
-                        logger.info(
-                            f"Due loan SMS sent to {borrower_phone_str} for Loan {loan.id}"
-                        )
+                        logger.info(f"Due loan SMS sent to {borrower_phone_str} for Loan {loan.id}")
                         sent_sms += 1
                     except Exception as e:
-                        logger.error(
-                            f"Failed to send due loan SMS to {borrower_phone_str} for Loan {loan.id}: {e}"
-                        )
+                        logger.error(f"Failed to send due loan SMS to {borrower_phone_str} for Loan {loan.id}: {e}")
                         failed_sms += 1
                         continue
 
@@ -148,14 +127,10 @@ class Command(BaseCommand):
                             from_=settings.TWILIO_PHONE_NUMBER,
                             to=borrower_phone_str,
                         )
-                        logger.info(
-                            f"Overdue loan SMS sent to {borrower_phone_str} for Loan {loan.id}"
-                        )
+                        logger.info(f"Overdue loan SMS sent to {borrower_phone_str} for Loan {loan.id}")
                         sent_sms += 1
                     except Exception as e:
-                        logger.error(
-                            f"Failed to send overdue loan SMS to {borrower_phone_str} for Loan {loan.id}: {e}"
-                        )
+                        logger.error(f"Failed to send overdue loan SMS to {borrower_phone_str} for Loan {loan.id}: {e}")
                         failed_sms += 1
                         continue
                 elif overdue_payments:
@@ -170,8 +145,7 @@ class Command(BaseCommand):
                     if earliest_due_date < today:
                         days_overdue = (today - earliest_due_date).days
                         monthly_installment = sum(
-                            p["principal_payment"] + p["interest_payment"]
-                            for p in overdue_payments
+                            p["principal_payment"] + p["interest_payment"] for p in overdue_payments
                         )
                         # Cap total_amount_due at total_balance
                         total_amount_due = min(monthly_installment, total_balance)
@@ -189,9 +163,7 @@ class Command(BaseCommand):
                                 from_=settings.TWILIO_PHONE_NUMBER,
                                 to=borrower_phone_str,
                             )
-                            logger.info(
-                                f"Overdue loan SMS sent to {borrower_phone_str} for Loan {loan.id}"
-                            )
+                            logger.info(f"Overdue loan SMS sent to {borrower_phone_str} for Loan {loan.id}")
                             sent_sms += 1
                         except Exception as e:
                             logger.error(
@@ -208,7 +180,5 @@ class Command(BaseCommand):
         if sent_sms == 0 and failed_sms == 0:
             logger.info("No loans due or overdue today")
 
-        self.stdout.write(
-            self.style.SUCCESS(f"SMS sent: {sent_sms}, Failed: {failed_sms}")
-        )
+        self.stdout.write(self.style.SUCCESS(f"SMS sent: {sent_sms}, Failed: {failed_sms}"))
         log_process_memory("send_sms_notifications.finish")

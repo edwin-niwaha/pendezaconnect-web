@@ -52,6 +52,7 @@ from .models import (
     LoanRepayment,
     TransactionHistory,
 )
+from .services.aging import compute_installment_based_days_overdue
 from .services.reporting import (
     ReportColumn,
     export_rows_csv,
@@ -64,7 +65,6 @@ from .services.reporting import (
     repayment_rows,
     summarize_amounts,
 )
-from .services.aging import compute_installment_based_days_overdue
 from .tasks import (
     is_blocked_borrower_email,
     send_html_email_task,
@@ -83,11 +83,7 @@ logger = logging.getLogger(__name__)
 
 def get_loan_queryset(search_query=None):
     """Base queryset used by every loan list view."""
-    qs = (
-        Loan.objects.select_related("borrower", "account")
-        .prefetch_related("disbursements")
-        .order_by("id")
-    )
+    qs = Loan.objects.select_related("borrower", "account").prefetch_related("disbursements").order_by("id")
     if search_query:
         qs = qs.filter(borrower__full_name__icontains=search_query)
     return qs
@@ -161,9 +157,7 @@ def _reverse_penalty_balance(penalty, user):
     try:
         income_account = ChartOfAccounts.objects.get(account_number="5030")
     except ChartOfAccounts.DoesNotExist as exc:
-        raise ValidationError(
-            "Loan Interest Income account (5030) does not exist."
-        ) from exc
+        raise ValidationError("Loan Interest Income account (5030) does not exist.") from exc
 
     reversal_date = timezone.localdate()
     description = f"Penalty reversal for Loan {penalty.loan.id}: penalty #{penalty.id}"
@@ -258,9 +252,7 @@ def _restore_penalties_paid_by_repayment(repayment):
         return Decimal("0.00")
 
     restored = Decimal("0.00")
-    penalties = repayment.loan.penalties.filter(is_deleted=False).order_by(
-        "penalty_date", "id"
-    )
+    penalties = repayment.loan.penalties.filter(is_deleted=False).order_by("penalty_date", "id")
     for penalty in penalties:
         if remaining <= 0:
             break
@@ -286,11 +278,7 @@ def _get_self_service_client(user):
     email = (getattr(user, "email", "") or "").strip()
     if not email:
         return None
-    return (
-        Client.objects.filter(email__iexact=email)
-        .exclude(email="no-email@example.com")
-        .first()
-    )
+    return Client.objects.filter(email__iexact=email).exclude(email="no-email@example.com").first()
 
 
 def _self_service_loan_queryset(user):
@@ -351,15 +339,11 @@ def compute_installment_based_days_overdue(loan: Loan, today: date) -> dict:
         total_principal=Sum("principal_payment"),
         total_interest=Sum("interest_payment"),
     )
-    total_paid_pi = (paid["total_principal"] or Decimal("0.00")) + (
-        paid["total_interest"] or Decimal("0.00")
-    )
+    total_paid_pi = (paid["total_principal"] or Decimal("0.00")) + (paid["total_interest"] or Decimal("0.00"))
 
     # Pass 1 — count all installments due up to today
     installments_due_by_now = sum(
-        1
-        for n in range(1, term_months + 1)
-        if disbursement_date + relativedelta(months=n) <= today
+        1 for n in range(1, term_months + 1) if disbursement_date + relativedelta(months=n) <= today
     )
 
     if installments_due_by_now == 0:
@@ -379,9 +363,7 @@ def compute_installment_based_days_overdue(loan: Loan, today: date) -> dict:
     # Pass 2 — find first installment not yet covered
     first_unpaid_due_date = None
     for n in range(1, installments_due_by_now + 1):
-        cumulative_due = (monthly_installment * n).quantize(
-            Decimal("0.01"), rounding=ROUND_HALF_UP
-        )
+        cumulative_due = (monthly_installment * n).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
         if total_paid_pi + Decimal("0.01") < cumulative_due:
             first_unpaid_due_date = disbursement_date + relativedelta(months=n)
             break
@@ -404,9 +386,7 @@ def compute_installment_based_days_overdue(loan: Loan, today: date) -> dict:
             "total_paid_pi": total_paid_pi,
         }
 
-    shortfall = (total_due_by_today - total_paid_pi).quantize(
-        Decimal("0.01"), rounding=ROUND_HALF_UP
-    )
+    shortfall = (total_due_by_today - total_paid_pi).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
     days_overdue = max((today - first_unpaid_due_date).days, 0)
 
     return {
@@ -431,15 +411,9 @@ def _get_next_payment_date(loan: Loan) -> date | None:
     """
     if not loan.disbursement_date or not loan.loan_period_months:
         return None
-    total_paid = loan.repayments.aggregate(total=Sum("principal_payment"))[
-        "total"
-    ] or Decimal("0.00")
-    monthly_principal = (
-        loan.principal_amount / Decimal(loan.loan_period_months)
-    ).quantize(Decimal("0.01"))
-    installments_paid = (
-        int(total_paid / monthly_principal) if monthly_principal > 0 else 0
-    )
+    total_paid = loan.repayments.aggregate(total=Sum("principal_payment"))["total"] or Decimal("0.00")
+    monthly_principal = (loan.principal_amount / Decimal(loan.loan_period_months)).quantize(Decimal("0.01"))
+    installments_paid = int(total_paid / monthly_principal) if monthly_principal > 0 else 0
     next_unpaid = installments_paid + 1
     if next_unpaid > loan.loan_period_months:
         return None
@@ -451,15 +425,9 @@ def _get_next_payment_date(loan: Loan) -> date | None:
 # ─────────────────────────────────────────────────────────────────────────────
 
 
-def send_loan_application_email(
-    recipient_name, client_name, recipient_email, application_id, is_applicant=True
-):
+def send_loan_application_email(recipient_name, client_name, recipient_email, application_id, is_applicant=True):
     dashboard_url = "https://sponsorwithpendeza.org/loans/applications/"
-    subject = (
-        "Your Loan Application Submitted"
-        if is_applicant
-        else "New Loan Application for Review"
-    )
+    subject = "Your Loan Application Submitted" if is_applicant else "New Loan Application for Review"
 
     if is_applicant:
         body = f"""
@@ -497,9 +465,7 @@ def send_loan_application_email(
         return False
 
     try:
-        email = EmailMultiAlternatives(
-            subject, strip_tags(body), settings.EMAIL_HOST_USER, [recipient_email]
-        )
+        email = EmailMultiAlternatives(subject, strip_tags(body), settings.EMAIL_HOST_USER, [recipient_email])
         email.attach_alternative(body, "text/html")
         email.send()
         return True
@@ -595,9 +561,7 @@ def loan_applications_view(request):
         "boo_approved": summary_qs.filter(status="boo_approved").count(),
         "hof_approved": summary_qs.filter(status="hof_approved").count(),
     }
-    total_principal = summary_qs.aggregate(total=Sum("principal_amount"))[
-        "total"
-    ] or Decimal("0.00")
+    total_principal = summary_qs.aggregate(total=Sum("principal_amount"))["total"] or Decimal("0.00")
 
     loans = paginate_queryset(qs, request.GET.get("page"))
     return render(
@@ -636,10 +600,7 @@ def loan_applications_all_view(request):
         qs = qs.filter(applied_by=request.user)
 
     if show_bad:
-        qs = qs.filter(
-            Q(borrower_id__isnull=True)
-            | ~Q(borrower_id__in=Client.objects.values_list("id", flat=True))
-        )
+        qs = qs.filter(Q(borrower_id__isnull=True) | ~Q(borrower_id__in=Client.objects.values_list("id", flat=True)))
 
     if sort_by in ["id", "-id", "borrower_id", "-borrower_id"]:
         qs = qs.order_by(sort_by)
@@ -651,9 +612,7 @@ def loan_applications_all_view(request):
         {
             "loans": loans,
             "page_obj": loans,
-            "table_title": (
-                "Bad Loan Applications" if show_bad else "All Loan Applications"
-            ),
+            "table_title": ("Bad Loan Applications" if show_bad else "All Loan Applications"),
             "search_query": search_query,
             "current_sort": sort_by,
             "show_bad": show_bad,
@@ -702,9 +661,7 @@ def loan_apply(request):
                     application.id,
                 )
 
-            resp = _json_or_message(
-                request, True, "Loan application submitted successfully."
-            )
+            resp = _json_or_message(request, True, "Loan application submitted successfully.")
             if resp:
                 return resp
             return redirect("loans:loan_applications")
@@ -725,15 +682,11 @@ def loan_apply(request):
             return resp or redirect("loans:apply_for_loan")
 
     elif request.method == "POST":
-        resp = _json_or_message(
-            request, False, "Please correct the errors below.", status=400
-        )
+        resp = _json_or_message(request, False, "Please correct the errors below.", status=400)
         if resp:
             return resp
 
-    open_applications = Loan.objects.filter(
-        status__in=["pending", "boo_approved", "hof_approved"]
-    ).count()
+    open_applications = Loan.objects.filter(status__in=["pending", "boo_approved", "hof_approved"]).count()
     active_loans = Loan.objects.filter(status__in=Loan.ACTIVE_STATUSES).count()
     clients = Client.objects.order_by("full_name", "reg_number")
 
@@ -770,17 +723,13 @@ def client_loan_apply(request):
         *Loan.ACTIVE_STATUSES,
     }
     blocking_loan = (
-        Loan.objects.filter(borrower=current_client, status__in=blocking_statuses)
-        .order_by("-created_at")
-        .first()
+        Loan.objects.filter(borrower=current_client, status__in=blocking_statuses).order_by("-created_at").first()
     )
     open_applications = Loan.objects.filter(
         borrower=current_client,
         status__in=["pending", "boo_approved", "hof_approved", "approved"],
     ).count()
-    active_loans = Loan.objects.filter(
-        borrower=current_client, status__in=Loan.ACTIVE_STATUSES
-    ).count()
+    active_loans = Loan.objects.filter(borrower=current_client, status__in=Loan.ACTIVE_STATUSES).count()
 
     if blocking_loan is not None and request.method == "POST":
         messages.error(
@@ -796,17 +745,13 @@ def client_loan_apply(request):
         if form.is_valid() and document_form.is_valid():
             try:
                 with transaction.atomic():
-                    application = form.save(
-                        commit=False, borrower=current_client, user=request.user
-                    )
+                    application = form.save(commit=False, borrower=current_client, user=request.user)
                     application.save()
                     document_form.save(application, uploaded_by=request.user)
 
                 try:
                     base_url = request.build_absolute_uri("/")
-                    submitter_name = (
-                        request.user.get_full_name() or request.user.username
-                    )
+                    submitter_name = request.user.get_full_name() or request.user.username
                     send_loan_application_email_task.delay(
                         recipient_name=submitter_name,
                         recipient_email=request.user.email,
@@ -831,15 +776,11 @@ def client_loan_apply(request):
                     "Loan application submitted successfully.",
                     extra_tags="bg-success",
                 )
-                return redirect(
-                    "loans:client_loan_application_detail", loan_id=application.id
-                )
+                return redirect("loans:client_loan_application_detail", loan_id=application.id)
             except ValidationError as exc:
                 messages.error(request, str(exc), extra_tags="bg-danger")
         else:
-            messages.error(
-                request, "Please correct the errors below.", extra_tags="bg-danger"
-            )
+            messages.error(request, "Please correct the errors below.", extra_tags="bg-danger")
     else:
         form = ClientSelfServiceLoanApplicationForm()
         document_form = LoanApplicationDocumentForm()
@@ -882,16 +823,10 @@ def client_loan_applications(request):
         summary["open_applications"] = summary_qs.filter(
             status__in=["pending", "boo_approved", "hof_approved", "approved"]
         ).count()
-        summary["active_loans"] = summary_qs.filter(
-            status__in=Loan.ACTIVE_STATUSES
-        ).count()
-        summary["total_requested"] = summary_qs.aggregate(
-            total=Sum("principal_amount")
-        )["total"] or Decimal("0.00")
+        summary["active_loans"] = summary_qs.filter(status__in=Loan.ACTIVE_STATUSES).count()
+        summary["total_requested"] = summary_qs.aggregate(total=Sum("principal_amount"))["total"] or Decimal("0.00")
         loans_qs = qs.annotate(document_count=Count("documents"))
-        summary["total_documents"] = (
-            loans_qs.aggregate(total=Sum("document_count"))["total"] or 0
-        )
+        summary["total_documents"] = loans_qs.aggregate(total=Sum("document_count"))["total"] or 0
         loans = paginate_queryset(loans_qs, request.GET.get("page"), per_page=20)
 
     return render(
@@ -928,24 +863,14 @@ def client_loan_application_detail(request, loan_id):
     balances = loan.calculate_remaining_balances()
     total_outstanding_balance = sum(balances.values())
     payment_schedule = loan.generate_payment_schedule()
-    schedule_total_principal = sum(
-        (item["principal_payment"] for item in payment_schedule), Decimal("0.00")
-    )
-    schedule_total_interest = sum(
-        (item["interest_payment"] for item in payment_schedule), Decimal("0.00")
-    )
-    schedule_total_payment = sum(
-        (item["total_payment"] for item in payment_schedule), Decimal("0.00")
-    )
-    final_due_date = (
-        payment_schedule[-1]["payment_due_date"] if payment_schedule else None
-    )
+    schedule_total_principal = sum((item["principal_payment"] for item in payment_schedule), Decimal("0.00"))
+    schedule_total_interest = sum((item["interest_payment"] for item in payment_schedule), Decimal("0.00"))
+    schedule_total_payment = sum((item["total_payment"] for item in payment_schedule), Decimal("0.00"))
+    final_due_date = payment_schedule[-1]["payment_due_date"] if payment_schedule else None
     schedule_unavailable_reason = ""
 
     if not loan.disbursement_date:
-        schedule_unavailable_reason = (
-            "Your repayment schedule will be available after the loan is disbursed."
-        )
+        schedule_unavailable_reason = "Your repayment schedule will be available after the loan is disbursed."
     elif not loan.loan_period_months or loan.loan_period_months <= 0:
         schedule_unavailable_reason = "Your repayment schedule cannot be generated because the loan period is missing."
 
@@ -983,13 +908,9 @@ def update_loan(request, loan_id):
     if request.method == "POST":
         if form.is_valid():
             form.save()
-            messages.success(
-                request, "Loan details updated successfully.", extra_tags="bg-success"
-            )
+            messages.success(request, "Loan details updated successfully.", extra_tags="bg-success")
             return redirect("loans:loan_applications")
-        messages.error(
-            request, "Please correct the errors below.", extra_tags="bg-danger"
-        )
+        messages.error(request, "Please correct the errors below.", extra_tags="bg-danger")
 
     return render(
         request,
@@ -1015,13 +936,9 @@ def repayment_schedule(request, loan_id):
     schedule_unavailable_reason = ""
 
     if not loan.disbursement_date:
-        schedule_unavailable_reason = (
-            "Repayment schedule will be available after this loan is disbursed."
-        )
+        schedule_unavailable_reason = "Repayment schedule will be available after this loan is disbursed."
     elif not loan.loan_period_months or loan.loan_period_months <= 0:
-        schedule_unavailable_reason = (
-            "Repayment schedule cannot be generated because the loan period is missing."
-        )
+        schedule_unavailable_reason = "Repayment schedule cannot be generated because the loan period is missing."
 
     # First payment gives monthly figures (same for all — flat rate)
     first = schedule[0] if schedule else {}
@@ -1040,9 +957,7 @@ def repayment_schedule(request, loan_id):
             "monthly_payment": monthly_payment,
             "total_interest": loan.total_interest,
             "total_cost_of_loan": loan.total_repayable,  # uses model @property
-            "loan_period_years": (
-                loan.loan_period_months / 12 if loan.loan_period_months else 0
-            ),
+            "loan_period_years": (loan.loan_period_months / 12 if loan.loan_period_months else 0),
             "interest_method": loan.interest_method,
             "schedule_unavailable_reason": schedule_unavailable_reason,
         },
@@ -1057,9 +972,7 @@ def repayment_schedule(request, loan_id):
 @login_required
 @admin_or_manager_or_staff_required
 def disbursed_loans_view(request):
-    qs = get_loan_queryset(request.GET.get("search")).filter(
-        status__in=["disbursed", "overdue", "repaid"]
-    )
+    qs = get_loan_queryset(request.GET.get("search")).filter(status__in=["disbursed", "overdue", "repaid"])
     # Evaluate once for totals, then paginate
     total_disbursed = Decimal("0.00")
     total_interest_all = Decimal("0.00")
@@ -1125,9 +1038,7 @@ def approved_loans_view(request):
 @login_required
 @admin_or_manager_or_staff_required
 def rejected_loans_view(request):
-    qs = get_loan_queryset(request.GET.get("search")).filter(
-        status__in=["ed_rejected", "hof_rejected"]
-    )
+    qs = get_loan_queryset(request.GET.get("search")).filter(status__in=["ed_rejected", "hof_rejected"])
     if request.user.profile.role in ["staff", "guest"]:
         qs = qs.filter(applied_by=request.user)
     return render(
@@ -1181,9 +1092,7 @@ def disburse_loan(request):
         return redirect("loans:disburse_loan")
 
     if request.method == "POST":
-        messages.error(
-            request, "Please check the form for errors.", extra_tags="bg-danger"
-        )
+        messages.error(request, "Please check the form for errors.", extra_tags="bg-danger")
 
     return render(
         request,
@@ -1204,9 +1113,9 @@ def disburse_all_loans(request):
     for loan in Loan.objects.filter(status="approved"):
         has_balance = any(
             sum(rl.calculate_remaining_balances().values()) > 0
-            for rl in Loan.objects.filter(
-                borrower=loan.borrower, status__in=["disbursed", "overdue"]
-            ).exclude(id=loan.id)
+            for rl in Loan.objects.filter(borrower=loan.borrower, status__in=["disbursed", "overdue"]).exclude(
+                id=loan.id
+            )
         )
         (ineligible if has_balance else eligible).append(loan)
 
@@ -1233,9 +1142,7 @@ def disburse_all_loans(request):
                 extra_tags="bg-danger",
             )
             return redirect("loans:disburse_all_loans")
-        messages.success(
-            request, f"{count} loans disbursed successfully.", extra_tags="bg-success"
-        )
+        messages.success(request, f"{count} loans disbursed successfully.", extra_tags="bg-success")
         if ineligible:
             messages.warning(
                 request,
@@ -1245,9 +1152,7 @@ def disburse_all_loans(request):
         return redirect("loans:disburse_all_loans")
 
     if request.method == "POST":
-        messages.error(
-            request, "Please check the form for errors.", extra_tags="bg-danger"
-        )
+        messages.error(request, "Please check the form for errors.", extra_tags="bg-danger")
 
     return render(
         request,
@@ -1352,9 +1257,7 @@ def approve_all_loans(request):
         return redirect("loans:loan_applications")
 
     pending_status = stage_map[role]
-    pending_loans = Loan.objects.filter(status=pending_status).prefetch_related(
-        "documents"
-    )
+    pending_loans = Loan.objects.filter(status=pending_status).prefetch_related("documents")
 
     if not pending_loans.exists():
         messages.info(
@@ -1462,14 +1365,10 @@ def delete_loan(request, loan_id):
     try:
         loan_ref = str(loan)
         loan.delete()
-        messages.success(
-            request, f"{loan_ref} deleted successfully!", extra_tags="bg-danger"
-        )
+        messages.success(request, f"{loan_ref} deleted successfully!", extra_tags="bg-danger")
     except Exception as e:
         logger.error("Error deleting loan %s: %s", loan_id, e)
-        messages.error(
-            request, "An error occurred during deletion.", extra_tags="bg-danger"
-        )
+        messages.error(request, "An error occurred during deletion.", extra_tags="bg-danger")
     return redirect("loans:loan_applications")
 
 
@@ -1497,13 +1396,9 @@ def loan_repayment_create_view(request):
                 repayment.save()  # clean() + _post_entries() + update_status() in model
             except ValidationError as exc:
                 form.add_error(None, exc)
-                messages.error(
-                    request, "Please correct the errors below.", extra_tags="bg-danger"
-                )
+                messages.error(request, "Please correct the errors below.", extra_tags="bg-danger")
             except Exception:
-                logger.exception(
-                    "Repayment posting failed for loan %s.", repayment.loan_id
-                )
+                logger.exception("Repayment posting failed for loan %s.", repayment.loan_id)
                 messages.error(
                     request,
                     "The repayment could not be posted. No repayment or journal changes were saved.",
@@ -1516,9 +1411,7 @@ def loan_repayment_create_view(request):
                     extra_tags="bg-success",
                 )
                 return redirect("loans:loan_repayment_create")
-        messages.error(
-            request, "Please correct the errors below.", extra_tags="bg-danger"
-        )
+        messages.error(request, "Please correct the errors below.", extra_tags="bg-danger")
     else:
         form = LoanRepaymentForm(loan_queryset=loans)
 
@@ -1548,9 +1441,7 @@ def loan_penalty_create_view(request):
                 penalty.save()  # _post_entries() + update_status() in model
             except ValidationError as exc:
                 form.add_error(None, exc)
-                messages.error(
-                    request, "Please correct the errors below.", extra_tags="bg-danger"
-                )
+                messages.error(request, "Please correct the errors below.", extra_tags="bg-danger")
             except Exception:
                 logger.exception("Penalty posting failed for loan %s.", penalty.loan_id)
                 messages.error(
@@ -1566,9 +1457,7 @@ def loan_penalty_create_view(request):
                 )
                 return redirect("loans:loan_penalty_create")
         if not form.is_valid():
-            messages.error(
-                request, "Please correct the errors below.", extra_tags="bg-danger"
-            )
+            messages.error(request, "Please correct the errors below.", extra_tags="bg-danger")
     else:
         form = LoanPenaltyForm(user=request.user, loan_queryset=loans)
 
@@ -1587,9 +1476,7 @@ def loan_penalty_create_view(request):
 @admin_or_manager_or_staff_required
 def loan_detail_view(request, loan_id):
     loan = get_object_or_404(
-        Loan.objects.select_related("borrower", "account").prefetch_related(
-            "repayments", "documents"
-        ),
+        Loan.objects.select_related("borrower", "account").prefetch_related("repayments", "documents"),
         id=loan_id,
     )
     balances = loan.calculate_remaining_balances()
@@ -1601,12 +1488,8 @@ def loan_detail_view(request, loan_id):
     )
     total_remaining_balance = sum(balances.values())
     missing_required_documents = loan.missing_required_documents
-    documents_page = Paginator(loan.attached_documents, 5).get_page(
-        request.GET.get("documents_page")
-    )
-    repayments_page = Paginator(repayments, 8).get_page(
-        request.GET.get("repayments_page")
-    )
+    documents_page = Paginator(loan.attached_documents, 5).get_page(request.GET.get("documents_page"))
+    repayments_page = Paginator(repayments, 8).get_page(request.GET.get("repayments_page"))
 
     return render(
         request,
@@ -1629,8 +1512,7 @@ def loan_detail_view(request, loan_id):
             "total_interest": totals["total_interest"] or 0,
             "total_penalty": totals["total_penalty"] or 0,
             "form_title": (
-                f"{loan.borrower.full_name} | Loan id: ({loan.id}) "
-                f"| Reg No: {loan.borrower.reg_number}"
+                f"{loan.borrower.full_name} | Loan id: ({loan.id}) " f"| Reg No: {loan.borrower.reg_number}"
             ),
         },
     )
@@ -1737,9 +1619,7 @@ def delete_repayment(request, repayment_id):
 def chart_of_accounts_list_view(request):
     accounts_by_type = {}
     for account in ChartOfAccounts.objects.all():
-        accounts_by_type.setdefault(account.get_account_type_display(), []).append(
-            account
-        )
+        accounts_by_type.setdefault(account.get_account_type_display(), []).append(account)
     return render(
         request,
         "loans/chart_of_accounts_list.html",
@@ -1756,9 +1636,7 @@ def add_chart_of_account_view(request):
     form = ChartOfAccountsForm(request.POST or None)
     if form.is_valid():
         form.save()
-        messages.success(
-            request, "Account added successfully!", extra_tags="bg-success"
-        )
+        messages.success(request, "Account added successfully!", extra_tags="bg-success")
         return redirect("loans:add_chart_of_account")
     return render(
         request,
@@ -1831,13 +1709,9 @@ def import_coa_data(request):
             for e in errors:
                 messages.error(request, e, extra_tags="bg-danger")
             if not errors:
-                messages.success(
-                    request, "Accounts imported successfully!", extra_tags="bg-success"
-                )
+                messages.success(request, "Accounts imported successfully!", extra_tags="bg-success")
             return redirect("loans:chart_of_accounts_list")
-        messages.error(
-            request, "Please upload a valid .xlsx file.", extra_tags="bg-danger"
-        )
+        messages.error(request, "Please upload a valid .xlsx file.", extra_tags="bg-danger")
 
     return render(
         request,
@@ -1901,13 +1775,9 @@ def import_loan_data(request):
             for e in errors:
                 messages.error(request, e, extra_tags="bg-danger")
             if not errors:
-                messages.success(
-                    request, "Loans imported successfully!", extra_tags="bg-success"
-                )
+                messages.success(request, "Loans imported successfully!", extra_tags="bg-success")
             return redirect("loans:loan_applications")
-        messages.error(
-            request, "Please upload a valid .xlsx file.", extra_tags="bg-danger"
-        )
+        messages.error(request, "Please upload a valid .xlsx file.", extra_tags="bg-danger")
 
     return render(
         request,
@@ -1991,12 +1861,8 @@ def ledger_report_view(request):
         selected_account = get_object_or_404(ChartOfAccounts, id=selected_account_id)
 
         # Opening balance: all entries before the range
-        for txn in TransactionHistory.objects.filter(
-            account=selected_account, transaction_date__lt=start_date
-        ):
-            opening_balance += (
-                txn.amount if txn.transaction_type == "debit" else -txn.amount
-            )
+        for txn in TransactionHistory.objects.filter(account=selected_account, transaction_date__lt=start_date):
+            opening_balance += txn.amount if txn.transaction_type == "debit" else -txn.amount
 
         running = opening_balance
         for txn in TransactionHistory.objects.filter(
@@ -2112,9 +1978,7 @@ def loan_aging_report(request):
                 "penalty_due": balances["penalty_balance"],
                 "outstanding_balance": outstanding,
                 "total_paid": total_paid_all,
-                "last_repayment_date": (
-                    last_repayment.repayment_date if last_repayment else None
-                ),
+                "last_repayment_date": (last_repayment.repayment_date if last_repayment else None),
                 "loan_product": loan.get_loan_purpose_display(),
                 "status": loan.status,
             }
@@ -2144,9 +2008,7 @@ def loan_aging_report(request):
             bt["total_paid"] += total_paid_all
 
         except Exception as e:
-            logger.error(
-                "Error processing loan %s for aging: %s", loan.id, e, exc_info=True
-            )
+            logger.error("Error processing loan %s for aging: %s", loan.id, e, exc_info=True)
 
     for bucket_key in aging_buckets:
         aging_buckets[bucket_key].sort(
@@ -2171,9 +2033,7 @@ def loan_aging_report(request):
                 {
                     "key": k,
                     "loans": aging_buckets[k],
-                    "totals": {
-                        fk: fmt(bucket_totals[k][fk]) for fk in bucket_totals[k]
-                    },
+                    "totals": {fk: fmt(bucket_totals[k][fk]) for fk in bucket_totals[k]},
                 }
                 for k in bucket_keys
             ],
@@ -2278,9 +2138,7 @@ def loan_arrears_report(request):
             logger.error("Error in arrears report for loan %s: %s", loan.id, e)
 
     for bucket in arrears_buckets:
-        arrears_buckets[bucket].sort(
-            key=lambda x: (-x["days_overdue"], -float(x["outstanding"]))
-        )
+        arrears_buckets[bucket].sort(key=lambda x: (-x["days_overdue"], -float(x["outstanding"])))
 
     for bt in bucket_totals.values():
         for k in grand_totals:
@@ -2335,20 +2193,14 @@ def loan_portfolio_report(request):
         ]
     }
 
-    for loan in (
-        Loan.objects.select_related("borrower").prefetch_related("repayments").all()
-    ):
+    for loan in Loan.objects.select_related("borrower").prefetch_related("repayments").all():
         try:
             balances = loan.calculate_remaining_balances()
             total_bal = sum(balances.values())
             if total_bal <= 0:
                 continue
 
-            days_overdue = (
-                max((today - loan.due_date).days, 0)
-                if loan.due_date and loan.due_date < today
-                else 0
-            )
+            days_overdue = max((today - loan.due_date).days, 0) if loan.due_date and loan.due_date < today else 0
             last_repayment = loan.repayments.order_by("-repayment_date").first()
             next_payment = _get_next_payment_date(loan)
 
@@ -2372,16 +2224,12 @@ def loan_portfolio_report(request):
                     "disbursement_date": loan.disbursement_date,
                     "due_date": loan.due_date,
                     "days_overdue": days_overdue,
-                    "last_payment": (
-                        last_repayment.repayment_date if last_repayment else None
-                    ),
+                    "last_payment": (last_repayment.repayment_date if last_repayment else None),
                     "next_payment": next_payment,
                 }
             )
         except Exception as e:
-            logger.error(
-                "Portfolio report error for loan %s: %s", loan.id, e, exc_info=True
-            )
+            logger.error("Portfolio report error for loan %s: %s", loan.id, e, exc_info=True)
 
     loan_data.sort(key=lambda x: x["disbursement_date"] or date.min)
     page_obj = paginate_queryset(loan_data, request.GET.get("page"))
@@ -2401,17 +2249,12 @@ def loan_portfolio_report(request):
 def portfolio_at_risk(request):
     today = timezone.now().date()
     loans = (
-        Loan.objects.filter(
-            status__in=["disbursed", "overdue"], disbursement_date__isnull=False
-        )
+        Loan.objects.filter(status__in=["disbursed", "overdue"], disbursement_date__isnull=False)
         .select_related("borrower")
         .prefetch_related("repayments")
     )
 
-    par = {
-        k: Decimal("0.00")
-        for k in ["par_1", "par_30", "par_60", "par_90", "par_120", "par_180"]
-    }
+    par = {k: Decimal("0.00") for k in ["par_1", "par_30", "par_60", "par_90", "par_120", "par_180"]}
     total_portfolio = Decimal("0.00")
     total_loans_count = 0
 
@@ -2436,9 +2279,7 @@ def portfolio_at_risk(request):
             if days >= threshold:
                 par[key] += outstanding
 
-    pct = lambda v: (
-        (v / total_portfolio * 100) if total_portfolio > 0 else Decimal("0.00")
-    )
+    pct = lambda v: ((v / total_portfolio * 100) if total_portfolio > 0 else Decimal("0.00"))
 
     return render(
         request,
@@ -2471,10 +2312,7 @@ def portfolio_at_risk(request):
 def non_performing_loans(request):
     today = timezone.now().date()
     loans_qs = (
-        Loan.objects.filter(
-            Q(status="overdue")
-            | Q(due_date__lt=today, status__in=["disbursed", "approved"])
-        )
+        Loan.objects.filter(Q(status="overdue") | Q(due_date__lt=today, status__in=["disbursed", "approved"]))
         .select_related("borrower", "account")
         .prefetch_related("repayments")
     )
@@ -2487,11 +2325,7 @@ def non_performing_loans(request):
             continue
 
         last = loan.repayments.order_by("-repayment_date").first()
-        days_overdue = (
-            max((today - loan.due_date).days, 0)
-            if loan.due_date and loan.due_date < today
-            else 0
-        )
+        days_overdue = max((today - loan.due_date).days, 0) if loan.due_date and loan.due_date < today else 0
 
         loan_data.append(
             {
@@ -2530,9 +2364,7 @@ def loan_due_overdue_report(request):
 
     selected_date_str = request.GET.get("selected_date")
     selected_date = (
-        datetime.strptime(selected_date_str, "%Y-%m-%d").date()
-        if selected_date_str
-        else timezone.now().date()
+        datetime.strptime(selected_date_str, "%Y-%m-%d").date() if selected_date_str else timezone.now().date()
     )
 
     search_term = request.GET.get("search", "").strip().lower()
@@ -2603,12 +2435,8 @@ def loan_due_overdue_report(request):
             # DUE TODAY
             due_today = [p for p in payments if p["payment_due_date"] == selected_date]
             if due_today:
-                expected = sum(
-                    p["principal_payment"] + p["interest_payment"] for p in due_today
-                )
-                due_amount = loan.calculate_total_amount_due_balance(
-                    selected_date, Decimal(str(expected))
-                )
+                expected = sum(p["principal_payment"] + p["interest_payment"] for p in due_today)
+                due_amount = loan.calculate_total_amount_due_balance(selected_date, Decimal(str(expected)))
                 if due_amount > 0:
                     due_today_list.append({**base, "due_amount": due_amount})
                 continue
@@ -2618,12 +2446,8 @@ def loan_due_overdue_report(request):
             if missed and (not loan.due_date or loan.due_date >= selected_date):
                 earliest = min(p["payment_due_date"] for p in missed)
                 days_arrears = (selected_date - earliest).days
-                expected = sum(
-                    p["principal_payment"] + p["interest_payment"] for p in missed
-                )
-                arrears_amount = loan.calculate_total_amount_due_balance(
-                    selected_date, Decimal(str(expected))
-                )
+                expected = sum(p["principal_payment"] + p["interest_payment"] for p in missed)
+                arrears_amount = loan.calculate_total_amount_due_balance(selected_date, Decimal(str(expected)))
                 if arrears_amount > 0:
                     arrears_list.append(
                         {
@@ -2636,9 +2460,7 @@ def loan_due_overdue_report(request):
             # PAST MATURITY
             if loan.due_date and loan.due_date < selected_date:
                 days_past = (selected_date - loan.due_date).days
-                mat_amount = loan.calculate_total_amount_due_balance(
-                    selected_date, outstanding
-                )
+                mat_amount = loan.calculate_total_amount_due_balance(selected_date, outstanding)
                 if mat_amount > 0:
                     past_maturity_list.append(
                         {
@@ -2677,9 +2499,7 @@ def loan_due_overdue_report(request):
 @admin_or_manager_or_staff_required
 def client_loan_statement(request):
     clients = (
-        Client.objects.filter(loans__status__in=["disbursed", "overdue", "repaid"])
-        .distinct()
-        .order_by("full_name")
+        Client.objects.filter(loans__status__in=["disbursed", "overdue", "repaid"]).distinct().order_by("full_name")
     )
     client, statement_data = None, None
 
@@ -2705,9 +2525,7 @@ def client_loan_statement(request):
                 ti = totals["total_interest"] or Decimal("0.00")
                 tk = totals["total_penalty"] or Decimal("0.00")
 
-                total_penalties = loan.penalties.aggregate(t=Sum("penalty_amount"))[
-                    "t"
-                ] or Decimal("0.00")
+                total_penalties = loan.penalties.aggregate(t=Sum("penalty_amount"))["t"] or Decimal("0.00")
                 pb = loan.principal_amount - tp
                 ib = (loan.total_interest or Decimal("0")) - ti
                 kb = total_penalties - tk
@@ -2716,9 +2534,7 @@ def client_loan_statement(request):
                     {
                         "loan": loan,
                         "repayments": repayments,
-                        "transactions": loan.transactions.all().order_by(
-                            "transaction_date"
-                        ),
+                        "transactions": loan.transactions.all().order_by("transaction_date"),
                         "principal_balance": pb,
                         "interest_balance": ib,
                         "penalty_balance": kb,
@@ -2741,9 +2557,7 @@ def client_loan_statement(request):
 @login_required
 @admin_or_manager_or_staff_required
 def loan_penalty_management(request):
-    clients_with_loans = (
-        Client.objects.filter(loans__isnull=False).distinct().order_by("full_name")
-    )
+    clients_with_loans = Client.objects.filter(loans__isnull=False).distinct().order_by("full_name")
     selected_client = None
     unpaid_penalties, paid_penalties = [], []
     unpaid_total = paid_total = total_ever = Decimal("0.00")
@@ -2759,27 +2573,17 @@ def loan_penalty_management(request):
                 if ids:
                     with transaction.atomic():
                         penalties = list(
-                            LoanPenalty.objects.select_related(
-                                "loan", "account"
-                            ).filter(
+                            LoanPenalty.objects.select_related("loan", "account").filter(
                                 id__in=ids,
                                 loan__borrower=selected_client,
                                 is_deleted=False,
                             )
                         )
-                        paid_count_blocked = sum(
-                            1 for p in penalties if p.is_paid or p.remaining_amount <= 0
-                        )
-                        reversible = [
-                            p
-                            for p in penalties
-                            if not p.is_paid and p.remaining_amount > 0
-                        ]
+                        paid_count_blocked = sum(1 for p in penalties if p.is_paid or p.remaining_amount <= 0)
+                        reversible = [p for p in penalties if not p.is_paid and p.remaining_amount > 0]
                         reversed_total = Decimal("0.00")
                         for penalty in reversible:
-                            reversed_total += _reverse_penalty_balance(
-                                penalty, request.user
-                            )
+                            reversed_total += _reverse_penalty_balance(penalty, request.user)
 
                     if reversible:
                         messages.success(
@@ -2814,9 +2618,7 @@ def loan_penalty_management(request):
                 .select_related("loan")
                 .order_by("-penalty_date")
             )
-            unpaid_total = unpaid_penalties.aggregate(t=Sum("remaining_amount"))[
-                "t"
-            ] or Decimal("0")
+            unpaid_total = unpaid_penalties.aggregate(t=Sum("remaining_amount"))["t"] or Decimal("0")
             unpaid_count = unpaid_penalties.count()
 
             # Build paid list from paid penalties linked to this client
@@ -2824,9 +2626,7 @@ def loan_penalty_management(request):
             paid_penalties = []
 
             for repayment in (
-                LoanRepayment.objects.filter(
-                    loan__borrower=selected_client, penalty_payment__gt=0
-                )
+                LoanRepayment.objects.filter(loan__borrower=selected_client, penalty_payment__gt=0)
                 .select_related("loan")
                 .order_by("-repayment_date")
             ):
@@ -2986,9 +2786,7 @@ LOAN_TOTAL_KEYS = [
 COLLECTION_TOTAL_KEYS = ["principal", "interest", "fees", "penalties", "paid_amount"]
 
 
-def _loan_report_rows(
-    filters, *, date_field="disbursement_date", statuses=None, as_of=None
-):
+def _loan_report_rows(filters, *, date_field="disbursement_date", statuses=None, as_of=None):
     qs = filtered_loans(filters, date_field=date_field)
     if statuses:
         qs = qs.filter(status__in=statuses)
@@ -3000,9 +2798,7 @@ def _loan_report_rows(
 def loan_aging_report(request):
     filters = parse_report_filters(request)
     rows = [
-        row
-        for row in _loan_report_rows(filters, statuses=["disbursed", "overdue"])
-        if row["outstanding_amount"] > 0
+        row for row in _loan_report_rows(filters, statuses=["disbursed", "overdue"]) if row["outstanding_amount"] > 0
     ]
     rows.sort(key=lambda item: (item["days_in_arrears"], item["client"]))
     return _standard_report_response(
@@ -3060,9 +2856,7 @@ def loan_portfolio_report(request):
 def portfolio_at_risk(request):
     filters = parse_report_filters(request)
     portfolio_rows = [
-        row
-        for row in _loan_report_rows(filters, statuses=["disbursed", "overdue"])
-        if row["outstanding_amount"] > 0
+        row for row in _loan_report_rows(filters, statuses=["disbursed", "overdue"]) if row["outstanding_amount"] > 0
     ]
     par = portfolio_at_risk_summary(portfolio_rows)
     rows = [
@@ -3111,9 +2905,7 @@ def loan_due_overdue_report(request):
     filters = parse_report_filters(request)
     selected_date = parse_date(request.GET.get("date") or "") or timezone.localdate()
     rows = []
-    for row in _loan_report_rows(
-        filters, statuses=["disbursed", "overdue"], as_of=selected_date
-    ):
+    for row in _loan_report_rows(filters, statuses=["disbursed", "overdue"], as_of=selected_date):
         if row["outstanding_amount"] <= 0:
             continue
         if row["overdue_amount"] <= 0:
@@ -3125,9 +2917,7 @@ def loan_due_overdue_report(request):
         if row["maturity_date"] and row["maturity_date"] < selected_date:
             category = "Past maturity"
         rows.append({**row, "category": category})
-    rows.sort(
-        key=lambda item: (item["category"], -item["days_in_arrears"], item["client"])
-    )
+    rows.sort(key=lambda item: (item["category"], -item["days_in_arrears"], item["client"]))
     return _standard_report_response(
         request,
         "Due, Arrears And Past Maturity Report",
@@ -3144,10 +2934,7 @@ def loan_due_overdue_report(request):
 @admin_or_manager_or_staff_required
 def loan_disbursement_report(request):
     filters = parse_report_filters(request)
-    rows = [
-        loan_financial_row(loan)
-        for loan in filtered_loans(filters).filter(disbursement_date__isnull=False)
-    ]
+    rows = [loan_financial_row(loan) for loan in filtered_loans(filters).filter(disbursement_date__isnull=False)]
     return _standard_report_response(
         request,
         "Loan Disbursement Report",
@@ -3180,9 +2967,7 @@ def loan_collection_report(request):
 def outstanding_loan_balances_report(request):
     filters = parse_report_filters(request)
     rows = [
-        row
-        for row in (loan_financial_row(loan) for loan in filtered_loans(filters))
-        if row["outstanding_amount"] > 0
+        row for row in (loan_financial_row(loan) for loan in filtered_loans(filters)) if row["outstanding_amount"] > 0
     ]
     return _standard_report_response(
         request,
@@ -3222,9 +3007,7 @@ def closed_loans_report(request):
     filters = parse_report_filters(request)
     rows = [
         loan_financial_row(loan)
-        for loan in filtered_loans(filters, date_field="updated_at").filter(
-            status__in=["closed", "repaid"]
-        )
+        for loan in filtered_loans(filters, date_field="updated_at").filter(status__in=["closed", "repaid"])
     ]
     return _standard_report_response(
         request,
@@ -3353,9 +3136,7 @@ def _standard_report_response(
             "status_choices": Loan.STATUS_CHOICES,
             "loan_product_choices": Loan.LOAN_PURPOSE_CHOICES,
             "clients": Client.objects.order_by("full_name"),
-            "loan_officers": User.objects.filter(applied_loans__isnull=False)
-            .distinct()
-            .order_by("username"),
+            "loan_officers": User.objects.filter(applied_loans__isnull=False).distinct().order_by("username"),
             "csv_url": _csv_url(request),
         },
     )

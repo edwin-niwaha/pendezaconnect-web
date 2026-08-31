@@ -14,7 +14,6 @@ from apps.users.models import Profile
 
 
 class ViewTests(TestCase):
-
     def setUp(self):
         self.client = Client()
 
@@ -146,13 +145,9 @@ class ViewTests(TestCase):
             amount=10000,
         )
 
-        payload = json.dumps(
-            {"externalId": "fake_ext", "status": "SUCCESSFUL", "amount": "10000"}
-        )
+        payload = json.dumps({"externalId": "fake_ext", "status": "SUCCESSFUL", "amount": "10000"})
 
-        response = self.client.post(
-            reverse("momo_callback"), data=payload, content_type="application/json"
-        )
+        response = self.client.post(reverse("momo_callback"), data=payload, content_type="application/json")
 
         self.assertEqual(response.status_code, 200)
 
@@ -160,9 +155,7 @@ class ViewTests(TestCase):
         self.assertEqual(txn.status, "SUCCESSFUL")
 
     def test_momo_callback_invalid_json(self):
-        response = self.client.post(
-            reverse("momo_callback"), data="notjson", content_type="application/json"
-        )
+        response = self.client.post(reverse("momo_callback"), data="notjson", content_type="application/json")
         self.assertEqual(response.status_code, 400)
 
     # ==============================
@@ -231,9 +224,7 @@ class ViewTests(TestCase):
             is_active=True,
         )
 
-        response = self.client.post(
-            reverse("terminate_child_sponsorship", args=[ending_sponsorship.id])
-        )
+        response = self.client.post(reverse("terminate_child_sponsorship", args=[ending_sponsorship.id]))
 
         self.assertRedirects(response, reverse("child_sponsorship_report"))
         child.refresh_from_db()
@@ -263,9 +254,7 @@ class ViewTests(TestCase):
             is_active=True,
         )
 
-        response = self.client.post(
-            reverse("terminate_child_sponsorship", args=[sponsorship.id])
-        )
+        response = self.client.post(reverse("terminate_child_sponsorship", args=[sponsorship.id]))
 
         self.assertRedirects(response, reverse("child_sponsorship_report"))
         child.refresh_from_db()

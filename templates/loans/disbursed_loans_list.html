@@ -3,7 +3,167 @@
 
 {% block content %}
   {% include 'loans/_report_styles.html' %}
-  <div class="container-fluid loan-report-page">
+  <style>
+    .disbursed-register {
+      --register-green: #13745d;
+      --register-ink: #172b3f;
+      --register-border: #e3e9ef;
+      color: var(--register-ink);
+    }
+    .disbursed-register .loan-report-header {
+      align-items: center;
+      background: linear-gradient(125deg, #123b36 0%, #176b59 58%, #21836c 100%);
+      border: 0;
+      border-radius: 18px;
+      box-shadow: 0 16px 36px rgba(18, 59, 54, .18);
+      overflow: hidden;
+      padding: 22px 24px;
+      position: relative;
+    }
+    .disbursed-register .loan-report-header::after {
+      border: 22px solid rgba(255,255,255,.06);
+      border-radius: 50%;
+      content: '';
+      height: 165px;
+      position: absolute;
+      right: -30px;
+      top: -70px;
+      width: 165px;
+    }
+    .disbursed-register .loan-report-title {
+      color: #fff;
+      font-size: clamp(1.35rem, 2vw, 1.8rem);
+      letter-spacing: -.02em;
+    }
+    .disbursed-register .loan-report-subtitle { color: rgba(255,255,255,.74); }
+    .disbursed-register .loan-report-header > * { position: relative; z-index: 1; }
+    .disbursed-register .loan-report-actions .btn {
+      align-items: center;
+      border-radius: 10px;
+      display: inline-flex;
+      font-weight: 800;
+      gap: 4px;
+      min-height: 38px;
+      padding: 7px 12px;
+    }
+    .disbursed-register .loan-report-actions .btn-dark {
+      background: #fff;
+      border-color: #fff;
+      color: #135b4c;
+    }
+    .disbursed-register .loan-report-actions .btn-outline-primary,
+    .disbursed-register .loan-report-actions .btn-success {
+      background: rgba(255,255,255,.08);
+      border-color: rgba(255,255,255,.38);
+      color: #fff;
+    }
+    .disbursed-register .loan-report-kpis { gap: 12px; margin-bottom: 16px; }
+    .disbursed-register .loan-report-kpi {
+      border-color: var(--register-border);
+      border-radius: 14px;
+      box-shadow: 0 10px 24px rgba(31, 50, 70, .06);
+      min-height: 104px;
+      overflow: hidden;
+      padding: 16px 17px;
+      position: relative;
+    }
+    .disbursed-register .loan-report-kpi::after {
+      background: #e8f4f0;
+      border-radius: 50%;
+      content: '';
+      height: 68px;
+      position: absolute;
+      right: -20px;
+      top: -22px;
+      width: 68px;
+    }
+    .disbursed-register .loan-report-kpi:nth-child(2)::after { background: #e8efff; }
+    .disbursed-register .loan-report-kpi:nth-child(3)::after { background: #fff3dd; }
+    .disbursed-register .loan-report-kpi:nth-child(4)::after { background: #e9f6f1; }
+    .disbursed-register .loan-report-kpi span { letter-spacing: .04em; }
+    .disbursed-register .loan-report-kpi strong {
+      color: var(--register-ink);
+      font-size: 1.16rem;
+      margin-top: 9px;
+      overflow-wrap: anywhere;
+    }
+    .disbursed-register .loan-report-panel {
+      border-color: var(--register-border);
+      border-radius: 14px;
+      box-shadow: 0 12px 30px rgba(31, 50, 70, .07);
+    }
+    .disbursed-register .loan-report-panel-head {
+      background: #fff;
+      padding: 14px 16px;
+    }
+    .register-heading { align-items: center; display: flex; gap: 10px; }
+    .register-heading i {
+      align-items: center;
+      background: #e9f6f1;
+      border-radius: 9px;
+      color: var(--register-green);
+      display: inline-flex;
+      font-size: 1.05rem;
+      height: 34px;
+      justify-content: center;
+      width: 34px;
+    }
+    .register-heading small { color: #667085; display: block; font-size: .72rem; font-weight: 500; margin-top: 1px; }
+    .disbursed-register .loan-report-filters { flex-wrap: nowrap; }
+    .disbursed-register .loan-report-filters .form-control {
+      border-color: #d7dee7;
+      border-radius: 9px;
+      min-height: 36px;
+      min-width: min(280px, 30vw);
+      padding-left: 12px;
+    }
+    .disbursed-register .loan-report-filters .btn { border-radius: 9px; height: 36px; width: 40px; }
+    .disbursed-register .loan-report-table thead th {
+      background: #f7f9fb;
+      border-bottom-color: #dfe5ec;
+      color: #536273;
+      letter-spacing: .025em;
+      padding-bottom: .68rem;
+      padding-top: .68rem;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    .disbursed-register .loan-report-table tbody td { border-color: #edf1f5; padding-bottom: .68rem; padding-top: .68rem; }
+    .disbursed-register .loan-report-table tbody tr:hover td { background: #f8fbfa; }
+    .loan-id-link { color: var(--register-green); font-weight: 900; }
+    .borrower-cell strong { color: var(--register-ink); display: block; font-weight: 800; }
+    .account-number { color: #667085; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .78rem; }
+    .amount-cell { color: #243b53; font-weight: 800; }
+    .disbursed-register .loan-report-table tfoot th { background: #f1f6f4; border-top: 2px solid #cfe1db; color: #183e36; }
+    .disbursed-register .loan-status-badge::before {
+      background: currentColor;
+      border-radius: 50%;
+      content: '';
+      height: 6px;
+      margin-right: 6px;
+      width: 6px;
+    }
+    .disbursed-register .loan-pagination .page-link { border-color: #dfe5ec; color: var(--register-green); }
+    .disbursed-register .loan-pagination .active .page-link { background: var(--register-green); border-color: var(--register-green); color: #fff; }
+    @media (max-width: 768px) {
+      .disbursed-register .loan-report-header { align-items: flex-start; border-radius: 14px; padding: 20px; }
+      .disbursed-register .loan-report-actions { display: grid; grid-template-columns: 1fr 1fr auto; }
+      .disbursed-register .loan-report-actions .btn { justify-content: center; }
+      .disbursed-register .loan-report-panel-head { align-items: stretch; flex-direction: column; }
+      .disbursed-register .loan-report-filters .form-control { min-width: 0; width: 100%; }
+    }
+    @media (max-width: 576px) {
+      .disbursed-register .loan-report-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .disbursed-register .loan-report-kpi { min-height: 96px; }
+      .disbursed-register .loan-report-actions { grid-template-columns: 1fr 1fr; }
+      .disbursed-register .loan-report-actions .btn-success { width: 100%; }
+      .disbursed-register .loan-report-filters { flex-direction: row; }
+      .disbursed-register .loan-report-filters .form-control { flex: 1 1 auto; }
+      .disbursed-register .loan-report-filters .btn { flex: 0 0 40px; }
+    }
+  </style>
+  <div class="container-fluid loan-report-page loan-register-page disbursed-register" data-register-state="disbursed">
     <div class="loan-report-header">
       <div>
         <h1 class="loan-report-title">{{ table_title }}</h1>
@@ -17,7 +177,7 @@
     </div>
 
     <div class="loan-report-kpis">
-      <div class="loan-report-kpi"><span>Loans</span><strong>{{ loan_count|intcomma }}</strong></div>
+      <div class="loan-report-kpi"><span>Active register</span><strong>{{ loan_count|intcomma }} loan{{ loan_count|pluralize }}</strong></div>
       <div class="loan-report-kpi"><span>Principal Issued</span><strong>UGX {{ total_disbursed|floatformat:0|intcomma }}</strong></div>
       <div class="loan-report-kpi"><span>Interest Receivable</span><strong>UGX {{ total_interest_all|floatformat:0|intcomma }}</strong></div>
       <div class="loan-report-kpi"><span>Total Recoverable</span><strong>UGX {{ total_recoverable|floatformat:0|intcomma }}</strong></div>
@@ -25,7 +185,10 @@
 
     <div id="printMe" class="loan-report-panel">
       <div class="loan-report-panel-head">
-        <strong>Disbursement register</strong>
+        <div class="register-heading">
+          <i class="mdi mdi-bank-transfer-out"></i>
+          <div><strong>Disbursement register</strong><small>Search, review, and open individual loan records</small></div>
+        </div>
         <form method="GET" action="{% url 'loans:disbursed_loans' %}" class="loan-report-filters print-hide">
           <input type="text" name="search" value="{{ search_query|default:'' }}" placeholder="Search borrower..." class="form-control form-control-sm" />
           <button type="submit" class="btn btn-primary btn-sm"><i class="mdi mdi-magnify"></i></button>
@@ -54,11 +217,11 @@
             <tbody>
               {% for loan_info in loans_with_disbursement_info %}
                 <tr>
-                  <td>#{{ loan_info.loan_id }}</td>
-                  <td>{{ loan_info.borrower }}</td>
-                  <td>{{ loan_info.account_number|default:'-' }}</td>
-                  <td class="text-end">UGX {{ loan_info.principal_amount|floatformat:0|intcomma }}</td>
-                  <td class="text-end">UGX {{ loan_info.total_interest|floatformat:0|intcomma }}</td>
+                  <td><span class="loan-id-link">#{{ loan_info.loan_id }}</span></td>
+                  <td class="borrower-cell"><strong>{{ loan_info.borrower }}</strong></td>
+                  <td><span class="account-number">{{ loan_info.account_number|default:'-' }}</span></td>
+                  <td class="text-end amount-cell">UGX {{ loan_info.principal_amount|floatformat:0|intcomma }}</td>
+                  <td class="text-end amount-cell">UGX {{ loan_info.total_interest|floatformat:0|intcomma }}</td>
                   <td class="text-center">{{ loan_info.interest_rate|floatformat:0 }}%</td>
                   <td class="text-center">{{ loan_info.loan_period_months }}m</td>
                   <td>{{ loan_info.start_date|date:'d/m/Y' }}</td>

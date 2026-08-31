@@ -1,292 +1,67 @@
 {% extends 'loans/base.html' %}
-{% load humanize %}
-
+{% load static humanize %}
+{% block title %}Loan statement | Pendeza Connect{% endblock %}
 {% block content %}
+<link rel="stylesheet" href="{% static 'css/compact-loan-statement.css' %}">
+<main class="statement-page">
+  <header class="statement-topbar">
+    <div><p class="statement-kicker">Loan reports</p><h1>Client loan statement</h1></div>
+    <a href="{% url 'loans:loan_reports_dashboard' %}" class="btn btn-outline-secondary btn-sm no-print">Back to reports</a>
+  </header>
 
- <div class="container-fluid mt-1 pt-3">
-    <!-- Header Section -->
-    <div class="mb-3">
-        <h1 class="text-3xl font-extrabold text-gray-900">Loan Statement</h1>
-    </div>
+  <form method="post" class="statement-selector no-print">
+    {% csrf_token %}
+    <label for="client_id">Client</label>
+    <select id="client_id" name="client_id" class="form-control chzn-select" required>
+      <option value="">Select a client</option>
+      {% for item in clients %}<option value="{{ item.id }}"{% if client and item.id == client.id %} selected{% endif %}>{{ item.full_name }} · {{ item.reg_number }}</option>{% endfor %}
+    </select>
+    <button type="submit" class="btn btn-primary btn-sm">View statement</button>
+    {% if client %}<button type="button" class="btn btn-dark btn-sm" onclick="window.print()">Print</button>{% endif %}
+  </form>
 
-    <!-- Client Selection Form -->
-    <div class="mb-8 bg-white shadow-lg rounded-xl p-6">
-        <form method="POST" class="flex flex-col sm:flex-row gap-4 items-center">
-            {% csrf_token %}
-            <label for="client_id" class="text-sm font-medium text-gray-700">Select Client:</label>
-            <select id="client_id" name="client_id" class="w-full sm:w-64 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 chzn-select">
-            {% comment %} <select name="id" id="dropdown" class="chzn-select" required>     {% endcomment %}
-            <option value="">-- Select a Client --</option>
-                {% for client in clients %}
-                    <option value="{{ client.id }}" {% if client.id == client_selected.id %}selected{% endif %}>
-                        {{ client.full_name }} (ID: {{ client.reg_number }})
-                    </option>
-                {% endfor %}
-            </select>
-            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                View Statement
-            </button>
-            <button title="Print" type="button" class="btn btn-success ml-2" onclick="printDiv('printMe')"><i class="mdi mdi-printer btn-icon-prepend"></i></button>
+  {% if client %}
+  <div class="statement-client"><strong>{{ client.full_name }}</strong><span>{{ client.reg_number }}</span><span>{{ statement_data|length }} loan{{ statement_data|length|pluralize }}</span></div>
+  {% if statement_data %}
+    {% for loan_data in statement_data %}
+    <article class="loan-statement-card">
+      <header class="loan-card-head">
+        <div><h2>Loan #{{ loan_data.loan.id }}</h2><span>{{ loan_data.loan.loan_purpose|title }}</span></div>
+        <span class="statement-status {% if loan_data.total_balance == 0 or loan_data.loan.status == 'repaid' or loan_data.loan.status == 'closed' %}success{% elif loan_data.loan.status == 'overdue' %}danger{% elif loan_data.loan.status == 'pending' %}warning{% endif %}">{% if loan_data.total_balance == 0 %}Paid{% else %}{{ loan_data.loan.get_status_display }}{% endif %}</span>
+      </header>
 
-        </form>
-    </div>
-<div id="printMe">
-    {% if client %}
-        <!-- Client Info -->
-        <div class="mb-6">
-            <p class="text-lg text-gray-600">Statement for {{ client.full_name }} (ID: {{ client.reg_number }})</p>
-        </div>
+      <section class="balance-strip" aria-label="Outstanding balances">
+        <div><span>Principal balance</span><strong>{{ loan_data.principal_balance|floatformat:0|intcomma }}</strong></div>
+        <div><span>Interest balance</span><strong>{{ loan_data.interest_balance|floatformat:0|intcomma }}</strong></div>
+        <div><span>Penalty balance</span><strong>{{ loan_data.penalty_balance|floatformat:0|intcomma }}</strong></div>
+        <div class="total"><span>Total balance</span><strong>{{ loan_data.total_balance|floatformat:0|intcomma }}</strong></div>
+      </section>
 
-        {% if statement_data %}
-            {% for loan_data in statement_data %}
-                <div class="bg-white shadow-lg rounded-xl p-8 mb-8 border border-gray-100">
-                    <!-- Loan Header -->
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-semibold text-gray-800">
-                            Loan #{{ loan_data.loan.id }} - {{ loan_data.loan.loan_purpose|title }}
-                        </h2>
-                        <span class="px-3 py-1 text-sm font-medium rounded-full
-                            {% if loan_data.total_balance == 0 %}
-                                bg-green-100 text-green-800
-                            {% elif loan_data.loan.status == 'repaid' or loan_data.loan.status == 'closed' %}
-                                bg-green-100 text-green-800
-                            {% elif loan_data.loan.status == 'overdue' %}
-                                bg-red-100 text-red-800
-                            {% elif loan_data.loan.status == 'pending' %}
-                                bg-yellow-100 text-yellow-800
-                            {% else %}
-                                bg-blue-100 text-blue-800
-                            {% endif %}">
-                            {% if loan_data.total_balance == 0 %}
-                                Paid
-                            {% else %}
-                                {{ loan_data.loan.get_status_display }}
-                            {% endif %}
-                        </span>
-                    </div>
+      <section class="loan-facts" aria-label="Loan details">
+        <div><span>Principal</span><strong>{{ loan_data.loan.principal_amount|floatformat:0|intcomma }}</strong></div>
+        <div><span>Interest</span><strong>{{ loan_data.loan.interest_rate }}%</strong></div>
+        <div><span>Term</span><strong>{{ loan_data.loan.loan_period_months }} months</strong></div>
+        <div><span>Total interest</span><strong>{{ loan_data.loan.total_interest|floatformat:0|intcomma }}</strong></div>
+        <div><span>Disbursed</span><strong>{{ loan_data.loan.disbursement_date|date:'d M Y'|default:'—' }}</strong></div>
+        <div><span>Maturity</span><strong>{{ loan_data.loan.due_date|date:'d M Y'|default:'—' }}</strong></div>
+      </section>
 
-                    <!-- Outstanding Balances -->
-                    <!-- Outstanding Balances -->
-                    <div class="mb-8 bg-gray-50 p-6 rounded-lg">
-                        <h3 class="text-lg font-medium text-gray-700 mb-4">Outstanding Balances</h3>
-                        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                            <div class="text-center">
-                                <p class="text-sm text-gray-500">Principal Balance</p>
-                                <p class="text-xl font-bold text-gray-900">{{ loan_data.principal_balance|floatformat:'2'|intcomma }}</p>
-                            </div>
-                            <div class="text-center">
-                                <p class="text-sm text-gray-500">Interest Balance</p>
-                                <p class="text-xl font-bold text-gray-900">{{ loan_data.interest_balance|floatformat:'2'|intcomma }}</p>
-                            </div>
-                            <div class="text-center">
-                                <p class="text-sm text-gray-500">Penalty Balance</p>
-                                <p class="text-xl font-bold text-gray-900">{{ loan_data.penalty_balance|floatformat:'2'|intcomma }}</p>
-                            </div>
-                            <div class="text-center">
-                                <p class="text-sm text-gray-500">Total Balance</p>
-                                <p class="text-xl font-bold text-red-600">{{ loan_data.total_balance|floatformat:'2'|intcomma }}</p>
-                            </div>
-                        </div>
-                    </div>
+      <section class="statement-section">
+        <div class="section-title"><h3>Repayments</h3><span>{{ loan_data.repayments|length }} entries</span></div>
+        <div class="statement-table-wrap"><table class="statement-table"><thead><tr><th>Date</th><th class="number">Principal</th><th class="number">Interest</th><th class="number">Total paid</th></tr></thead><tbody>
+          {% for repayment in loan_data.repayments %}<tr><td>{{ repayment.repayment_date|date:'d M Y' }}</td><td class="number">{{ repayment.principal_payment|floatformat:0|intcomma }}</td><td class="number">{{ repayment.interest_payment|floatformat:0|intcomma }}</td><td class="number">{{ repayment.total_payment|floatformat:0|intcomma }}</td></tr>{% empty %}<tr><td colspan="4" class="empty-row">No repayments recorded</td></tr>{% endfor %}
+        </tbody></table></div>
+      </section>
 
-
-                    <!-- Loan Details -->
-                    <div class="mb-8">
-                        <h3 class="text-lg font-medium text-gray-700 mb-4">Loan Details</h3>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div>
-                                <p class="text-sm text-gray-500">Principal Amount</p>
-                                <p class="font-medium">{{ loan_data.loan.principal_amount|floatformat:'2'|intcomma }}</p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-500">Interest Rate</p>
-                                <p class="font-medium">{{ loan_data.loan.interest_rate }}%</p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-500">Loan Period</p>
-                                <p class="font-medium">{{ loan_data.loan.loan_period_months }} months</p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-500">Total Interest</p>
-                                <p class="font-medium">{{ loan_data.loan.total_interest|floatformat:'2'|intcomma }}</p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-500">Applied On</p>
-                                <p class="font-medium">{{ loan_data.loan.start_date }}</p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-500">Disbursement Date</p>
-                                <p class="font-medium">{{ loan_data.loan.disbursement_date|default:"N/A" }}</p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-500">Maturity Date</p>
-                                <p class="font-medium">{{ loan_data.loan.due_date|default:"N/A" }}</p>
-                            </div>
-                            <div>
-                                <p class="text-sm text-gray-500">Interest Method</p>
-                                <p class="font-medium">{{ loan_data.loan.get_interest_method_display }}</p>
-                            </div>
-                            {% comment %} <div>
-                                <p class="text-sm text-gray-500">Purpose</p>
-                                <p class="font-medium">{{ loan_data.loan.get_loan_purpose_display }}</p>
-                            </div> {% endcomment %}
-                        </div>
-                    </div>
-
-                    {% comment %} <!-- Payment Schedule -->
-                    <div class="mb-8">
-                        <h3 class="text-lg font-medium text-gray-700 mb-4">Payment Schedule</h3>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-sm text-left text-gray-600">
-                                <thead class="text-xs uppercase bg-gray-50">
-                                    <tr>
-                                        <th class="px-6 py-3">Due Date</th>
-                                        <th class="px-6 py-3 text-right">Principal</th>
-                                        <th class="px-6 py-3 text-right">Interest</th>
-                                        <th class="px-6 py-3 text-right">Total Payment</th>
-                                        <th class="px-6 py-3 text-right">Remaining Balance</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for payment in loan_data.payment_schedule %}
-                                        <tr class="bg-white border-b hover:bg-gray-50">
-                                            <td class="px-6 py-4">{{ payment.payment_due_date }}</td>
-                                            <td class="px-6 py-4 text-right">{{ payment.principal_payment|floatformat:'2'|intcomma }}</td>
-                                            <td class="px-6 py-4 text-right">{{ payment.interest_payment|floatformat:'2'|intcomma }}</td>
-                                            <td class="px-6 py-4 text-right">{{ payment.total_payment|floatformat:'2'|intcomma }}</td>
-                                            <td class="px-6 py-4 text-right">{{ payment.remaining_balance|floatformat:'2'|intcomma }}</td>
-                                        </tr>
-                                    {% empty %}
-                                        <tr>
-                                            <td colspan="5" class="px-6 py-4 text-center text-gray-500">No payment schedule available</td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div> {% endcomment %}
-
-                    <!-- Payment Schedule -->
-                    <div class="mb-8">
-                        <h3 class="d-flex align-items-center mb-4">
-                            <button class="btn btn-link text-decoration-none fw-bold text-primary p-0 d-flex align-items-center" type="button" data-bs-toggle="collapse" data-bs-target="#payment-schedule-{{ loan_data.loan.id }}" aria-expanded="false" aria-controls="payment-schedule-{{ loan_data.loan.id }}">
-                                <i class="bi bi-plus toggle-icon me-2 fs-4"></i> Payment Schedule
-                            </button>
-                        </h3>
-                        <div id="payment-schedule-{{ loan_data.loan.id }}" class="collapse">
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-sm text-left text-gray-600">
-                                    <thead class="text-xs uppercase bg-gray-50">
-                                        <tr>
-                                            <th class="px-6 py-3">Due Date</th>
-                                            <th class="px-6 py-3 text-right">Principal</th>
-                                            <th class="px-6 py-3 text-right">Interest</th>
-                                            <th class="px-6 py-3 text-right">Total Payment</th>
-                                            <th class="px-6 py-3 text-right">Remaining Balance</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for payment in loan_data.payment_schedule %}
-                                            <tr class="bg-white border-b hover:bg-gray-50">
-                                                <td class="px-6 py-4">{{ payment.payment_due_date }}</td>
-                                                <td class="px-6 py-4 text-right">{{ payment.principal_payment|floatformat:'2'|intcomma }}</td>
-                                                <td class="px-6 py-4 text-right">{{ payment.interest_payment|floatformat:'2'|intcomma }}</td>
-                                                <td class="px-6 py-4 text-right">{{ payment.total_payment|floatformat:'2'|intcomma }}</td>
-                                                <td class="px-6 py-4 text-right">{{ payment.remaining_balance|floatformat:'2'|intcomma }}</td>
-                                            </tr>
-                                        {% empty %}
-                                            <tr>
-                                                <td colspan="5" class="px-6 py-4 text-center text-gray-500">No payment schedule available</td>
-                                            </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Repayments -->
-                    <div class="mb-8">
-                        <h3 class="text-lg font-medium text-gray-700 mb-4">Repayments</h3>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-sm text-left text-gray-600">
-                                <thead class="text-xs uppercase bg-gray-50">
-                                    <tr>
-                                        <th class="px-6 py-3">Date</th>
-                                        <th class="px-6 py-3 text-right">Principal</th>
-                                        <th class="px-6 py-3 text-right">Interest</th>
-                                        <th class="px-6 py-3 text-right">Total</th>
-                                        <th class="px-6 py-3">Description</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for repayment in loan_data.repayments %}
-                                        <tr class="bg-white border-b hover:bg-gray-50">
-                                            <td class="px-6 py-4">{{ repayment.repayment_date }}</td>
-                                            <td class="px-6 py-4 text-right">{{ repayment.principal_payment|floatformat:'2'|intcomma }}</td>
-                                            <td class="px-6 py-4 text-right">{{ repayment.interest_payment|floatformat:'2'|intcomma }}</td>
-                                            <td class="px-6 py-4 text-right">{{ repayment.total_payment|floatformat:'2'|intcomma }}</td>
-                                            <td class="px-6 py-4">{{ repayment.description|default:"N/A" }}</td>
-                                        </tr>
-                                    {% empty %}
-                                        <tr>
-                                            <td colspan="5" class="px-6 py-4 text-center text-gray-500">No repayments made</td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Transaction History -->
-                    {% comment %} <div>
-                        <h3 class="text-lg font-medium text-gray-700 mb-4">Transaction History</h3>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-sm text-left text-gray-600">
-                                <thead class="text-xs uppercase bg-gray-50">
-                                    <tr>
-                                        <th class="px-6 py-3">Date</th>
-                                        <th class="px-6 py-3">Type</th>
-                                        <th class="px-6 py-3">Amount</th>
-                                        <th class="px-6 py-3">Account</th>
-                                        <th class="px-6 py-3">Description</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for transaction in loan_data.transactions %}
-                                        <tr class="bg-white border-b hover:bg-gray-50">
-                                            <td class="px-6 py-4">{{ transaction.transaction_date }}</td>
-                                            <td class="px-6 py-4">
-                                                <span class="inline-block px-2 py-1 text-xs font-medium rounded
-                                                    {% if transaction.transaction_type == 'debit' %}
-                                                        bg-red-100 text-red-800
-                                                    {% else %}
-                                                        bg-green-100 text-green-800
-                                                    {% endif %}">
-                                                    {{ transaction.get_transaction_type_display }}
-                                                </span>
-                                            </td>
-                                            <td class="px-6 py-4">{{ transaction.amount|floatformat:'2'|intcomma }}</td>
-                                            <td class="px-6 py-4">{{ transaction.account.account_number }}</td>
-                                            <td class="px-6 py-4">{{ transaction.description|default:"N/A" }}</td>
-                                        </tr>
-                                    {% empty %}
-                                        <tr>
-                                            <td colspan="5" class="px-6 py-4 text-center text-gray-500">No transactions recorded</td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div> {% endcomment %}
-                </div>
-            {% endfor %}
-        {% else %}
-            <div class="bg-white shadow-lg rounded-xl p-8 text-center">
-                <p class="text-gray-600 text-lg">No loans found for this client.</p>
-            </div>
-        {% endif %}
-    {% endif %}
-</div>
-</div>
+      <details class="schedule-panel no-print">
+        <summary>Payment schedule <span>{{ loan_data.payment_schedule|length }} installments</span></summary>
+        <div class="statement-table-wrap"><table class="statement-table"><thead><tr><th>Due date</th><th class="number">Principal</th><th class="number">Interest</th><th class="number">Payment</th><th class="number">Balance</th></tr></thead><tbody>
+          {% for payment in loan_data.payment_schedule %}<tr><td>{{ payment.payment_due_date|date:'d M Y' }}</td><td class="number">{{ payment.principal_payment|floatformat:0|intcomma }}</td><td class="number">{{ payment.interest_payment|floatformat:0|intcomma }}</td><td class="number">{{ payment.total_payment|floatformat:0|intcomma }}</td><td class="number">{{ payment.remaining_balance|floatformat:0|intcomma }}</td></tr>{% empty %}<tr><td colspan="5" class="empty-row">No payment schedule available</td></tr>{% endfor %}
+        </tbody></table></div>
+      </details>
+    </article>
+    {% endfor %}
+  {% else %}<div class="statement-empty">No loans found for this client.</div>{% endif %}
+  {% else %}<div class="statement-empty no-print">Select a client to view their loan statement.</div>{% endif %}
+</main>
 {% endblock %}

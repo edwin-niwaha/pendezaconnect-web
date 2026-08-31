@@ -3,6 +3,7 @@ from decimal import Decimal
 from rest_framework import serializers
 
 from apps.loans.models import Loan, LoanApplicationDocument
+
 from .media import absolute_media_url
 
 
@@ -92,9 +93,7 @@ class LoanSerializer(serializers.ModelSerializer):
         paid_principal = sum((item.principal_payment or Decimal("0")) for item in repayments)
         paid_interest = sum((item.interest_payment or Decimal("0")) for item in repayments)
         unpaid_penalties = sum(
-            (item.remaining_amount or Decimal("0"))
-            for item in penalties
-            if not item.is_paid and not item.is_deleted
+            (item.remaining_amount or Decimal("0")) for item in penalties if not item.is_paid and not item.is_deleted
         )
         return (
             max(obj.principal_amount - paid_principal, Decimal("0"))
@@ -157,7 +156,9 @@ def is_mobile_internal_user(request):
 
 
 def is_mobile_admin_or_manager(request):
-    return mobile_user_role(request) in {"administrator", "manager"} or getattr(getattr(request, "user", None), "is_superuser", False)
+    return mobile_user_role(request) in {"administrator", "manager"} or getattr(
+        getattr(request, "user", None), "is_superuser", False
+    )
 
 
 def owns_mobile_loan(request, loan):

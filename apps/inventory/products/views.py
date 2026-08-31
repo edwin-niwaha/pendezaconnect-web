@@ -72,9 +72,7 @@ def categories_list_view(request):
 
     # Filter categories based on the search query
     if search_query:
-        categories = Category.objects.filter(
-            Q(name__icontains=search_query) | Q(description__icontains=search_query)
-        )
+        categories = Category.objects.filter(Q(name__icontains=search_query) | Q(description__icontains=search_query))
     else:
         categories = Category.objects.all()
 
@@ -248,11 +246,7 @@ def products_list_view(request):
             )
         )
     else:
-        products = (
-            Product.objects.select_related("category", "supplier")
-            .prefetch_related("variants")
-            .all()
-        )
+        products = Product.objects.select_related("category", "supplier").prefetch_related("variants").all()
 
     # If no products are found, handle empty case
     if not products.exists():
@@ -310,9 +304,7 @@ def products_add_view(request):
             # Check if a product with the same attributes exists
             attributes = form.cleaned_data
             if Product.objects.filter(**attributes).exists():
-                messages.error(
-                    request, "Product already exists!", extra_tags="bg-warning"
-                )
+                messages.error(request, "Product already exists!", extra_tags="bg-warning")
                 return redirect("products:products_add")
 
             try:
@@ -410,9 +402,7 @@ def products_delete_view(request, product_id):
         # Get the product to delete
         product = Product.objects.get(id=product_id)
         product.delete()
-        messages.success(
-            request, "¡Product: " + product.name + " deleted!", extra_tags="bg-success"
-        )
+        messages.success(request, "¡Product: " + product.name + " deleted!", extra_tags="bg-success")
         return redirect("products:products_list")
     except Exception as e:
         messages.success(
@@ -426,9 +416,7 @@ def products_delete_view(request, product_id):
 
 def product_detail_view(request, id):
     product = get_object_or_404(
-        Product.objects.select_related("category", "supplier").prefetch_related(
-            "variants", "stock_movements"
-        ),
+        Product.objects.select_related("category", "supplier").prefetch_related("variants", "stock_movements"),
         id=id,
     )
     images = product.images.all()  # Fetch related product images
@@ -459,12 +447,8 @@ def stock_alerts_view(request):
     ).select_related("product")
 
     # Fetch products that are out of stock
-    out_of_stock_products = Inventory.objects.filter(quantity=0).select_related(
-        "product"
-    )
-    out_of_stock_variants = ProductVariant.objects.filter(quantity=0).select_related(
-        "product"
-    )
+    out_of_stock_products = Inventory.objects.filter(quantity=0).select_related("product")
+    out_of_stock_variants = ProductVariant.objects.filter(quantity=0).select_related("product")
 
     # Passing data to the template
     context = {
@@ -498,9 +482,7 @@ def update_product_image(request):
             product_image.image = new_picture.image
             product_image.save()
 
-            messages.success(
-                request, "Product image updated successfully!", extra_tags="bg-success"
-            )
+            messages.success(request, "Product image updated successfully!", extra_tags="bg-success")
             return redirect("products:update_product_image")
         else:
             messages.error(request, "Form is invalid.", extra_tags="bg-danger")
@@ -579,15 +561,14 @@ def delete_product_image(request, pk):
 @admin_or_manager_or_staff_required
 def inventory_list_view(request):
     # Query Inventory and include related Product details
-    queryset = Inventory.objects.select_related("product").all()
+    queryset = Inventory.objects.select_related("product").order_by("product__name", "pk")
     variants = ProductVariant.objects.select_related("product", "product__category")
 
     # Search functionality: filter by product name if search_query is provided
     search_query = request.GET.get("search", "")  # Default to empty string if no search
     if search_query:
         queryset = queryset.filter(
-            Q(product__name__icontains=search_query)
-            | Q(product__category__name__icontains=search_query)
+            Q(product__name__icontains=search_query) | Q(product__category__name__icontains=search_query)
         )
         variants = variants.filter(
             Q(product__name__icontains=search_query)
@@ -623,8 +604,10 @@ def inventory_list_view(request):
 @admin_or_manager_or_staff_required
 def inventory_report_view(request):
     # Fetch all inventories with related products
-    inventories = Inventory.objects.select_related("product", "product__category").all()
-    variants = ProductVariant.objects.select_related("product", "product__category")
+    inventories = Inventory.objects.select_related("product", "product__category").order_by("product__name", "pk")
+    variants = ProductVariant.objects.select_related("product", "product__category").order_by(
+        "product__name", "name", "pk"
+    )
 
     # Add pagination
     paginator = Paginator(inventories, 25)
@@ -632,9 +615,9 @@ def inventory_report_view(request):
     page_obj = paginator.get_page(page_number)
 
     # Calculate total stock from inventory quantities
-    total_stock = (
-        inventories.aggregate(total_stock=Sum("quantity"))["total_stock"] or 0
-    ) + (variants.aggregate(total_stock=Sum("quantity"))["total_stock"] or 0)
+    total_stock = (inventories.aggregate(total_stock=Sum("quantity"))["total_stock"] or 0) + (
+        variants.aggregate(total_stock=Sum("quantity"))["total_stock"] or 0
+    )
 
     # Prepare context for rendering
     context = {
@@ -662,9 +645,7 @@ def inventory_add_view(request):
     if request.method == "POST":
         form = InventoryForm(request.POST)
         if form.is_valid():
-            product = form.cleaned_data[
-                "product"
-            ]  # Ensure 'product' field is in your form
+            product = form.cleaned_data["product"]  # Ensure 'product' field is in your form
 
             if Inventory.objects.filter(product=product).exists():
                 messages.warning(
@@ -681,12 +662,8 @@ def inventory_add_view(request):
                     user=request.user,
                     reference="Initial inventory",
                 )
-                messages.success(
-                    request, "Inventory added successfully!", extra_tags="bg-success"
-                )
-                return redirect(
-                    "products:inventory_list"
-                )  # Adjust the redirect as necessary
+                messages.success(request, "Inventory added successfully!", extra_tags="bg-success")
+                return redirect("products:inventory_list")  # Adjust the redirect as necessary
         else:
             messages.error(
                 request,
@@ -728,9 +705,7 @@ def inventory_update_view(request, pk):
                     user=request.user,
                     reference="Inventory update",
                 )
-            messages.success(
-                request, "Inventory updated successfully!", extra_tags="bg-success"
-            )
+            messages.success(request, "Inventory updated successfully!", extra_tags="bg-success")
             return redirect("products:inventory_list")
     else:
         form = InventoryForm(instance=inventory)
@@ -753,9 +728,7 @@ def inventory_delete_view(request, pk):
 @admin_or_manager_or_staff_required
 def variants_list_view(request):
     search_query = request.GET.get("search", "")
-    variants = ProductVariant.objects.select_related(
-        "product", "product__category", "product__supplier"
-    )
+    variants = ProductVariant.objects.select_related("product", "product__category", "product__supplier")
 
     if search_query:
         variants = variants.filter(
@@ -856,9 +829,7 @@ def variant_update_view(request, pk):
 def variant_delete_view(request, pk):
     variant = get_object_or_404(ProductVariant, pk=pk)
     variant.delete()
-    messages.info(
-        request, "Product variant deleted successfully.", extra_tags="bg-warning"
-    )
+    messages.info(request, "Product variant deleted successfully.", extra_tags="bg-warning")
     return redirect("products:variants_list")
 
 
@@ -892,9 +863,7 @@ def stock_adjustment_view(request):
                 reference="Manual stock adjustment",
                 notes=notes,
             )
-            messages.success(
-                request, "Stock adjusted successfully.", extra_tags="bg-success"
-            )
+            messages.success(request, "Stock adjusted successfully.", extra_tags="bg-success")
             return redirect("products:inventory_list")
     else:
         form = StockAdjustmentForm()

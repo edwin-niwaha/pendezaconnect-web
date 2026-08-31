@@ -89,20 +89,53 @@
       padding: 0 10px;
       white-space: nowrap;
     }
+    /* Polished, accessible loan application layout */
+    body { background: #f4f7f6; }
+    .loan-application-shell { max-width: 1240px; margin: 30px auto 48px; padding: 0 18px; }
+    .loan-page-header { background: linear-gradient(125deg,#0b4635,#116149 60%,#17785b); border: 0; border-radius: 20px; box-shadow: 0 18px 45px rgba(16,78,59,.18); color: #fff; overflow: hidden; padding: 28px 30px; margin-bottom: 22px; position: relative; }
+    .loan-page-header::after { background: rgba(255,255,255,.07); border-radius: 50%; content: ""; height: 220px; position: absolute; right: -55px; top: -105px; width: 220px; }
+    .loan-header-content, .loan-header-actions { position: relative; z-index: 1; }
+    .loan-eyebrow { color: #bce7d7; font-size: .73rem; font-weight: 800; letter-spacing: .14em; margin-bottom: 7px; text-transform: uppercase; }
+    .loan-page-title { color: #fff; font-size: clamp(1.55rem,3vw,2.05rem); letter-spacing: -.025em; }
+    .loan-page-subtitle { color: rgba(255,255,255,.78); font-size: .92rem; margin-top: 7px; max-width: 580px; }
+    .loan-header-actions .btn { border-color: rgba(255,255,255,.3); color: #fff; padding: .56rem .86rem; }
+    .loan-header-actions .btn:hover { background: #fff; border-color: #fff; color: #0b4635; }
+    .loan-form-panel, .loan-side-panel { border: 1px solid #e3e8f0; border-radius: 16px; box-shadow: 0 8px 28px rgba(31,45,61,.06); }
+    .loan-form-panel { padding: 28px; }
+    .loan-side-panel { padding: 20px; }
+    .section-title { align-items: center; color: #172235; display: flex; font-size: .78rem; gap: 9px; letter-spacing: .09em; margin-bottom: 16px; }
+    .section-title::before { background: #d8a72d; border-radius: 99px; content: ""; height: 7px; width: 7px; }
+    .section-title.mt-4 { border-top: 1px solid #edf0f4; padding-top: 24px; }
+    .form-label { color: #354052; font-size: .84rem; font-weight: 700; margin-bottom: 7px; }
+    .form-control, .form-select { border: 1px solid #d7dde7; border-radius: 10px; min-height: 46px; padding: .65rem .8rem; transition: border-color .2s,box-shadow .2s; }
+    textarea.form-control { min-height: 104px; }
+    .form-control:focus, .form-select:focus { border-color: #116149; box-shadow: 0 0 0 .22rem rgba(17,97,73,.12); }
+    .client-result-count, .metric-row { background: #f8faf9; border-color: #d7dde7; border-radius: 10px; }
+    .metric-row { padding: 11px 12px; }
+    .estimate-panel { background: linear-gradient(160deg,#fff 20%,#f0f8f4); border-top: 4px solid #116149; }
+    .estimate-panel .metric-row:nth-child(3) { background: #116149; border-color: #116149; }
+    .estimate-panel .metric-row:nth-child(3) span { color: #fff; }
+    .step-number { background: #eaf6f1; border: 1px solid #cae7dc; color: #116149; }
+    .loan-form-panel .btn { border-radius: 10px; font-weight: 700; padding: .68rem 1rem; }
+    .loan-submit-btn { background: #116149; border-color: #116149; box-shadow: 0 8px 18px rgba(17,97,73,.2); }
+    .sidebar-stack { position: sticky; top: 18px; }
+    .secure-note { align-items: center; color: #68748a; display: flex; font-size: .75rem; gap: 7px; margin-top: 14px; }
+    .secure-note i { color: #116149; font-size: 1rem; }
+    @media (max-width: 991.98px) { .sidebar-stack { position: static; } }
     @media (max-width: 768px) {
       .loan-application-shell { margin: 12px auto; }
+      .loan-page-header { border-radius: 15px; padding: 22px 20px; }
       .loan-page-title { font-size: 1.22rem; }
-      .loan-form-panel { padding: 14px; }
+      .loan-form-panel { padding: 20px 16px; }
     }
   </style>
 
   <main class="loan-application-shell">
     <header class="loan-page-header d-flex flex-wrap justify-content-between align-items-start gap-3">
-      <div>
+      <div class="loan-header-content">
         <h1 class="loan-page-title">{{ form_title }}</h1>
-        <div class="loan-page-subtitle">Create a loan application for review and approval.</div>
       </div>
-      <div class="d-flex flex-wrap gap-2">
+      <div class="loan-header-actions d-flex flex-wrap gap-2">
         <a href="{% url 'loans:loan_applications' %}" class="btn btn-outline-secondary btn-sm">
           <i class="mdi mdi-format-list-bulleted"></i> Applications
         </a>
@@ -218,7 +251,7 @@
 
             <div class="d-flex flex-wrap justify-content-end gap-2 pt-2">
               <a href="{% url 'loans:loan_applications' %}" class="btn btn-outline-secondary">Cancel</a>
-              <button type="submit" class="btn btn-dark" id="submitLoanApplication">
+              <button type="submit" class="btn btn-success loan-submit-btn" id="submitLoanApplication">
                 <i class="mdi mdi-send"></i> Submit Application
               </button>
             </div>
@@ -227,7 +260,8 @@
       </div>
 
       <div class="col-lg-4">
-        <aside class="loan-side-panel mb-3">
+        <div class="sidebar-stack">
+        <aside class="loan-side-panel estimate-panel mb-3">
           <div class="section-title">Estimate</div>
           <div class="metric-list">
             <div class="metric-row">
@@ -247,6 +281,7 @@
               <span class="metric-value" id="previewMonthly">UGX 0</span>
             </div>
           </div>
+        <div class="secure-note"><i class="mdi mdi-information-outline"></i> Estimate uses simple interest and updates as you type.</div>
         </aside>
 
         <aside class="loan-side-panel mb-3">
@@ -287,6 +322,7 @@
             </div>
           </div>
         </aside>
+        </div>
       </div>
     </div>
   </main>

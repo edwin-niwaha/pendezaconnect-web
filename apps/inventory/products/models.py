@@ -19,9 +19,7 @@ class Category(models.Model):
         max_length=100,
         verbose_name="Name",
     )
-    description = models.CharField(
-        max_length=50, blank=True, verbose_name="Description"
-    )
+    description = models.CharField(max_length=50, blank=True, verbose_name="Description")
 
     class Meta:
         db_table = "category"
@@ -34,9 +32,7 @@ class Category(models.Model):
 class Product(models.Model):
     name = models.CharField(max_length=256, verbose_name="Product Name")
     description = models.TextField(verbose_name="Product Description")
-    status = models.CharField(
-        choices=STATUS_CHOICES, max_length=10, verbose_name="Status"
-    )
+    status = models.CharField(choices=STATUS_CHOICES, max_length=10, verbose_name="Status")
     category = models.ForeignKey(
         Category,
         related_name="products",
@@ -53,12 +49,8 @@ class Product(models.Model):
         blank=True,
         verbose_name="Supplier",
     )
-    cost = models.DecimalField(
-        max_digits=10, decimal_places=2, verbose_name="Cost Price"
-    )
-    price = models.DecimalField(
-        max_digits=10, decimal_places=2, verbose_name="Selling Price"
-    )
+    cost = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Cost Price")
+    price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Selling Price")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created At")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated At")
 
@@ -117,10 +109,7 @@ class Product(models.Model):
     def stock_status(self):
         if self.stock_on_hand <= 0:
             return "Out of stock"
-        if (
-            hasattr(self, "inventory")
-            and self.stock_on_hand <= self.inventory.low_stock_threshold
-        ):
+        if hasattr(self, "inventory") and self.stock_on_hand <= self.inventory.low_stock_threshold:
             return "Low stock"
         return "In stock"
 
@@ -156,9 +145,7 @@ class ProductVariant(models.Model):
         verbose_name="Selling Price",
     )
     quantity = models.PositiveIntegerField(default=0, verbose_name="Stock Quantity")
-    low_stock_threshold = models.PositiveIntegerField(
-        default=5, verbose_name="Low Stock Threshold"
-    )
+    low_stock_threshold = models.PositiveIntegerField(default=5, verbose_name="Low Stock Threshold")
     status = models.CharField(
         choices=STATUS_CHOICES,
         max_length=10,
@@ -225,9 +212,7 @@ class ProductVariant(models.Model):
 
 
 class ProductImage(models.Model):
-    product = models.ForeignKey(
-        Product, related_name="images", on_delete=models.CASCADE
-    )
+    product = models.ForeignKey(Product, related_name="images", on_delete=models.CASCADE)
     # image = models.ImageField(upload_to="product_images/", verbose_name="Product Image")
     image = CloudinaryField("image", blank=True, null=True)
     is_default = models.BooleanField(default=False, verbose_name="Is Default")
@@ -247,9 +232,7 @@ class ProductImage(models.Model):
         # Ensure only one default image is set per product
         if self.is_default:
             default_image_exists = (
-                ProductImage.objects.filter(product=self.product, is_default=True)
-                .exclude(id=self.id)
-                .exists()
+                ProductImage.objects.filter(product=self.product, is_default=True).exclude(id=self.id).exists()
             )
 
             if default_image_exists:
@@ -258,21 +241,15 @@ class ProductImage(models.Model):
     def save(self, *args, **kwargs):
         # Ensure no other images are marked as default if this one is set as default
         if self.is_default:
-            ProductImage.objects.filter(product=self.product, is_default=True).update(
-                is_default=False
-            )
+            ProductImage.objects.filter(product=self.product, is_default=True).update(is_default=False)
 
         super().save(*args, **kwargs)
 
 
 class Inventory(models.Model):
-    product = models.OneToOneField(
-        Product, on_delete=models.CASCADE, related_name="inventory"
-    )
+    product = models.OneToOneField(Product, on_delete=models.CASCADE, related_name="inventory")
     quantity = models.PositiveIntegerField(verbose_name="Stock Quantity", default=0)
-    low_stock_threshold = models.PositiveIntegerField(
-        default=5, verbose_name="Low Stock Threshold"
-    )
+    low_stock_threshold = models.PositiveIntegerField(default=5, verbose_name="Low Stock Threshold")
     is_out_of_stock = models.BooleanField(default=False, verbose_name="Out of Stock")
 
     def check_stock_alerts(self):
