@@ -46,11 +46,7 @@ def _get_request_sponsor(request):
     sponsor = getattr(profile, "sponsor", None)
 
     if sponsor is None and request.user.email:
-        sponsor = (
-            Sponsor.objects.active_real_supporters()
-            .filter(email__iexact=request.user.email)
-            .first()
-        )
+        sponsor = Sponsor.objects.active_real_supporters().filter(email__iexact=request.user.email).first()
 
     return sponsor
 
@@ -180,9 +176,7 @@ def mark_sponsor_feedback_reviewed(request, feedback_id):
     if request.method == "POST":
         feedback.status = SponsorFeedback.Status.REVIEWED
         feedback.save(update_fields=["status", "updated_at"])
-        messages.success(
-            request, "Sponsor feedback marked as reviewed.", extra_tags="bg-success"
-        )
+        messages.success(request, "Sponsor feedback marked as reviewed.", extra_tags="bg-success")
         return redirect("sponsor_feedback_report")
 
     return HttpResponseBadRequest("Invalid request")
@@ -204,11 +198,7 @@ def _sponsor_payment_report_context(sponsor, payment_model, beneficiary_type):
         total_amount = payments.aggregate(total=Sum("amount"))["total"] or 0
         payment_count = payments.count()
         latest_payment = payments.first()
-        yearly_totals = (
-            payments.values("payment_year")
-            .annotate(total=Sum("amount"))
-            .order_by("-payment_year")
-        )
+        yearly_totals = payments.values("payment_year").annotate(total=Sum("amount")).order_by("-payment_year")
 
     return {
         "sponsor": sponsor,
@@ -295,15 +285,9 @@ def sponsor_list(request):
             "table_title": "Sponsors List",
             "search_query": search_query,
             "total_sponsors": Sponsor.objects.active_real_supporters().count(),
-            "child_sponsors": Sponsor.objects.active_real_supporters()
-            .filter(is_child_sponsor=True)
-            .count(),
-            "staff_sponsors": Sponsor.objects.active_real_supporters()
-            .filter(is_staff_sponsor=True)
-            .count(),
-            "family_supporters": Sponsor.objects.active_real_supporters()
-            .filter(is_family_supporter=True)
-            .count(),
+            "child_sponsors": Sponsor.objects.active_real_supporters().filter(is_child_sponsor=True).count(),
+            "staff_sponsors": Sponsor.objects.active_real_supporters().filter(is_staff_sponsor=True).count(),
+            "family_supporters": Sponsor.objects.active_real_supporters().filter(is_family_supporter=True).count(),
         },
     )
 
@@ -320,9 +304,7 @@ def register_sponsor(request):
 
         if form.is_valid():
             form.save()
-            messages.info(
-                request, "Sponsor added successfully!", extra_tags="bg-success"
-            )
+            messages.info(request, "Sponsor added successfully!", extra_tags="bg-success")
             return redirect("register_sponsor")
         else:
             # Display an error message if the form is not valid
@@ -402,9 +384,7 @@ def update_donor_view(request, donor_id):
         form = DonorForm(request.POST, instance=donor)
         if form.is_valid():
             form.save()
-            messages.success(
-                request, "Donor updated successfully!", extra_tags="bg-success"
-            )
+            messages.success(request, "Donor updated successfully!", extra_tags="bg-success")
             return redirect("donor_list")
         else:
             messages.error(request, "Form is invalid.", extra_tags="bg-danger")
@@ -446,9 +426,7 @@ def update_sponsor(request, pk, template_name="sponsor/sponsor_update.html"):
         if form.is_valid():
             form.save()
 
-            messages.success(
-                request, "Record updated successfully!", extra_tags="bg-success"
-            )
+            messages.success(request, "Record updated successfully!", extra_tags="bg-success")
             return redirect("sponsor_list")
         else:
             # Display an error message if the form is not valid
@@ -486,9 +464,7 @@ def sponsor_departure(request):
         if form.is_valid():
             sponsor_id = request.POST.get("id")
             if not sponsor_id:
-                messages.error(
-                    request, "Please select a sponsor.", extra_tags="bg-danger"
-                )
+                messages.error(request, "Please select a sponsor.", extra_tags="bg-danger")
                 return redirect("sponsor_departure")
             sponsor_instance = get_object_or_404(Sponsor, pk=sponsor_id)
 
@@ -502,18 +478,14 @@ def sponsor_departure(request):
             sponsor_instance.is_departed = True
             sponsor_instance.save()
 
-            messages.success(
-                request, "Sponsor departed successfully!", extra_tags="bg-success"
-            )
+            messages.success(request, "Sponsor departed successfully!", extra_tags="bg-success")
             return redirect("sponsor_departure")
         else:
             messages.error(request, "Form is invalid.", extra_tags="bg-danger")
     else:
         form = SponsorDepartForm()
 
-    sponsors = Sponsor.objects.active_real_supporters().order_by(
-        "first_name", "last_name", "id"
-    )
+    sponsors = Sponsor.objects.active_real_supporters().order_by("first_name", "last_name", "id")
     return render(
         request,
         "sponsor/sponsor_depature.html",
@@ -531,11 +503,7 @@ def sponsor_departure(request):
 @login_required
 @admin_or_manager_or_staff_required
 def sponsor_depature_list(request):
-    queryset = (
-        Sponsor.objects.departed_real_supporters()
-        .order_by("id")
-        .prefetch_related("departures")
-    )
+    queryset = Sponsor.objects.departed_real_supporters().order_by("id").prefetch_related("departures")
 
     search_query = request.GET.get("search", "").strip()
     if search_query:
@@ -580,9 +548,7 @@ def reinstate_sponsor(request, pk):
     if request.method == "POST":
         sponsor.is_departed = False
         sponsor.save()
-        messages.success(
-            request, "Sponsor reinstated successfully!", extra_tags="bg-success"
-        )
+        messages.success(request, "Sponsor reinstated successfully!", extra_tags="bg-success")
 
         return redirect("sponsor_depature_list")
 
@@ -601,9 +567,7 @@ def import_sponsor_data(request):
             try:
                 # Call process_and_import_data function
                 process_and_import_data(excel_file)
-                messages.success(
-                    request, "Data imported successfully!", extra_tags="bg-success"
-                )
+                messages.success(request, "Data imported successfully!", extra_tags="bg-success")
             except Exception as e:
                 messages.error(
                     request, f"Error importing data: {e}", extra_tags="bg-danger"
@@ -668,9 +632,7 @@ def process_and_import_data(excel_file):
             obj = Sponsor(**data)
             obj.save()
     except Exception as e:
-        logger.error(
-            f"Error importing data: {e}", exc_info=True
-        )  # Log error with traceback
+        logger.error(f"Error importing data: {e}", exc_info=True)  # Log error with traceback
         raise e
 
 
@@ -705,9 +667,7 @@ def update_sponsor_contacts(request):
     if request.method == "POST":
         # Call the management command and handle success or failure
         try:
-            call_command(
-                "sponsor_contacts"
-            )  # Replace "sponsor_contacts" with your actual command name
+            call_command("sponsor_contacts")  # Replace "sponsor_contacts" with your actual command name
             messages.success(
                 request,
                 "Sponsors contacts updated successfully!",

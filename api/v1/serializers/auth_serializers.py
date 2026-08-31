@@ -3,6 +3,7 @@ from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 
 from apps.users.models import Profile
+
 from .media import absolute_media_url
 
 
@@ -118,9 +119,7 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
             setattr(instance, field, value.strip() if isinstance(value, str) else value)
         instance.save()
         if bio is not None:
-            profile, _ = Profile.objects.get_or_create(
-                user=instance, defaults={"bio": "", "avatar": "default.jpg"}
-            )
+            profile, _ = Profile.objects.get_or_create(user=instance, defaults={"bio": "", "avatar": "default.jpg"})
             profile.bio = bio.strip()
             profile.save(update_fields=["bio"])
         return instance
@@ -131,9 +130,7 @@ class AvatarUploadSerializer(serializers.Serializer):
 
     def save(self, **kwargs):
         user = self.context["request"].user
-        profile, _ = Profile.objects.get_or_create(
-            user=user, defaults={"bio": "", "avatar": "default.jpg"}
-        )
+        profile, _ = Profile.objects.get_or_create(user=user, defaults={"bio": "", "avatar": "default.jpg"})
         profile.avatar = self.validated_data["avatar"]
         profile.save(update_fields=["avatar"])
         return user
@@ -152,9 +149,7 @@ class ChangePasswordSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         if attrs["new_password"] != attrs["confirm_password"]:
-            raise serializers.ValidationError(
-                {"confirm_password": "New password and confirmation do not match."}
-            )
+            raise serializers.ValidationError({"confirm_password": "New password and confirmation do not match."})
         validate_password(attrs["new_password"], self.context["request"].user)
         return attrs
 

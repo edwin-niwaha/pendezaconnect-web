@@ -2,70 +2,39 @@
 {% load static %} {% load humanize %}
 {% load crispy_forms_tags %}
 {% block content %}
-  <div class="form-content my-3 p-4">
-    <div class="container-fluid">
-      <div class="row mb-3">
-        <div class="col-md-12 d-flex justify-content-between align-items-center">
-          <a href="{% url 'inventory-dashboard' %}">
-            <button type="button" class="btn btn-info font-weight-bold">
-              <i class="mdi mdi-arrow-left-bold mr-2"></i>
-              Go back
-            </button>
-          </a>
-          <div class="d-flex">
-            <a href="{% url 'sales:sales_add' %}" class="btn btn-dark ml-2">
-              <i class="mdi mdi-plus mr-2"></i>
-              Create Sale
-            </a>
-            <button title="Print" type="button" class="btn btn-success ml-2" onclick="printDiv('printMe')"><i class="mdi mdi-printer btn-icon-prepend"></i></button>
-          </div>
-        </div>
-      </div>
-
-      <!-- DataTable -->
-      <div id="printMe" class="card shadow mb-4">
-        <div class="card-header py-3">
-          <h3>{{ table_title|upper }}</h3>
-        </div>
-        <div class="card-body">
+  <style>
+    .sales-register{--sales-green:#13745d;--sales-dark:#123b36;--sales-ink:#172b3f;--sales-muted:#667085;--sales-line:#e3e9ef;margin:6px auto 32px;max-width:1500px;padding:0 14px}.sales-header{align-items:center;background:linear-gradient(125deg,var(--sales-dark),#21836c);border-radius:18px;box-shadow:0 16px 36px rgba(18,59,54,.17);display:flex;gap:16px;justify-content:space-between;margin-bottom:14px;overflow:hidden;padding:22px 24px;position:relative}.sales-header:after{border:22px solid rgba(255,255,255,.06);border-radius:50%;content:"";height:170px;position:absolute;right:-35px;top:-74px;width:170px}.sales-heading,.sales-actions{position:relative;z-index:1}.sales-eyebrow{color:rgba(255,255,255,.68);font-size:.7rem;font-weight:800;letter-spacing:.09em;margin:0 0 3px;text-transform:uppercase}.sales-header h1{color:#fff;font-size:clamp(1.4rem,2vw,1.8rem);font-weight:900;letter-spacing:-.02em;margin:0}.sales-header p{color:rgba(255,255,255,.76);font-size:.84rem;margin:4px 0 0}.sales-actions{display:flex;gap:8px}.sales-actions .btn{align-items:center;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.4);border-radius:9px;color:#fff;display:inline-flex;font-weight:800;gap:6px;min-height:38px}.sales-actions .btn-primary{background:#fff;border-color:#fff;color:var(--sales-dark)}.sales-summary{display:grid;gap:11px;grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:14px}.sales-summary-card{background:#fff;border:1px solid var(--sales-line);border-radius:12px;box-shadow:0 8px 20px rgba(31,50,70,.05);padding:14px 16px}.sales-summary-card span{color:var(--sales-muted);display:block;font-size:.69rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase}.sales-summary-card strong{color:var(--sales-ink);display:block;font-size:1.08rem;margin-top:6px;overflow-wrap:anywhere}.sales-panel{background:#fff;border:1px solid var(--sales-line);border-radius:14px;box-shadow:0 12px 30px rgba(31,50,70,.07);overflow:hidden}.sales-panel-head{align-items:center;border-bottom:1px solid #edf1f5;display:flex;justify-content:space-between;padding:14px 16px}.sales-panel-head h2{color:var(--sales-ink);font-size:1rem;font-weight:900;margin:0}.sales-panel-head span{color:var(--sales-muted);font-size:.74rem}.sales-table{color:#344054;font-size:.8rem;margin:0;white-space:nowrap;width:100%}.sales-table thead th{background:#f7f9fb;border-bottom:1px solid #dfe5ec;color:#536273;font-size:.68rem;font-weight:800;letter-spacing:.03em;padding:.68rem .62rem;text-transform:uppercase}.sales-table td{border-color:#edf1f5;padding:.68rem .62rem;vertical-align:middle}.sales-table tbody tr:hover td{background:#f8fbfa}.sale-id{color:var(--sales-green);font-weight:900}.customer-name{color:var(--sales-ink);font-weight:800}.sale-items{display:flex;flex-wrap:wrap;gap:5px;list-style:none;margin:0;max-width:340px;padding:0}.sale-items li{background:#f2f5f4;border-radius:999px;color:#475467;font-size:.72rem;padding:4px 8px}.money{color:#243b53;font-weight:800;text-align:right}.profit{color:var(--sales-green)}.sale-actions-cell .btn{border-radius:8px;margin:1px;min-width:34px}.sales-table tfoot td{background:#eef6f3;border-top:2px solid #cfe1db;color:#183e36;font-weight:900}.sales-pagination{align-items:center;border-top:1px solid #edf1f5;display:flex;gap:14px;justify-content:space-between;padding:12px 16px}.sales-pagination>span{color:var(--sales-muted);font-size:.74rem}.sales-pagination .pagination{margin:0}.sales-pagination .page-link{border-color:#dfe5ec;color:var(--sales-green)}.sales-pagination .active .page-link{background:var(--sales-green);border-color:var(--sales-green);color:#fff}@media(max-width:900px){.sales-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:640px){.sales-register{padding:0 7px}.sales-header{align-items:flex-start;border-radius:14px;flex-direction:column;padding:19px}.sales-actions{display:grid;grid-template-columns:1fr 1fr;width:100%}.sales-actions .btn{justify-content:center}.sales-summary{grid-template-columns:1fr 1fr}.sales-pagination{align-items:flex-start;flex-direction:column}}
+  </style>
+  <main class="sales-register">
+    <header class="sales-header"><div class="sales-heading"><p class="sales-eyebrow">Inventory sales</p><h1>Sales register</h1><p>Review transactions, receipts, revenue, and profit.</p></div><nav class="sales-actions"><a href="{% url 'sales:sales_add' %}" class="btn btn-primary"><i class="mdi mdi-plus"></i> New sale</a><a href="{% url 'inventory-dashboard' %}" class="btn"><i class="mdi mdi-arrow-left"></i> Dashboard</a><button title="Print" type="button" class="btn" onclick="printDiv('printMe')"><i class="mdi mdi-printer"></i> Print</button></nav></header>
+    <section class="sales-summary" aria-label="Sales totals"><div class="sales-summary-card"><span>Transactions</span><strong>{{ sales.paginator.count|intcomma }}</strong></div><div class="sales-summary-card"><span>Items sold</span><strong>{{ total_items|intcomma }}</strong></div><div class="sales-summary-card"><span>Sales revenue</span><strong>UGX {{ grand_total|floatformat:0|intcomma }}</strong></div><div class="sales-summary-card"><span>Net profit</span><strong>UGX {{ total_profit|floatformat:0|intcomma }}</strong></div></section>
+      <div id="printMe" class="sales-panel">
+        <div class="sales-panel-head"><h2>Transactions</h2><span>Newest and historical sales</span></div>
+        <div>
           <div class="table-responsive">
-            <table class="my-table" id="dataTable">
+            <table class="sales-table" id="dataTable">
               <thead>
                 <tr>
-                  <th>#</th>
-                  <th>S.ID</th>
+                  <th>Sale</th>
                   <th>Date</th>
                   <th>Customer</th>
                   <th>Product</th>
-                  <th class="text-center">Sold</th>
-                  <th class="text-center">Sales Revenue</th>
-                  <th class="text-center">Net Profit</th>
-                  <th colspan="3" class="text-center print-hide">Actions</th>
+                  <th class="text-center">Items</th>
+                  <th class="text-end">Revenue</th>
+                  <th class="text-end">Profit</th>
+                  <th class="text-center print-hide">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {% for s in sales %}
                   <tr>
-                    <td>{{ forloop.counter }}</td>
-                    <td>{{ s.id }}</td>
-                    <td>{{ s.trans_date }}</td>
-                    <td>{{ s.customer.first_name }}</td>
+                    <td><span class="sale-id">#{{ s.id }}</span></td>
+                    <td>{{ s.trans_date|date:'d M Y' }}</td>
+                    <td><span class="customer-name">{{ s.customer.first_name }}</span></td>
                     <td>
-                      <ul class="list-group list-group-flush">
+                      <ul class="sale-items">
                         {% for detail in s.items.all %}
-                          <li class="list-group-item d-flex justify-content-between align-items-start">
-                            <div>
-                              <strong>{{ detail.quantity }}x</strong>
-                              {{ detail.product.name }}
-                            </div>
-                            <div class="text-end">
-                              <small class="text-muted">
-                                Cost:
-                                {{ detail.product.cost|floatformat:'2'|intcomma }}
-                              </small><br />
-                              <small class="text-muted">Price: {{ detail.product.price|floatformat:'2'|intcomma }}</small>
-                            </div>
-                          </li>
+                          <li><strong>{{ detail.quantity }}×</strong> {{ detail.product.name }}</li>
                         {% empty %}
                           <li class="list-group-item text-danger">No items available.</li>
                         {% endfor %}
@@ -73,17 +42,13 @@
                     </td>
 
                     <td class="text-center">{{ s.sum_items }}</td>
-                    <td class="text-right">{{ s.grand_total|floatformat:'2'|intcomma }}</td>
-                    <td class="text-right">{{ s.profit|floatformat:'2'|intcomma }}</td>
-                    <td class="text-center print-hide">
-                      <a href="{% url 'sales:sales_details' s.id %}" class="text-decoration-none"><button type="button" class="btn btn-info btn-sm" data-bs-toggle="tooltip" title="Update sale"><i class="fas fa-eye"></i></button></a>
-                    </td>
-                    <td class="print-hide">
-                      <a href="{% url 'sales:sales_receipt_pdf' s.id %}" class="text-decoration-none" target="_blank"><button type="button" class="btn btn-dark btn-sm" data-bs-toggle="tooltip" title="View Receipt"><i class="fas fa-receipt"></i></button></a>
-                    </td>
-                    <td class="text-center print-hide">
+                    <td class="money">{{ s.grand_total|floatformat:'2'|intcomma }}</td>
+                    <td class="money profit">{{ s.profit|floatformat:'2'|intcomma }}</td>
+                    <td class="text-center print-hide sale-actions-cell">
+                      <a href="{% url 'sales:sales_details' s.id %}" class="btn btn-outline-primary btn-sm" title="View sale"><i class="fas fa-eye"></i></a>
+                      <a href="{% url 'sales:sales_receipt_pdf' s.id %}" class="btn btn-outline-dark btn-sm" target="_blank" title="View receipt"><i class="fas fa-receipt"></i></a>
                       {% if user.profile.role == 'administrator' or user.profile.role == 'manager' %}
-                        <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal{{ s.id }}" title="Delete sale"><i class="bi bi-trash"></i></button>
+                        <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal{{ s.id }}" title="Delete sale"><i class="bi bi-trash"></i></button>
 
                         <!-- Delete Modal -->
                         <div class="modal fade" id="deleteModal{{ s.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ s.id }}" aria-hidden="true">
@@ -111,25 +76,24 @@
               </tbody>
               <tfoot>
                 <tr>
-                  <td colspan="5" class="text-right">
+                  <td colspan="4" class="text-right">
                     <strong>Total</strong>
                   </td>
                   <td class="text-center">
                     <strong>{{ total_items }}</strong>
                   </td>
-                  <td class="text-right">
+                  <td class="money">
                     <strong>{{ grand_total|floatformat:'2'|intcomma }}</strong>
                   </td>
-                  <td class="text-right">
+                  <td class="money profit">
                     <strong>{{ total_profit|floatformat:'2'|intcomma }}</strong>
                   </td>
+                  <td class="print-hide"></td>
                 </tr>
               </tfoot>
             </table>
-            <div class="d-flex justify-content-between align-items-center mt-4">
-              <div>
-                <span>Showing {{ sales.start_index }} to {{ sales.end_index }} of {{ sales.paginator.count }} sales</span>
-              </div>
+            <div class="sales-pagination">
+              <span>Showing {{ sales.start_index }}–{{ sales.end_index }} of {{ sales.paginator.count }} sales</span>
               <nav aria-label="Page navigation">
                 <ul class="pagination justify-content-end">
                   {% if sales.has_previous %}
@@ -161,6 +125,5 @@
           </div>
         </div>
       </div>
-    </div>
-  </div>
+  </main>
 {% endblock %}

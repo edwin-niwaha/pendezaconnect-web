@@ -52,9 +52,7 @@ def staff_list(request):
             "table_title": "Staff List",
             "active_staff_count": active_staff.count(),
             "sponsored_staff_count": active_staff.filter(is_sponsored=True).count(),
-            "non_sponsored_staff_count": active_staff.filter(
-                is_sponsored=False
-            ).count(),
+            "non_sponsored_staff_count": active_staff.filter(is_sponsored=False).count(),
             "departed_staff_count": Staff.objects.filter(is_departed=True).count(),
             "search_query": search_query or "",
         },
@@ -73,9 +71,7 @@ def register_staff(request):
 
         if form.is_valid():
             form.save()
-            messages.info(
-                request, "Record saved successfully!", extra_tags="bg-success"
-            )
+            messages.info(request, "Record saved successfully!", extra_tags="bg-success")
             return redirect("register_staff")
         else:
             # Display an error message if the form is not valid
@@ -115,12 +111,8 @@ def update_staff(request, pk, template_name="staff/staff_update.html"):
 
         if form.is_valid():
             form.save()
-            messages.success(
-                request, "Staff record updated successfully!", extra_tags="bg-success"
-            )
-            return redirect(
-                "staff_list"
-            )  # Redirect to the staff list after successful update
+            messages.success(request, "Staff record updated successfully!", extra_tags="bg-success")
+            return redirect("staff_list")  # Redirect to the staff list after successful update
         else:
             messages.error(
                 request,
@@ -177,13 +169,9 @@ def staff_departure(request):
             # Update Staff status to "departed"
             staff_instance.is_departed = True
             staff_instance.is_sponsored = False
-            staff_instance.save(
-                update_fields=["is_departed", "is_sponsored", "updated_at"]
-            )
+            staff_instance.save(update_fields=["is_departed", "is_sponsored", "updated_at"])
 
-            messages.success(
-                request, "Staff departed successfully!", extra_tags="bg-success"
-            )
+            messages.success(request, "Staff departed successfully!", extra_tags="bg-success")
             return redirect("staff_departure")
         else:
             messages.error(request, "Form is invalid.", extra_tags="bg-danger")
@@ -209,9 +197,7 @@ def staff_departure(request):
 @admin_or_manager_required
 def staff_depature_list(request):
     queryset = (
-        Staff.objects.filter(is_departed=True)
-        .order_by("first_name", "last_name", "id")
-        .prefetch_related("departures")
+        Staff.objects.filter(is_departed=True).order_by("first_name", "last_name", "id").prefetch_related("departures")
     )
 
     search_query = request.GET.get("search", "").strip()
@@ -259,9 +245,7 @@ def reinstate_staff(request, pk):
     if request.method == "POST":
         staff.is_departed = False
         staff.save(update_fields=["is_departed", "updated_at"])
-        messages.success(
-            request, "staff reinstated successfully!", extra_tags="bg-success"
-        )
+        messages.success(request, "staff reinstated successfully!", extra_tags="bg-success")
 
         return redirect("staff_depature_list")
 

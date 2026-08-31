@@ -160,9 +160,7 @@ class UpdateUserForm(forms.ModelForm):
         required=True,
         widget=forms.TextInput(attrs={"class": "form-control"}),
     )
-    email = forms.EmailField(
-        required=True, widget=forms.TextInput(attrs={"class": "form-control"})
-    )
+    email = forms.EmailField(required=True, widget=forms.TextInput(attrs={"class": "form-control"}))
 
     class Meta:
         model = User
@@ -173,12 +171,8 @@ class UpdateUserForm(forms.ModelForm):
 
 
 class UpdateProfileForm(forms.ModelForm):
-    avatar = forms.ImageField(
-        widget=forms.FileInput(attrs={"class": "form-control-file"})
-    )
-    bio = forms.CharField(
-        widget=forms.Textarea(attrs={"class": "form-control", "rows": 3})
-    )
+    avatar = forms.ImageField(widget=forms.FileInput(attrs={"class": "form-control-file"}))
+    bio = forms.CharField(widget=forms.Textarea(attrs={"class": "form-control", "rows": 3}))
 
     class Meta:
         model = Profile
@@ -257,9 +251,7 @@ class PolicyForm(forms.ModelForm):
                     "accept": "application/pdf,.pdf",
                 }
             ),
-            "date_reviewed": forms.DateInput(
-                attrs={"type": "date", "class": "form-control"}
-            ),
+            "date_reviewed": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
         }
 
     def clean_upload(self):
@@ -268,9 +260,7 @@ class PolicyForm(forms.ModelForm):
             if not upload.name.lower().endswith(".pdf"):
                 raise forms.ValidationError("Only PDF files are allowed.")
             if upload.size > 10 * 1024 * 1024:  # 10 MB limit
-                raise forms.ValidationError(
-                    "The file is too large. It should be less than 10 MB."
-                )
+                raise forms.ValidationError("The file is too large. It should be less than 10 MB.")
         return upload
 
 
@@ -282,15 +272,9 @@ class EbookUploadForm(forms.ModelForm):
         model = Ebook
         fields = ["title", "author", "ebook_file"]
         widgets = {
-            "title": forms.TextInput(
-                attrs={"class": "form-control", "placeholder": "Book title"}
-            ),
-            "author": forms.TextInput(
-                attrs={"class": "form-control", "placeholder": "Author"}
-            ),
-            "ebook_file": forms.FileInput(
-                attrs={"class": "form-control", "accept": "application/pdf,.pdf"}
-            ),
+            "title": forms.TextInput(attrs={"class": "form-control", "placeholder": "Book title"}),
+            "author": forms.TextInput(attrs={"class": "form-control", "placeholder": "Author"}),
+            "ebook_file": forms.FileInput(attrs={"class": "form-control", "accept": "application/pdf,.pdf"}),
         }
 
     def clean_ebook_file(self):
@@ -308,9 +292,7 @@ class DocumentForm(forms.ModelForm):
         model = DocumentUpload
         fields = "__all__"
         widgets = {
-            "title": forms.TextInput(
-                attrs={"class": "form-control", "placeholder": "Document title"}
-            ),
+            "title": forms.TextInput(attrs={"class": "form-control", "placeholder": "Document title"}),
             "file": forms.FileInput(
                 attrs={
                     "class": "form-control",

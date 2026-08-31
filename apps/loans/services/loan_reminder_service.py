@@ -33,9 +33,7 @@ class LoanReminderService:
         if not schedule:
             return None
 
-        today_installments = [
-            payment for payment in schedule if payment["payment_due_date"] == self.today
-        ]
+        today_installments = [payment for payment in schedule if payment["payment_due_date"] == self.today]
 
         if today_installments:
             expected = sum(payment["total_payment"] for payment in today_installments)
@@ -61,9 +59,7 @@ class LoanReminderService:
         ]
 
         if upcoming:
-            next_payment = min(
-                upcoming, key=lambda payment: payment["payment_due_date"]
-            )
+            next_payment = min(upcoming, key=lambda payment: payment["payment_due_date"])
             return {
                 "category": "pre_due",
                 "notice_title": "Upcoming loan payment",
@@ -74,9 +70,7 @@ class LoanReminderService:
                 **balances,
             }
 
-        missed = [
-            payment for payment in schedule if payment["payment_due_date"] < self.today
-        ]
+        missed = [payment for payment in schedule if payment["payment_due_date"] < self.today]
 
         if missed:
             aging = compute_installment_based_days_overdue(self.loan, self.today)

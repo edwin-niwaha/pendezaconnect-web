@@ -5,9 +5,7 @@ from apps.sponsor.models import Sponsor, sponsorship_type_flags
 
 
 class Command(BaseCommand):
-    help = (
-        "Backfill sponsor classification flags from legacy relationships and payments."
-    )
+    help = "Backfill sponsor classification flags from legacy relationships and payments."
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -45,11 +43,7 @@ class Command(BaseCommand):
                 "is_one_time_donor": sponsor.is_one_time_donor,
             }
             flags = self.classify(sponsor)
-            changed_fields = [
-                field
-                for field, value in flags.items()
-                if getattr(sponsor, field) != value
-            ]
+            changed_fields = [field for field, value in flags.items() if getattr(sponsor, field) != value]
 
             if not changed_fields:
                 continue
@@ -59,21 +53,16 @@ class Command(BaseCommand):
 
             updated += 1
             self.stdout.write(
-                f"{'Would update' if dry_run else 'Updated'} sponsor {sponsor.id}: "
-                f"{original} -> {flags}"
+                f"{'Would update' if dry_run else 'Updated'} sponsor {sponsor.id}: " f"{original} -> {flags}"
             )
             if not dry_run:
                 sponsor.save(update_fields=[*changed_fields, "updated_at"])
 
         if dry_run:
             transaction.set_rollback(True)
-            self.stdout.write(
-                self.style.WARNING(f"Dry run complete. Sponsors changed: {updated}")
-            )
+            self.stdout.write(self.style.WARNING(f"Dry run complete. Sponsors changed: {updated}"))
         else:
-            self.stdout.write(
-                self.style.SUCCESS(f"Sponsor classifications synced: {updated}")
-            )
+            self.stdout.write(self.style.SUCCESS(f"Sponsor classifications synced: {updated}"))
 
     def classify(self, sponsor):
         flags = {
@@ -91,12 +80,8 @@ class Command(BaseCommand):
         flags["is_staff_sponsor"] = flags["is_staff_sponsor"] or any(
             sponsorship.is_active for sponsorship in sponsor.sponsored_staff.all()
         )
-        flags["is_child_sponsor"] = (
-            flags["is_child_sponsor"] or sponsor.child_payments.exists()
-        )
-        flags["is_staff_sponsor"] = (
-            flags["is_staff_sponsor"] or sponsor.staff_payments.exists()
-        )
+        flags["is_child_sponsor"] = flags["is_child_sponsor"] or sponsor.child_payments.exists()
+        flags["is_staff_sponsor"] = flags["is_staff_sponsor"] or sponsor.staff_payments.exists()
 
         for payment in sponsor.payments.all():
             code = payment.program.code

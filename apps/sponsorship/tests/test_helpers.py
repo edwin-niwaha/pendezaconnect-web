@@ -9,7 +9,6 @@ from apps.sponsorship.momo_prod import (
 
 
 class HelperFunctionTests(TestCase):
-
     @responses.activate
     def test_create_access_token_success(self):
         responses.add(
@@ -43,9 +42,7 @@ class HelperFunctionTests(TestCase):
             status=202,
             body="Success",
         )
-        status, res_text = request_to_pay(
-            "fake_token", "fake_sub_key", "256700000000", 10000, "fake_ref"
-        )
+        status, res_text = request_to_pay("fake_token", "fake_sub_key", "256700000000", 10000, "fake_ref")
         self.assertEqual(status, 202)
         self.assertEqual(res_text, "Success")
 
@@ -57,7 +54,5 @@ class HelperFunctionTests(TestCase):
             status=400,
             body="Error",
         )
-        status, res_text = request_to_pay(
-            "fake_token", "fake_sub_key", "256700000000", 10000, "fake_ref"
-        )
+        status, res_text = request_to_pay("fake_token", "fake_sub_key", "256700000000", 10000, "fake_ref")
         self.assertEqual(status, 400)

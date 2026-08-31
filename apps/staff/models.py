@@ -33,9 +33,7 @@ class Staff(models.Model):
     first_name = models.CharField(max_length=25, null=True, verbose_name="First Name")
     last_name = models.CharField(max_length=25, null=True, verbose_name="Last Name")
     picture = CloudinaryField("image", blank=True, null=True)
-    gender = models.CharField(
-        max_length=6, choices=GENDER_CHOICES, blank=False, verbose_name="Gender"
-    )
+    gender = models.CharField(max_length=6, choices=GENDER_CHOICES, blank=False, verbose_name="Gender")
     date_of_birth = models.DateField(
         null=True,
         blank=True,
@@ -43,12 +41,8 @@ class Staff(models.Model):
     )
     marital_status = models.CharField(max_length=30, choices=MARITAL_STATUS_CHOICES)
     email = models.EmailField(verbose_name="Email")
-    home_district = models.CharField(
-        max_length=30, null=True, verbose_name="Home District"
-    )
-    mobile_telephone = PhoneNumberField(
-        null=True, blank=True, default="+256999999999", verbose_name="Mobile Telephone"
-    )
+    home_district = models.CharField(max_length=30, null=True, verbose_name="Home District")
+    mobile_telephone = PhoneNumberField(null=True, blank=True, default="+256999999999", verbose_name="Mobile Telephone")
     date_started_work = models.DateField(
         null=True,
         blank=True,
@@ -88,18 +82,14 @@ class Staff(models.Model):
     def clean(self):
         # Validate that date_of_birth is not in the future
         if self.date_of_birth and self.date_of_birth > datetime.date.today():
-            raise ValidationError(
-                {"date_of_birth": "Date of birth cannot be in the future."}
-            )
+            raise ValidationError({"date_of_birth": "Date of birth cannot be in the future."})
 
         # Call the parent clean method to ensure other validations still work
         super().clean()
 
     def save(self, *args, **kwargs):
         if self.picture and not str(self.picture).startswith("http"):
-            upload_result = cloudinary.uploader.upload(
-                self.picture.file, folder="staff_profiles"
-            )
+            upload_result = cloudinary.uploader.upload(self.picture.file, folder="staff_profiles")
             self.picture = upload_result.get("secure_url") or upload_result["url"]
         super().save(*args, **kwargs)
 
@@ -123,9 +113,7 @@ class StaffDeparture(models.Model):
         verbose_name="Staff Information",
         related_name="departures",
     )
-    departure_date = models.DateField(
-        verbose_name="Departure Date", null=True, blank=True
-    )
+    departure_date = models.DateField(verbose_name="Departure Date", null=True, blank=True)
     departure_reason = models.TextField(verbose_name="Reason for Departure")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created At")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated At")

@@ -11,33 +11,17 @@ class StaffForm(forms.ModelForm):
         model = Staff
         exclude = ("is_departed", "is_sponsored")
         widgets = {
-            "first_name": forms.TextInput(
-                attrs={"class": "form-control", "required": True}
-            ),
-            "last_name": forms.TextInput(
-                attrs={"class": "form-control", "required": True}
-            ),
-            "picture": forms.FileInput(
-                attrs={"class": "form-control-file", "accept": "image/*"}
-            ),
-            "date_of_birth": forms.DateInput(
-                attrs={"class": "form-control", "type": "date", "required": True}
-            ),
-            "email": forms.EmailInput(
-                attrs={"class": "form-control", "required": True}
-            ),
+            "first_name": forms.TextInput(attrs={"class": "form-control", "required": True}),
+            "last_name": forms.TextInput(attrs={"class": "form-control", "required": True}),
+            "picture": forms.FileInput(attrs={"class": "form-control-file", "accept": "image/*"}),
+            "date_of_birth": forms.DateInput(attrs={"class": "form-control", "type": "date", "required": True}),
+            "email": forms.EmailInput(attrs={"class": "form-control", "required": True}),
             "home_district": forms.TextInput(attrs={"class": "form-control"}),
             "mobile_telephone": forms.TextInput(attrs={"class": "form-control"}),
-            "date_started_work": forms.DateInput(
-                attrs={"class": "form-control", "type": "date", "required": True}
-            ),
+            "date_started_work": forms.DateInput(attrs={"class": "form-control", "type": "date", "required": True}),
             "gender": forms.Select(attrs={"class": "form-control", "required": True}),
-            "marital_status": forms.Select(
-                attrs={"class": "form-control", "required": True}
-            ),
-            "department": forms.Select(
-                attrs={"class": "form-control", "required": True}
-            ),
+            "marital_status": forms.Select(attrs={"class": "form-control", "required": True}),
+            "department": forms.Select(attrs={"class": "form-control", "required": True}),
             "job_title": forms.TextInput(attrs={"class": "form-control"}),
         }
 
@@ -49,20 +33,12 @@ class StaffForm(forms.ModelForm):
         last_name = self.cleaned_data.get("last_name")
 
         if first_name and len(first_name) < 3:
-            self.add_error(
-                "first_name", "Can not save first name less than 3 characters long"
-            )
-            self.fields["first_name"].widget.attrs.update(
-                {"class": "form-control  is-invalid"}
-            )
+            self.add_error("first_name", "Can not save first name less than 3 characters long")
+            self.fields["first_name"].widget.attrs.update({"class": "form-control  is-invalid"})
 
         if last_name and len(last_name) < 3:
-            self.add_error(
-                "last_name", "Can not save last name less than 3 characters long"
-            )
-            self.fields["last_name"].widget.attrs.update(
-                {"class": "form-control  is-invalid"}
-            )
+            self.add_error("last_name", "Can not save last name less than 3 characters long")
+            self.fields["last_name"].widget.attrs.update({"class": "form-control  is-invalid"})
 
         return self.cleaned_data
 
@@ -73,16 +49,10 @@ class StaffUpdateForm(forms.ModelForm):
         exclude = ("is_departed", "is_sponsored", "created_at", "updated_at")
         widgets = {
             "date_of_birth": forms.DateInput(attrs={"type": "date", "required": True}),
-            "date_started_work": forms.DateInput(
-                attrs={"type": "date", "required": True}
-            ),
+            "date_started_work": forms.DateInput(attrs={"type": "date", "required": True}),
             "gender": forms.Select(attrs={"class": "form-control", "required": True}),
-            "marital_status": forms.Select(
-                attrs={"class": "form-control", "required": True}
-            ),
-            "department": forms.Select(
-                attrs={"class": "form-control", "required": True}
-            ),
+            "marital_status": forms.Select(attrs={"class": "form-control", "required": True}),
+            "department": forms.Select(attrs={"class": "form-control", "required": True}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -113,9 +83,7 @@ class StaffDepartureForm(forms.ModelForm):
         model = StaffDeparture
         exclude = ("staff",)
         widgets = {
-            "departure_date": forms.DateInput(
-                attrs={"class": "form-control", "type": "date", "required": True}
-            ),
+            "departure_date": forms.DateInput(attrs={"class": "form-control", "type": "date", "required": True}),
             "departure_reason": forms.Textarea(
                 attrs={
                     "class": "form-control",

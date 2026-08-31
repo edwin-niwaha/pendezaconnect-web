@@ -41,8 +41,7 @@ REAL_SUPPORT_PROGRAM_CODES = (
 
 def sponsorship_type_flags(sponsorship_type):
     return {
-        "is_child_sponsor": sponsorship_type
-        in (SponsorshipType.CHILD_FULL_SUPPORT, SponsorshipType.CHILD_CO_SUPPORT),
+        "is_child_sponsor": sponsorship_type in (SponsorshipType.CHILD_FULL_SUPPORT, SponsorshipType.CHILD_CO_SUPPORT),
         "is_family_supporter": sponsorship_type
         in (SponsorshipType.FAMILY_FULL_SUPPORT, SponsorshipType.FAMILY_CO_SUPPORT),
         "is_general_donor": sponsorship_type == SponsorshipType.GENERAL_SUPPORT,
@@ -89,10 +88,7 @@ class SponsorQuerySet(models.QuerySet):
         - staff supporters
         """
         return self.filter(
-            Q(is_child_sponsor=True)
-            | Q(is_staff_sponsor=True)
-            | Q(is_family_supporter=True)
-            | Q(is_general_donor=True)
+            Q(is_child_sponsor=True) | Q(is_staff_sponsor=True) | Q(is_family_supporter=True) | Q(is_general_donor=True)
         ).distinct()
 
     def exclude_one_time_only_donors(self):
@@ -134,9 +130,7 @@ class Sponsor(models.Model):
 
     first_name = models.CharField(max_length=50, null=True, verbose_name="First Name")
     last_name = models.CharField(max_length=50, null=True, verbose_name="Last Name")
-    gender = models.CharField(
-        max_length=6, choices=GENDER_CHOICES, blank=False, verbose_name="Gender"
-    )
+    gender = models.CharField(max_length=6, choices=GENDER_CHOICES, blank=False, verbose_name="Gender")
     date_of_birth = models.DateField(
         null=True,
         blank=True,
@@ -150,28 +144,18 @@ class Sponsor(models.Model):
         blank=True,
         verbose_name="Sponsorship Type",
     )
-    expected_amt = models.DecimalField(
-        _("Amount Expected(UgX)"), max_digits=10, decimal_places=2, default=0
-    )
-    job_title = models.CharField(
-        max_length=100, null=True, blank=True, verbose_name="Job Title"
-    )
-    region = models.CharField(
-        max_length=100, null=True, blank=True, verbose_name="Region"
-    )
+    expected_amt = models.DecimalField(_("Amount Expected(UgX)"), max_digits=10, decimal_places=2, default=0)
+    job_title = models.CharField(max_length=100, null=True, blank=True, verbose_name="Job Title")
+    region = models.CharField(max_length=100, null=True, blank=True, verbose_name="Region")
     town = models.CharField(max_length=100, null=True, blank=True, verbose_name="Town")
-    origin = models.CharField(
-        max_length=100, null=True, blank=True, verbose_name="Origin"
-    )
+    origin = models.CharField(max_length=100, null=True, blank=True, verbose_name="Origin")
     business_telephone = PhoneNumberField(
         null=True,
         blank=True,
         default="+256999999999",
         verbose_name="Business Telephone",
     )
-    mobile_telephone = PhoneNumberField(
-        null=True, blank=True, default="+256999999999", verbose_name="Mobile Telephone"
-    )
+    mobile_telephone = PhoneNumberField(null=True, blank=True, default="+256999999999", verbose_name="Mobile Telephone")
     city = models.CharField(max_length=30, null=True, blank=True, verbose_name="City")
     start_date = models.DateField(
         null=True,
@@ -182,15 +166,11 @@ class Sponsor(models.Model):
             MaxValueValidator(limit_value=datetime.date.today),
         ],
     )
-    first_street_address = models.CharField(
-        max_length=100, null=True, blank=True, verbose_name="First Street Address"
-    )
+    first_street_address = models.CharField(max_length=100, null=True, blank=True, verbose_name="First Street Address")
     second_street_address = models.CharField(
         max_length=100, null=True, blank=True, verbose_name="Second Street Address"
     )
-    zip_code = models.CharField(
-        max_length=50, null=True, blank=True, verbose_name="ZIP Code or Box Number"
-    )
+    zip_code = models.CharField(max_length=50, null=True, blank=True, verbose_name="ZIP Code or Box Number")
     is_departed = models.BooleanField(
         default=False,
         verbose_name="Departed?",
@@ -200,9 +180,7 @@ class Sponsor(models.Model):
     is_family_supporter = models.BooleanField(default=False)
     is_general_donor = models.BooleanField(default=False)
     is_one_time_donor = models.BooleanField(default=False)
-    comment = models.CharField(
-        max_length=100, null=True, blank=True, verbose_name="Comment"
-    )
+    comment = models.CharField(max_length=100, null=True, blank=True, verbose_name="Comment")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created at")
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -213,9 +191,7 @@ class Sponsor(models.Model):
     def clean(self):
         # Validate that date_of_birth is not in the future
         if self.date_of_birth and self.date_of_birth > datetime.date.today():
-            raise ValidationError(
-                {"date_of_birth": "Date of birth cannot be in the future."}
-            )
+            raise ValidationError({"date_of_birth": "Date of birth cannot be in the future."})
 
         # Call the parent clean method to ensure other validations still work
         super().clean()
@@ -258,9 +234,7 @@ class SponsorDeparture(models.Model):
         verbose_name="Sponsor Information",
         related_name="departures",
     )
-    departure_date = models.DateField(
-        verbose_name="Departure Date", null=True, blank=True
-    )
+    departure_date = models.DateField(verbose_name="Departure Date", null=True, blank=True)
     departure_reason = models.TextField(verbose_name="Reason for Departure")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created At")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Updated At")

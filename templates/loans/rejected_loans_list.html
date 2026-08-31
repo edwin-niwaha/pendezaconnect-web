@@ -3,7 +3,7 @@
 
 {% block content %}
   {% include 'loans/_report_styles.html' %}
-  <div class="container-fluid loan-report-page">
+  <div class="container-fluid loan-report-page loan-register-page" data-register-state="rejected">
     <div class="loan-report-header">
       <div>
         <h1 class="loan-report-title">{{ table_title }}</h1>
@@ -17,7 +17,7 @@
     </div>
 
     <div class="loan-report-kpis">
-      <div class="loan-report-kpi"><span>Rejected Loans</span><strong>{{ report_summary.loan_count|intcomma }}</strong></div>
+      <div class="loan-report-kpi"><span>Rejected applications</span><strong>{{ report_summary.loan_count|intcomma }} loan{{ report_summary.loan_count|pluralize }}</strong></div>
       <div class="loan-report-kpi"><span>Principal</span><strong>UGX {{ report_summary.total_principal|floatformat:0|intcomma }}</strong></div>
       <div class="loan-report-kpi"><span>Interest</span><strong>UGX {{ report_summary.total_interest|floatformat:0|intcomma }}</strong></div>
       <div class="loan-report-kpi"><span>Total Exposure</span><strong>UGX {{ report_summary.total_exposure|floatformat:0|intcomma }}</strong></div>
@@ -25,7 +25,10 @@
 
     <div id="printMe" class="loan-report-panel">
       <div class="loan-report-panel-head">
-        <strong>Rejected applications</strong>
+        <div class="register-heading">
+          <i class="mdi mdi-close-octagon-outline"></i>
+          <div><strong>Rejected applications</strong><small>Review declined applications and recorded decisions</small></div>
+        </div>
         <form method="get" action="{% url 'loans:rejected_loans' %}" class="loan-report-filters print-hide">
           <input type="text" name="search" value="{{ search_query|default:'' }}" placeholder="Search borrower..." class="form-control form-control-sm" />
           <button type="submit" class="btn btn-primary btn-sm"><i class="mdi mdi-magnify"></i></button>
@@ -53,11 +56,11 @@
             <tbody>
               {% for loan in loans %}
                 <tr>
-                  <td>#{{ loan.id }}</td>
-                  <td>{{ loan.borrower }}</td>
+                  <td><span class="loan-id-label">#{{ loan.id }}</span></td>
+                  <td><span class="borrower-name">{{ loan.borrower }}</span></td>
                   <td>{{ loan.loan_purpose }}</td>
-                  <td class="text-end">UGX {{ loan.principal_amount|floatformat:0|intcomma }}</td>
-                  <td class="text-end">UGX {{ loan.total_interest|floatformat:0|intcomma }}</td>
+                  <td class="text-end amount-cell">UGX {{ loan.principal_amount|floatformat:0|intcomma }}</td>
+                  <td class="text-end amount-cell">UGX {{ loan.total_interest|floatformat:0|intcomma }}</td>
                   <td class="text-center">{{ loan.loan_period_months }}m</td>
                   <td class="text-center">{{ loan.interest_rate|floatformat:0 }}%</td>
                   <td>{{ loan.applied_by }}</td>

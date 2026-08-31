@@ -43,7 +43,7 @@ def sales_list_view(request):
         Sale.objects.all()
         .select_related("customer")
         .prefetch_related("items__product", "items__variant")
-        .order_by("id")
+        .order_by("-id")
     )
 
     for sale in sales:
@@ -74,14 +74,8 @@ def sales_list_view(request):
 @login_required
 def sales_add_view(request):
     # Fetch only active products with their inventory
-    products = (
-        Product.objects.filter(status="ACTIVE")
-        .select_related("inventory")
-        .prefetch_related("variants")
-    )
-    variants = ProductVariant.objects.filter(
-        status="ACTIVE", product__status="ACTIVE"
-    ).select_related("product")
+    products = Product.objects.filter(status="ACTIVE").select_related("inventory").prefetch_related("variants")
+    variants = ProductVariant.objects.filter(status="ACTIVE", product__status="ACTIVE").select_related("product")
     sale_items = []
     for product in products:
         active_variants = list(product.variants.filter(status="ACTIVE"))
@@ -146,36 +140,23 @@ def sales_add_view(request):
                     variant_obj = None
 
                     if item_type == "variant":
-                        variant_obj = ProductVariant.objects.select_for_update().get(
-                            id=item_id
-                        )
+                        variant_obj = ProductVariant.objects.select_for_update().get(id=item_id)
                         product_obj = variant_obj.product
                         if variant_obj.quantity < quantity_requested:
-                            raise ValueError(
-                                f"Oops! Insufficient stock for {variant_obj.display_name}"
-                            )
+                            raise ValueError(f"Oops! Insufficient stock for {variant_obj.display_name}")
                         variant_obj.quantity -= quantity_requested
                         variant_obj.save(update_fields=["quantity", "updated_at"])
                     else:
-                        product_obj = Product.objects.select_for_update().get(
-                            id=item_id
-                        )
+                        product_obj = Product.objects.select_for_update().get(id=item_id)
                         # Check if the product has inventory and stock is available
-                        if (
-                            not hasattr(product_obj, "inventory")
-                            or product_obj.inventory.quantity < quantity_requested
-                        ):
-                            raise ValueError(
-                                f"Oops! Insufficient stock for {product_obj.name}"
-                            )
+                        if not hasattr(product_obj, "inventory") or product_obj.inventory.quantity < quantity_requested:
+                            raise ValueError(f"Oops! Insufficient stock for {product_obj.name}")
 
                         # Update inventory stock
                         inventory_obj = product_obj.inventory
                         inventory_obj.quantity -= quantity_requested
                         inventory_obj.save()
-                        logger.info(
-                            f"Stock updated for {product_obj.name}: {inventory_obj.quantity}"
-                        )
+                        logger.info(f"Stock updated for {product_obj.name}: {inventory_obj.quantity}")
 
                     # Create sale detail
                     detail_attributes = {
@@ -192,20 +173,14 @@ def sales_add_view(request):
                         variant=variant_obj,
                         movement_type=StockMovement.SALE,
                         quantity=-quantity_requested,
-                        unit_cost=(
-                            variant_obj.effective_cost
-                            if variant_obj
-                            else product_obj.cost
-                        ),
+                        unit_cost=(variant_obj.effective_cost if variant_obj else product_obj.cost),
                         unit_price=float(product_data["price"]),
                         reference=f"Sale #{new_sale.id}",
                         created_by=request.user,
                     )
                     logger.info(f"Sale detail added: {detail_attributes}")
 
-                messages.success(
-                    request, "Sale created successfully!", extra_tags="bg-success"
-                )
+                messages.success(request, "Sale created successfully!", extra_tags="bg-success")
                 return redirect("sales:sales_list")
 
         except ValueError as ve:
@@ -251,9 +226,7 @@ def sale_delete_view(request, sale_id):
         # Get the sale to delete
         sale = Sale.objects.get(id=sale_id)
         sale.delete()
-        messages.success(
-            request, f"Sale: {sale_id} deleted successfully!", extra_tags="bg-success"
-        )
+        messages.success(request, f"Sale: {sale_id} deleted successfully!", extra_tags="bg-success")
     except Sale.DoesNotExist:
         # Specific exception for when the sale is not found
         messages.error(
@@ -397,9 +370,7 @@ def sales_report_view(request):
         sale.profit = sum(item.calculate_profit() for item in sale.items.all())
 
     # Calculate stock balance
-    stock_balance = (
-        Inventory.objects.aggregate(total_stock=Sum("quantity"))["total_stock"] or 0
-    )
+    stock_balance = Inventory.objects.aggregate(total_stock=Sum("quantity"))["total_stock"] or 0
 
     context = {
         "form": form,

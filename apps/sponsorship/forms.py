@@ -15,9 +15,7 @@ class BaseSponsorshipEditForm(forms.ModelForm):
         # Check if a sponsorship with the same sponsor, start_date, and sponsorship_type already exists
         existing_sponsorship = self.Meta.model.objects.filter(
             sponsor=sponsor, start_date=start_date, sponsorship_type=sponsorship_type
-        ).exclude(
-            id=self.instance.id if self.instance else None
-        )  # Exclude the current instance if editing
+        ).exclude(id=self.instance.id if self.instance else None)  # Exclude the current instance if editing
 
         if existing_sponsorship.exists():
             raise ValidationError("A sponsorship with the same details already exists.")
@@ -31,12 +29,8 @@ class ChildSponsorshipForm(forms.ModelForm):
         model = ChildSponsorship
         exclude = ("sponsor", "child", "is_active", "end_date")
         widgets = {
-            "start_date": forms.DateInput(
-                attrs={"class": "form-control", "type": "date", "required": True}
-            ),
-            "sponsorship_type": forms.Select(
-                attrs={"class": "form-control", "required": True}
-            ),
+            "start_date": forms.DateInput(attrs={"class": "form-control", "type": "date", "required": True}),
+            "sponsorship_type": forms.Select(attrs={"class": "form-control", "required": True}),
         }
 
 
@@ -54,9 +48,7 @@ class ChildSponsorshipEditForm(BaseSponsorshipEditForm):
             ),
             "sponsor": forms.Select(attrs={"class": "form-control", "required": True}),
             "start_date": forms.DateInput(attrs={"type": "date", "required": True}),
-            "sponsorship_type": forms.Select(
-                attrs={"class": "form-control", "required": True}
-            ),
+            "sponsorship_type": forms.Select(attrs={"class": "form-control", "required": True}),
         }
 
 
@@ -66,12 +58,8 @@ class StaffSponsorshipForm(forms.ModelForm):
         model = StaffSponsorship
         exclude = ("sponsor", "staff", "is_active", "end_date")
         widgets = {
-            "start_date": forms.DateInput(
-                attrs={"class": "form-control", "type": "date", "required": True}
-            ),
-            "sponsorship_type": forms.Select(
-                attrs={"class": "form-control", "required": True}
-            ),  #
+            "start_date": forms.DateInput(attrs={"class": "form-control", "type": "date", "required": True}),
+            "sponsorship_type": forms.Select(attrs={"class": "form-control", "required": True}),  #
         }
 
 
@@ -89,9 +77,7 @@ class StaffSponsorshipEditForm(BaseSponsorshipEditForm):
             ),
             "sponsor": forms.Select(attrs={"class": "form-control", "required": True}),
             "start_date": forms.DateInput(attrs={"type": "date", "required": True}),
-            "sponsorship_type": forms.Select(
-                attrs={"class": "form-control", "required": True}
-            ),
+            "sponsorship_type": forms.Select(attrs={"class": "form-control", "required": True}),
         }
 
 

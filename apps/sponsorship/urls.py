@@ -4,9 +4,7 @@ from . import views
 
 urlpatterns = [
     # Child Sponsorship operations
-    path(
-        "child-sponsorship/create/", views.child_sponsorship, name="child_sponsorship"
-    ),
+    path("child-sponsorship/create/", views.child_sponsorship, name="child_sponsorship"),
     path(
         "child-sponsorship/report/",
         views.child_sponsorship_report,

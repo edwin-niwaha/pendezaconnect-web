@@ -30,12 +30,8 @@ class SponsorForm(forms.ModelForm):
             "start_date": forms.DateInput(attrs={"type": "date"}),
             "date_of_birth": forms.DateInput(attrs={"type": "date"}),
             "comment": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
-            "first_street_address": forms.Textarea(
-                attrs={"class": "form-control", "rows": 3}
-            ),
-            "second_street_address": forms.Textarea(
-                attrs={"class": "form-control", "rows": 3}
-            ),
+            "first_street_address": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+            "second_street_address": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
             "gender": forms.Select(attrs={"class": "form-control", "required": True}),
             "sponsorship_type": forms.Select(attrs={"class": "form-control"}),
         }
@@ -52,20 +48,12 @@ class SponsorForm(forms.ModelForm):
         last_name = self.cleaned_data.get("last_name")
 
         if first_name and len(first_name) < 2:
-            self.add_error(
-                "first_name", "Can not save first name less than 2 characters long"
-            )
-            self.fields["first_name"].widget.attrs.update(
-                {"class": "form-control  is-invalid"}
-            )
+            self.add_error("first_name", "Can not save first name less than 2 characters long")
+            self.fields["first_name"].widget.attrs.update({"class": "form-control  is-invalid"})
 
         if last_name and len(last_name) < 2:
-            self.add_error(
-                "last_name", "Can not save last name less than 2 characters long"
-            )
-            self.fields["last_name"].widget.attrs.update(
-                {"class": "form-control  is-invalid"}
-            )
+            self.add_error("last_name", "Can not save last name less than 2 characters long")
+            self.fields["last_name"].widget.attrs.update({"class": "form-control  is-invalid"})
 
         return self.cleaned_data
 
@@ -94,12 +82,8 @@ class DonorForm(forms.ModelForm):
                     "required": True,
                 }
             ),
-            "email": forms.EmailInput(
-                attrs={"class": "form-control", "placeholder": "Email"}
-            ),
-            "phone": forms.TextInput(
-                attrs={"class": "form-control", "placeholder": "Phone Number"}
-            ),
+            "email": forms.EmailInput(attrs={"class": "form-control", "placeholder": "Email"}),
+            "phone": forms.TextInput(attrs={"class": "form-control", "placeholder": "Phone Number"}),
         }
 
 
@@ -110,9 +94,7 @@ class SponsorDepartForm(forms.ModelForm):
         exclude = ("sponsor",)
         widgets = {
             "departure_date": forms.DateInput(attrs={"type": "date"}),
-            "departure_reason": forms.Textarea(
-                attrs={"class": "form-control", "rows": 2}
-            ),
+            "departure_reason": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
         }
 
     def __init__(self, *args, **kwargs):

@@ -139,6 +139,238 @@
     margin-top: 14px;
   }
 
+  /* Shared presentation for the approved, rejected, and disbursed registers. */
+  .loan-register-page {
+    --register-accent: #13745d;
+    --register-accent-soft: #e9f6f1;
+    --register-dark: #123b36;
+    --register-border: #e3e9ef;
+    margin-top: 22px;
+  }
+
+  .loan-register-page[data-register-state="approved"] {
+    --register-accent: #2563a6;
+    --register-accent-soft: #eaf2fc;
+    --register-dark: #193d66;
+  }
+
+  .loan-register-page[data-register-state="rejected"] {
+    --register-accent: #b5473e;
+    --register-accent-soft: #fdf0ef;
+    --register-dark: #71322d;
+  }
+
+  .loan-register-page .loan-report-header {
+    align-items: center;
+    background: linear-gradient(125deg, var(--register-dark), var(--register-accent));
+    border: 0;
+    border-radius: 18px;
+    box-shadow: 0 16px 36px color-mix(in srgb, var(--register-dark) 22%, transparent);
+    overflow: hidden;
+    padding: 22px 24px;
+    position: relative;
+  }
+
+  .loan-register-page .loan-report-header::after {
+    border: 22px solid rgba(255, 255, 255, .06);
+    border-radius: 50%;
+    content: '';
+    height: 165px;
+    position: absolute;
+    right: -30px;
+    top: -70px;
+    width: 165px;
+  }
+
+  .loan-register-page .loan-report-header > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .loan-register-page .loan-report-title {
+    color: #fff;
+    font-size: clamp(1.35rem, 2vw, 1.8rem);
+    letter-spacing: -.02em;
+  }
+
+  .loan-register-page .loan-report-subtitle {
+    color: rgba(255, 255, 255, .76);
+  }
+
+  .loan-register-page .loan-report-actions .btn {
+    align-items: center;
+    border-radius: 10px;
+    display: inline-flex;
+    font-weight: 800;
+    gap: 4px;
+    min-height: 38px;
+    padding: 7px 12px;
+  }
+
+  .loan-register-page .loan-report-actions .btn-dark {
+    background: #fff;
+    border-color: #fff;
+    color: var(--register-dark);
+  }
+
+  .loan-register-page .loan-report-actions .btn-outline-primary,
+  .loan-register-page .loan-report-actions .btn-success {
+    background: rgba(255, 255, 255, .08);
+    border-color: rgba(255, 255, 255, .4);
+    color: #fff;
+  }
+
+  .loan-register-page .loan-report-kpis {
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .loan-register-page .loan-report-kpi {
+    border-color: var(--register-border);
+    border-radius: 14px;
+    box-shadow: 0 10px 24px rgba(31, 50, 70, .06);
+    min-height: 102px;
+    overflow: hidden;
+    padding: 16px 17px;
+    position: relative;
+  }
+
+  .loan-register-page .loan-report-kpi::after {
+    background: var(--register-accent-soft);
+    border-radius: 50%;
+    content: '';
+    height: 68px;
+    position: absolute;
+    right: -20px;
+    top: -22px;
+    width: 68px;
+  }
+
+  .loan-register-page .loan-report-kpi span {
+    letter-spacing: .04em;
+  }
+
+  .loan-register-page .loan-report-kpi strong {
+    color: #172b3f;
+    font-size: 1.16rem;
+    margin-top: 9px;
+    overflow-wrap: anywhere;
+  }
+
+  .loan-register-page .loan-report-panel {
+    border-color: var(--register-border);
+    border-radius: 14px;
+    box-shadow: 0 12px 30px rgba(31, 50, 70, .07);
+  }
+
+  .loan-register-page .loan-report-panel-head {
+    background: #fff;
+    padding: 14px 16px;
+  }
+
+  .loan-register-page .register-heading {
+    align-items: center;
+    display: flex;
+    gap: 10px;
+  }
+
+  .loan-register-page .register-heading > i {
+    align-items: center;
+    background: var(--register-accent-soft);
+    border-radius: 9px;
+    color: var(--register-accent);
+    display: inline-flex;
+    font-size: 1.05rem;
+    height: 34px;
+    justify-content: center;
+    width: 34px;
+  }
+
+  .loan-register-page .register-heading small {
+    color: #667085;
+    display: block;
+    font-size: .72rem;
+    font-weight: 500;
+    margin-top: 1px;
+  }
+
+  .loan-register-page .loan-report-filters {
+    flex-wrap: nowrap;
+  }
+
+  .loan-register-page .loan-report-filters .form-control {
+    border-color: #d7dee7;
+    border-radius: 9px;
+    min-height: 36px;
+    min-width: min(280px, 30vw);
+    padding-left: 12px;
+  }
+
+  .loan-register-page .loan-report-filters .btn {
+    background: var(--register-accent);
+    border-color: var(--register-accent);
+    border-radius: 9px;
+    height: 36px;
+    width: 40px;
+  }
+
+  .loan-register-page .loan-report-table thead th {
+    background: #f7f9fb;
+    border-bottom-color: #dfe5ec;
+    color: #536273;
+    letter-spacing: .025em;
+    padding-bottom: .68rem;
+    padding-top: .68rem;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+
+  .loan-register-page .loan-report-table tbody td {
+    border-color: #edf1f5;
+    padding-bottom: .68rem;
+    padding-top: .68rem;
+  }
+
+  .loan-register-page .loan-report-table tbody tr:hover td {
+    background: color-mix(in srgb, var(--register-accent-soft) 42%, #fff);
+  }
+
+  .loan-register-page .loan-id-label {
+    color: var(--register-accent);
+    font-weight: 900;
+  }
+
+  .loan-register-page .borrower-name {
+    color: #172b3f;
+    font-weight: 800;
+  }
+
+  .loan-register-page .amount-cell {
+    color: #243b53;
+    font-weight: 800;
+  }
+
+  .loan-register-page .loan-status-badge::before {
+    background: currentColor;
+    border-radius: 50%;
+    content: '';
+    height: 6px;
+    margin-right: 6px;
+    width: 6px;
+  }
+
+  .loan-register-page .loan-pagination .page-link {
+    border-color: #dfe5ec;
+    color: var(--register-accent);
+  }
+
+  .loan-register-page .loan-pagination .active .page-link {
+    background: var(--register-accent);
+    border-color: var(--register-accent);
+    color: #fff;
+  }
+
   @media (max-width: 992px) {
     .loan-report-page {
       margin-top: -8px;
@@ -150,6 +382,10 @@
 
     .loan-report-kpis {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .loan-register-page {
+      margin-top: 16px;
     }
   }
 
@@ -167,6 +403,44 @@
     .loan-report-filters .form-select,
     .loan-report-filters .btn {
       flex: 1 1 100%;
+    }
+
+    .loan-register-page .loan-report-header {
+      align-items: flex-start;
+      border-radius: 14px;
+      padding: 20px;
+    }
+
+    .loan-register-page .loan-report-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+    }
+
+    .loan-register-page .loan-report-actions .btn {
+      justify-content: center;
+    }
+
+    .loan-register-page .loan-report-kpis {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .loan-register-page .loan-report-panel-head {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    .loan-register-page .loan-report-filters {
+      flex-direction: row;
+    }
+
+    .loan-register-page .loan-report-filters .form-control {
+      flex: 1 1 auto;
+      min-width: 0;
+      width: 100%;
+    }
+
+    .loan-register-page .loan-report-filters .btn {
+      flex: 0 0 40px;
     }
   }
 

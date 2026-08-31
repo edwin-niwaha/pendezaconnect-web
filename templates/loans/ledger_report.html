@@ -1,90 +1,11 @@
 {% extends 'sms/base_rpts.html' %}
-{% load humanize %}
-
+{% load static humanize %}
 {% block content %}
-  {% include 'loans/_report_styles.html' %}
-  <div class="container-fluid loan-report-page">
-    <div class="loan-report-header">
-      <div>
-        <h1 class="loan-report-title">Ledger Report</h1>
-        <p class="loan-report-subtitle">
-          {% if selected_account %}
-            {{ selected_account.account_number }} - {{ selected_account.account_name }} from {{ start_date }} to {{ end_date }}
-          {% else %}
-            Select an account and date range to generate the ledger.
-          {% endif %}
-        </p>
-      </div>
-      <div class="loan-report-actions print-hide">
-        <a href="{% url 'loans:loan_reports_dashboard' %}" class="btn btn-outline-primary btn-sm"><i class="mdi mdi-arrow-left-bold me-1"></i>Back to Dashboard</a>
-        <button title="Print" type="button" class="btn btn-success btn-sm" onclick="printDiv('printMe')"><i class="mdi mdi-printer"></i></button>
-      </div>
-    </div>
-
-    <form method="GET" action="{% url 'loans:ledger_report' %}" class="loan-report-panel loan-report-filters print-hide mb-3 p-3">
-      <select name="account_id" id="account_id" class="form-control form-control-sm" required>
-        <option value="" disabled {% if not selected_account_id %}selected{% endif %}>Select account</option>
-        {% for account in accounts %}
-          <option value="{{ account.id }}" {% if account.id|stringformat:'s' == selected_account_id|stringformat:'s' %}selected{% endif %}>{{ account.account_name }}</option>
-        {% endfor %}
-      </select>
-      <input type="date" name="start_date" id="start_date" class="form-control form-control-sm" value="{{ start_date }}" required />
-      <input type="date" name="end_date" id="end_date" class="form-control form-control-sm" value="{{ end_date }}" required />
-      <button type="submit" class="btn btn-primary btn-sm">Generate</button>
-    </form>
-
-    <div class="loan-report-kpis">
-      <div class="loan-report-kpi"><span>Opening Balance</span><strong>UGX {{ opening_balance|floatformat:0|intcomma }}</strong></div>
-      <div class="loan-report-kpi"><span>Debits</span><strong>UGX {{ total_debits|floatformat:0|intcomma }}</strong></div>
-      <div class="loan-report-kpi"><span>Credits</span><strong>UGX {{ total_credits|floatformat:0|intcomma }}</strong></div>
-      <div class="loan-report-kpi"><span>Closing Balance</span><strong>UGX {{ closing_balance|floatformat:0|intcomma }}</strong></div>
-    </div>
-
-    <div id="printMe" class="loan-report-panel">
-      <div class="loan-report-panel-head">
-        <strong>{% if selected_account %}{{ selected_account.account_name }} Ledger{% else %}Ledger Entries{% endif %}</strong>
-        <span class="loan-status-badge">{{ transaction_count|intcomma }} entries</span>
-      </div>
-      <div class="table-responsive">
-        <table class="table table-hover loan-report-table" id="dataTable">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Description</th>
-              <th class="text-end">Debits</th>
-              <th class="text-end">Credits</th>
-              <th class="text-end">Balance</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td colspan="4"><strong>Opening Balance</strong></td>
-              <td class="text-end"><strong>UGX {{ opening_balance|floatformat:0|intcomma }}</strong></td>
-            </tr>
-            {% for item in ledger_data %}
-              <tr>
-                <td>{{ item.transaction_date|date:'d/m/Y' }}</td>
-                <td>{{ item.description }}</td>
-                <td class="text-end">UGX {{ item.debit|floatformat:0|intcomma }}</td>
-                <td class="text-end">UGX {{ item.credit|floatformat:0|intcomma }}</td>
-                <td class="text-end fw-bold">UGX {{ item.running_balance|floatformat:0|intcomma }}</td>
-              </tr>
-            {% empty %}
-              <tr>
-                <td colspan="5" class="loan-empty-state">No transactions available for this account and period.</td>
-              </tr>
-            {% endfor %}
-          </tbody>
-          <tfoot>
-            <tr>
-              <th colspan="2">Total</th>
-              <th class="text-end">UGX {{ total_debits|floatformat:0|intcomma }}</th>
-              <th class="text-end">UGX {{ total_credits|floatformat:0|intcomma }}</th>
-              <th class="text-end">UGX {{ closing_balance|floatformat:0|intcomma }}</th>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-    </div>
-  </div>
+<link rel="stylesheet" href="{% static 'css/compact-ledger-report.css' %}">
+<main class="ledger-page">
+<header class="ledger-topbar"><div class="ledger-heading"><a href="{% url 'loans:loan_reports_dashboard' %}" class="ledger-back print-hide">&larr;</a><div><h1>Ledger report</h1>{% if selected_account %}<p>{{ selected_account.account_number }} | {{ selected_account.account_name }} | {{ start_date }} - {{ end_date }}</p>{% endif %}</div></div>{% if selected_account %}<button class="btn btn-dark btn-sm print-hide" onclick="window.print()">Print</button>{% endif %}</header>
+<form method="get" class="ledger-filter print-hide"><label class="account-field"><span>Account</span><select name="account_id" class="form-control form-control-sm" required><option value="" disabled{% if not selected_account_id %} selected{% endif %}>Select account</option>{% for account in accounts %}<option value="{{ account.id }}"{% if account.id|stringformat:'s' == selected_account_id|stringformat:'s' %} selected{% endif %}>{{ account.account_number }} | {{ account.account_name }}</option>{% endfor %}</select></label><label><span>From</span><input type="date" name="start_date" class="form-control form-control-sm" value="{{ start_date }}" required></label><label><span>To</span><input type="date" name="end_date" class="form-control form-control-sm" value="{{ end_date }}" required></label><button class="btn btn-primary btn-sm">Generate</button></form>
+{% if selected_account %}<section class="ledger-summary"><div><span>Opening</span><strong>UGX {{ opening_balance|floatformat:0|intcomma }}</strong></div><div><span>Debits</span><strong>UGX {{ total_debits|floatformat:0|intcomma }}</strong></div><div><span>Credits</span><strong>UGX {{ total_credits|floatformat:0|intcomma }}</strong></div><div class="closing"><span>Closing</span><strong>UGX {{ closing_balance|floatformat:0|intcomma }}</strong></div></section>{% endif %}
+<section class="ledger-table-card"><div class="ledger-table-head"><strong>{% if selected_account %}Entries{% else %}Select an account to generate the ledger{% endif %}</strong>{% if selected_account %}<span>{{ transaction_count|intcomma }} transactions</span>{% endif %}</div>{% if selected_account %}<div class="table-responsive"><table class="table table-sm ledger-table"><thead><tr><th>Date</th><th>Description</th><th class="text-end">Debit</th><th class="text-end">Credit</th><th class="text-end">Balance</th></tr></thead><tbody><tr class="opening-row"><td colspan="4">Opening balance</td><td class="text-end">{{ opening_balance|floatformat:0|intcomma }}</td></tr>{% for item in ledger_data %}<tr><td>{{ item.transaction_date|date:'d M Y' }}</td><td>{{ item.description|default:'-' }}</td><td class="text-end">{{ item.debit|floatformat:0|intcomma }}</td><td class="text-end">{{ item.credit|floatformat:0|intcomma }}</td><td class="text-end fw-bold">{{ item.running_balance|floatformat:0|intcomma }}</td></tr>{% empty %}<tr><td colspan="5" class="ledger-empty">No transactions for this account and period.</td></tr>{% endfor %}</tbody><tfoot><tr><th colspan="2">Totals</th><th class="text-end">{{ total_debits|floatformat:0|intcomma }}</th><th class="text-end">{{ total_credits|floatformat:0|intcomma }}</th><th class="text-end">{{ closing_balance|floatformat:0|intcomma }}</th></tr></tfoot></table></div>{% endif %}</section>
+</main>
 {% endblock %}

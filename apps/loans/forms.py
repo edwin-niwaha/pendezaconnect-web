@@ -35,29 +35,21 @@ MAX_ACCOUNT_NUMBER = 1020
 
 
 class ImportLoansForm(forms.Form):
-    excel_file = forms.FileField(
-        widget=forms.FileInput(attrs={"class": "form-control-file"})
-    )
+    excel_file = forms.FileField(widget=forms.FileInput(attrs={"class": "form-control-file"}))
 
 
 class ImportCOAForm(forms.Form):
-    excel_file = forms.FileField(
-        widget=forms.FileInput(attrs={"class": "form-control-file"})
-    )
+    excel_file = forms.FileField(widget=forms.FileInput(attrs={"class": "form-control-file"}))
 
 
 class LoanReportFilterForm(forms.Form):
     start_date = forms.DateField(
         required=False,
-        widget=forms.DateInput(
-            attrs={"class": "form-control form-control-sm", "type": "date"}
-        ),
+        widget=forms.DateInput(attrs={"class": "form-control form-control-sm", "type": "date"}),
     )
     end_date = forms.DateField(
         required=False,
-        widget=forms.DateInput(
-            attrs={"class": "form-control form-control-sm", "type": "date"}
-        ),
+        widget=forms.DateInput(attrs={"class": "form-control form-control-sm", "type": "date"}),
     )
     status = forms.ChoiceField(
         required=False,
@@ -99,13 +91,9 @@ class LoanReportFilterForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["client"].queryset = (
-            Client.objects.filter(loans__isnull=False).distinct().order_by("full_name")
-        )
+        self.fields["client"].queryset = Client.objects.filter(loans__isnull=False).distinct().order_by("full_name")
         self.fields["loan_officer"].queryset = (
-            User.objects.filter(applied_loans__isnull=False)
-            .distinct()
-            .order_by("username")
+            User.objects.filter(applied_loans__isnull=False).distinct().order_by("username")
         )
 
     def clean(self):
@@ -127,16 +115,10 @@ class ChartOfAccountsForm(forms.ModelForm):
         model = ChartOfAccounts
         fields = ["account_name", "account_type", "account_number", "description"]
         widgets = {
-            "account_name": forms.TextInput(
-                attrs={"class": "form-control", "placeholder": "Account Name"}
-            ),
+            "account_name": forms.TextInput(attrs={"class": "form-control", "placeholder": "Account Name"}),
             "account_type": forms.Select(attrs={"class": "form-control"}),
-            "account_number": forms.TextInput(
-                attrs={"class": "form-control", "placeholder": "Account Number"}
-            ),
-            "description": forms.TextInput(
-                attrs={"class": "form-control", "placeholder": "Description (optional)"}
-            ),
+            "account_number": forms.TextInput(attrs={"class": "form-control", "placeholder": "Account Number"}),
+            "description": forms.TextInput(attrs={"class": "form-control", "placeholder": "Description (optional)"}),
         }
 
     def clean_account_number(self):
@@ -173,14 +155,10 @@ class LoanApplicationForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
-        self.fields["client"].queryset = Client.objects.order_by(
-            "full_name", "reg_number"
-        )
+        self.fields["client"].queryset = Client.objects.order_by("full_name", "reg_number")
         if self.instance and self.instance.pk and self.instance.borrower_id:
             self.fields["client"].initial = self.instance.borrower_id
-        self.fields["start_date"].initial = (
-            self.fields["start_date"].initial or timezone.localdate()
-        )
+        self.fields["start_date"].initial = self.fields["start_date"].initial or timezone.localdate()
         for field_name, field in self.fields.items():
             field.widget.attrs.setdefault("class", "form-control")
             field.widget.attrs.setdefault("autocomplete", "off")
@@ -219,9 +197,7 @@ class LoanApplicationForm(forms.ModelForm):
                     "step": "0.01",
                 }
             ),
-            "start_date": forms.DateInput(
-                attrs={"class": "form-control", "type": "date"}
-            ),
+            "start_date": forms.DateInput(attrs={"class": "form-control", "type": "date"}),
             "interest_rate": forms.NumberInput(
                 attrs={
                     "class": "form-control",
@@ -330,16 +306,12 @@ class ClientSelfServiceLoanApplicationForm(forms.ModelForm):
             "loan_period_months": forms.NumberInput(
                 attrs={"class": "form-control", "placeholder": "Months", "min": "1"}
             ),
-            "start_date": forms.DateInput(
-                attrs={"class": "form-control", "type": "date"}
-            ),
+            "start_date": forms.DateInput(attrs={"class": "form-control", "type": "date"}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["start_date"].initial = (
-            self.fields["start_date"].initial or timezone.localdate()
-        )
+        self.fields["start_date"].initial = self.fields["start_date"].initial or timezone.localdate()
         for field in self.fields.values():
             field.widget.attrs.setdefault("autocomplete", "off")
 
@@ -366,17 +338,13 @@ class ClientSelfServiceLoanApplicationForm(forms.ModelForm):
         if borrower is not None:
             loan.borrower = borrower
         loan.status = "pending"
-        loan.interest_rate = getattr(
-            settings, "SELF_SERVICE_LOAN_INTEREST_RATE", Decimal("0.00")
-        )
+        loan.interest_rate = getattr(settings, "SELF_SERVICE_LOAN_INTEREST_RATE", Decimal("0.00"))
         loan.reason_for_approval = self.cleaned_data.get("application_notes") or (
             "Self-service application submitted by the client."
         )
         if user is not None:
             loan.applied_by = user
-            loan.applied_by_role = getattr(
-                getattr(user, "profile", None), "role", "guest"
-            )
+            loan.applied_by_role = getattr(getattr(user, "profile", None), "role", "guest")
             loan.created_by = user
         if commit:
             loan.save()
@@ -387,44 +355,32 @@ class LoanApplicationDocumentForm(forms.Form):
     national_id = forms.FileField(
         label="National ID",
         required=True,
-        widget=forms.ClearableFileInput(
-            attrs={"class": "form-control", "accept": ".pdf,.jpg,.jpeg,.png,.doc,.docx"}
-        ),
+        widget=forms.ClearableFileInput(attrs={"class": "form-control", "accept": ".pdf,.jpg,.jpeg,.png,.doc,.docx"}),
     )
     collateral_security = forms.FileField(
         label="Collateral / security document",
         required=True,
-        widget=forms.ClearableFileInput(
-            attrs={"class": "form-control", "accept": ".pdf,.jpg,.jpeg,.png,.doc,.docx"}
-        ),
+        widget=forms.ClearableFileInput(attrs={"class": "form-control", "accept": ".pdf,.jpg,.jpeg,.png,.doc,.docx"}),
     )
     proof_of_income = forms.FileField(
         label="Proof of income",
         required=False,
-        widget=forms.ClearableFileInput(
-            attrs={"class": "form-control", "accept": ".pdf,.jpg,.jpeg,.png,.doc,.docx"}
-        ),
+        widget=forms.ClearableFileInput(attrs={"class": "form-control", "accept": ".pdf,.jpg,.jpeg,.png,.doc,.docx"}),
     )
     guarantor_form = forms.FileField(
         label="Guarantor form",
         required=False,
-        widget=forms.ClearableFileInput(
-            attrs={"class": "form-control", "accept": ".pdf,.jpg,.jpeg,.png,.doc,.docx"}
-        ),
+        widget=forms.ClearableFileInput(attrs={"class": "form-control", "accept": ".pdf,.jpg,.jpeg,.png,.doc,.docx"}),
     )
     bank_statement = forms.FileField(
         label="Bank statement",
         required=True,
-        widget=forms.ClearableFileInput(
-            attrs={"class": "form-control", "accept": ".pdf,.jpg,.jpeg,.png,.doc,.docx"}
-        ),
+        widget=forms.ClearableFileInput(attrs={"class": "form-control", "accept": ".pdf,.jpg,.jpeg,.png,.doc,.docx"}),
     )
     other = forms.FileField(
         label="Other document",
         required=False,
-        widget=forms.ClearableFileInput(
-            attrs={"class": "form-control", "accept": ".pdf,.jpg,.jpeg,.png,.doc,.docx"}
-        ),
+        widget=forms.ClearableFileInput(attrs={"class": "form-control", "accept": ".pdf,.jpg,.jpeg,.png,.doc,.docx"}),
     )
     other_description = forms.CharField(
         label="Other document description",
@@ -453,9 +409,7 @@ class LoanApplicationDocumentForm(forms.Form):
             return upload
         extension = os.path.splitext(upload.name)[1].lstrip(".").lower()
         if extension not in LOAN_DOCUMENT_ALLOWED_EXTENSIONS:
-            raise forms.ValidationError(
-                "Upload PDF, JPG, JPEG, PNG, DOC, or DOCX files."
-            )
+            raise forms.ValidationError("Upload PDF, JPG, JPEG, PNG, DOC, or DOCX files.")
         return upload
 
     def clean_national_id(self):
@@ -593,9 +547,7 @@ class LoanApplicationUpdateForm(forms.ModelForm):
                 }
             ),
             "interest_method": forms.Select(attrs={"class": "form-control"}),
-            "start_date": forms.DateInput(
-                attrs={"class": "form-control", "type": "date"}
-            ),
+            "start_date": forms.DateInput(attrs={"class": "form-control", "type": "date"}),
             "loan_period_months": forms.NumberInput(
                 attrs={
                     "class": "form-control",
@@ -691,13 +643,10 @@ class LoanDisbursementForm(forms.ModelForm):
             # Disbursement date must not be before the loan application date
             if disbursement_date < loan.start_date:
                 raise forms.ValidationError(
-                    f"Disbursement date cannot be before the loan application date "
-                    f"({loan.start_date})."
+                    f"Disbursement date cannot be before the loan application date " f"({loan.start_date})."
                 )
             if disbursement_date > timezone.localdate():
-                raise forms.ValidationError(
-                    "Disbursement date cannot be in the future."
-                )
+                raise forms.ValidationError("Disbursement date cannot be in the future.")
         return cleaned_data
 
     def save(self, commit=True):
@@ -817,9 +766,7 @@ def active_loans_with_balance_queryset():
             remaining_interest=Coalesce(F("total_interest"), zero) - F("paid_interest"),
         )
         .filter(
-            Q(remaining_principal__gt=0)
-            | Q(remaining_interest__gt=0)
-            | Q(remaining_penalty__gt=0),
+            Q(remaining_principal__gt=0) | Q(remaining_interest__gt=0) | Q(remaining_penalty__gt=0),
             status__in=["disbursed", "overdue"],
         )
         .distinct()
@@ -900,18 +847,14 @@ class LoanRepaymentForm(forms.ModelForm):
             "account",
         ]
         widgets = {
-            "repayment_date": forms.DateInput(
-                attrs={"type": "date", "class": "form-control"}
-            ),
+            "repayment_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
         }
 
     def __init__(self, *args, **kwargs):
         loan_queryset = kwargs.pop("loan_queryset", None)
         super().__init__(*args, **kwargs)
         self.fields["loan"].queryset = (
-            loan_queryset
-            if loan_queryset is not None
-            else active_loans_with_balance_queryset()
+            loan_queryset if loan_queryset is not None else active_loans_with_balance_queryset()
         )
 
     def clean(self):
@@ -927,11 +870,7 @@ class LoanRepaymentForm(forms.ModelForm):
         repayment_date = cleaned_data.get("repayment_date")
         if repayment_date and repayment_date > timezone.localdate():
             self.add_error("repayment_date", "Repayment date cannot be in the future.")
-        if (
-            repayment_date
-            and loan.disbursement_date
-            and repayment_date < loan.disbursement_date
-        ):
+        if repayment_date and loan.disbursement_date and repayment_date < loan.disbursement_date:
             self.add_error(
                 "repayment_date",
                 "Repayment date cannot be before the loan disbursement date.",
@@ -949,20 +888,17 @@ class LoanRepaymentForm(forms.ModelForm):
         if principal_payment > balances["principal_balance"]:
             self.add_error(
                 "principal_payment",
-                f"Cannot exceed remaining principal balance of "
-                f"{balances['principal_balance']:,.2f}.",
+                f"Cannot exceed remaining principal balance of " f"{balances['principal_balance']:,.2f}.",
             )
         if interest_payment > balances["interest_balance"]:
             self.add_error(
                 "interest_payment",
-                f"Cannot exceed remaining interest balance of "
-                f"{balances['interest_balance']:,.2f}.",
+                f"Cannot exceed remaining interest balance of " f"{balances['interest_balance']:,.2f}.",
             )
         if penalty_payment > balances["penalty_balance"]:
             self.add_error(
                 "penalty_payment",
-                f"Cannot exceed remaining penalty balance of "
-                f"{balances['penalty_balance']:,.2f}.",
+                f"Cannot exceed remaining penalty balance of " f"{balances['penalty_balance']:,.2f}.",
             )
 
         return cleaned_data
@@ -1022,21 +958,14 @@ class LoanPenaltyForm(forms.ModelForm):
 
         # Loan dropdown — loans with outstanding balances
         self.fields["loan"].queryset = (
-            loan_queryset
-            if loan_queryset is not None
-            else active_loans_with_balance_queryset()
+            loan_queryset if loan_queryset is not None else active_loans_with_balance_queryset()
         )
 
         # Pre-select the penalty receivable account (1071) if it exists
         try:
-            self.fields["account"].initial = ChartOfAccounts.objects.get(
-                account_number="1071"
-            )
+            self.fields["account"].initial = ChartOfAccounts.objects.get(account_number="1071")
         except ChartOfAccounts.DoesNotExist:
-            logger.warning(
-                "Penalty account 1071 not found — "
-                "please create it in Chart of Accounts."
-            )
+            logger.warning("Penalty account 1071 not found — " "please create it in Chart of Accounts.")
 
         if user:
             self.instance.created_by = user
@@ -1052,13 +981,6 @@ class LoanPenaltyForm(forms.ModelForm):
         if penalty_date and penalty_date > timezone.now().date():
             raise forms.ValidationError("Penalty date cannot be in the future.")
         loan = self.cleaned_data.get("loan")
-        if (
-            penalty_date
-            and loan
-            and loan.disbursement_date
-            and penalty_date < loan.disbursement_date
-        ):
-            raise forms.ValidationError(
-                "Penalty date cannot be before the loan disbursement date."
-            )
+        if penalty_date and loan and loan.disbursement_date and penalty_date < loan.disbursement_date:
+            raise forms.ValidationError("Penalty date cannot be before the loan disbursement date.")
         return penalty_date

@@ -16,9 +16,7 @@ def savings_notifications_context(request):
             "pending_withdrawal_count": 0,
         }
 
-    pending_withdrawals = SavingsTransaction.objects.select_related(
-        "account", "account__client"
-    ).filter(
+    pending_withdrawals = SavingsTransaction.objects.select_related("account", "account__client").filter(
         status="pending",
         transaction_type="withdrawal",
     )

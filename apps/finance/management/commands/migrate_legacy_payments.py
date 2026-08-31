@@ -125,9 +125,7 @@ class Command(BaseCommand):
                 old.sponsor.is_staff_sponsor = True
                 old.sponsor.save(update_fields=["is_staff_sponsor", "updated_at"])
 
-        for old in DonorPayment.objects.select_related("donor").iterator(
-            chunk_size=batch_size
-        ):
+        for old in DonorPayment.objects.select_related("donor").iterator(chunk_size=batch_size):
             sponsor, created_sponsor = self.get_or_create_sponsor_from_donor(old.donor)
             if created_sponsor:
                 sponsor_created += 1
@@ -149,9 +147,7 @@ class Command(BaseCommand):
 
         if dry_run:
             transaction.set_rollback(True)
-            self.stdout.write(
-                self.style.WARNING("Dry run complete; no rows were saved.")
-            )
+            self.stdout.write(self.style.WARNING("Dry run complete; no rows were saved."))
         else:
             self.stdout.write(self.style.SUCCESS("Legacy payment migration complete."))
         self.stdout.write(f"Child payments copied: {child_created}")

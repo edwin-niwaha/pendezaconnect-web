@@ -8,8 +8,8 @@ from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from api.v1.serializers import (
     AvatarUploadSerializer,
@@ -18,8 +18,8 @@ from api.v1.serializers import (
     UserProfileSerializer,
     UserProfileUpdateSerializer,
 )
-from apps.users.tasks import queue_user_notification
 from api.v1.throttles import LoginThrottle, PasswordResetThrottle
+from apps.users.tasks import queue_user_notification
 
 logger = logging.getLogger(__name__)
 
@@ -82,9 +82,7 @@ class AuthViewSet(viewsets.ViewSet):
         url_path="profile",
     )
     def profile(self, request):
-        serializer = UserProfileUpdateSerializer(
-            request.user, data=request.data, partial=True
-        )
+        serializer = UserProfileUpdateSerializer(request.user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         return Response(UserProfileSerializer(user, context={"request": request}).data)
@@ -97,9 +95,7 @@ class AuthViewSet(viewsets.ViewSet):
         url_path="avatar",
     )
     def avatar(self, request):
-        serializer = AvatarUploadSerializer(
-            data=request.data, context={"request": request}
-        )
+        serializer = AvatarUploadSerializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         return Response(UserProfileSerializer(user, context={"request": request}).data)
@@ -129,9 +125,7 @@ class AuthViewSet(viewsets.ViewSet):
         url_path="password/change",
     )
     def change_password(self, request):
-        serializer = ChangePasswordSerializer(
-            data=request.data, context={"request": request}
-        )
+        serializer = ChangePasswordSerializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         update_session_auth_hash(request, user)
@@ -146,9 +140,7 @@ class AuthViewSet(viewsets.ViewSet):
                 {"detail": "Enter the email address connected to your account."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        if request.user.is_authenticated and not User.objects.filter(
-            email__iexact=email, is_active=True
-        ).exists():
+        if request.user.is_authenticated and not User.objects.filter(email__iexact=email, is_active=True).exists():
             return Response(
                 {"detail": "No active account was found with that email address."},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -176,10 +168,5 @@ class AuthViewSet(viewsets.ViewSet):
                     status=status.HTTP_503_SERVICE_UNAVAILABLE,
                 )
         return Response(
-            {
-                "detail": (
-                    "If an account exists with that email address, password reset "
-                    "instructions have been sent."
-                )
-            }
+            {"detail": ("If an account exists with that email address, password reset " "instructions have been sent.")}
         )

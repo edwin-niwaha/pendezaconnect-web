@@ -15,9 +15,7 @@ def loan_dashboard_context(request):
         "ed",
     }
     pending_applications = (
-        Loan.objects.select_related("borrower")
-        .filter(status="pending")
-        .order_by("-created_at")
+        Loan.objects.select_related("borrower").filter(status="pending").order_by("-created_at")
         if can_review_loans
         else Loan.objects.none()
     )

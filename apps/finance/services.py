@@ -51,9 +51,7 @@ def get_active_report_sponsors():
 
 
 def get_departed_report_sponsors():
-    return (
-        Sponsor.objects.departed_real_supporters().with_report_related().order_by("id")
-    )
+    return Sponsor.objects.departed_real_supporters().with_report_related().order_by("id")
 
 
 def get_active_sponsors_count():
@@ -65,9 +63,7 @@ def get_departed_sponsors_count():
 
 
 def get_real_support_payments():
-    return (
-        Payment.objects.real_support_payments().with_related().order_by("-payment_date")
-    )
+    return Payment.objects.real_support_payments().with_related().order_by("-payment_date")
 
 
 def get_one_time_only_donors():
@@ -83,17 +79,11 @@ def get_staff_payment_sponsors():
 
 
 def get_general_payment_sponsors():
-    return (
-        Sponsor.objects.active()
-        .filter(Q(is_family_supporter=True) | Q(is_general_donor=True))
-        .order_by("id")
-    )
+    return Sponsor.objects.active().filter(Q(is_family_supporter=True) | Q(is_general_donor=True)).order_by("id")
 
 
 def get_or_create_program(code):
-    label = dict(SupportProgram.PROGRAM_CHOICES).get(
-        code, code.replace("_", " ").title()
-    )
+    label = dict(SupportProgram.PROGRAM_CHOICES).get(code, code.replace("_", " ").title())
     program, _ = SupportProgram.objects.get_or_create(
         code=code,
         defaults={"name": label, "is_active": True},
@@ -232,17 +222,9 @@ def get_sponsor_portal_payment_summary(sponsor):
 
     return {
         "has_unified_payments": payments.exists(),
-        "total_payment_amount": _sum_amount(payments)
-        + legacy_child_total
-        + legacy_staff_total,
-        "real_support_total": (
-            _sum_amount(payments.real_support_payments())
-            + legacy_child_total
-            + legacy_staff_total
-        ),
-        "other_payment_total": _sum_amount(
-            payments.filter(program__code__in=other_support_codes)
-        ),
+        "total_payment_amount": _sum_amount(payments) + legacy_child_total + legacy_staff_total,
+        "real_support_total": (_sum_amount(payments.real_support_payments()) + legacy_child_total + legacy_staff_total),
+        "other_payment_total": _sum_amount(payments.filter(program__code__in=other_support_codes)),
         "one_time_payment_total": _sum_amount(payments.one_time_donations()),
         "payment_categories": payment_categories,
         "program_payment_totals": payment_categories,
@@ -380,10 +362,7 @@ def _legacy_portal_payment_categories(child_total):
 
 
 def _empty_portal_payment_categories():
-    return [
-        {**category, "amount": Decimal("0"), "has_payments": False}
-        for category in PORTAL_PAYMENT_CATEGORIES
-    ]
+    return [{**category, "amount": Decimal("0"), "has_payments": False} for category in PORTAL_PAYMENT_CATEGORIES]
 
 
 def _unsynced_legacy_child_payments(sponsor):
@@ -393,9 +372,7 @@ def _unsynced_legacy_child_payments(sponsor):
         source_id__isnull=False,
     ).values("source_id")
     return (
-        ChildPayments.objects.select_related("child")
-        .filter(sponsor=sponsor, is_valid=True)
-        .exclude(id__in=synced_ids)
+        ChildPayments.objects.select_related("child").filter(sponsor=sponsor, is_valid=True).exclude(id__in=synced_ids)
     )
 
 
@@ -406,9 +383,7 @@ def _unsynced_legacy_staff_payments(sponsor):
         source_id__isnull=False,
     ).values("source_id")
     return (
-        StaffPayments.objects.select_related("staff")
-        .filter(sponsor=sponsor, is_valid=True)
-        .exclude(id__in=synced_ids)
+        StaffPayments.objects.select_related("staff").filter(sponsor=sponsor, is_valid=True).exclude(id__in=synced_ids)
     )
 
 

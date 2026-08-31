@@ -83,9 +83,7 @@ class SavingsModuleTests(TestCase):
         )
 
         self.assertRedirects(response, reverse("client_savings_dashboard"))
-        self.assertFalse(
-            SavingsTransaction.objects.filter(reference="WD-OVER").exists()
-        )
+        self.assertFalse(SavingsTransaction.objects.filter(reference="WD-OVER").exists())
 
     def test_client_can_submit_pending_savings_request(self):
         self.client.force_login(self.user)
@@ -164,18 +162,10 @@ class SavingsModuleTests(TestCase):
             reverse("client_savings_deposit_waiting") + "?ref=deposit-ref-123",
             fetch_redirect_response=False,
         )
-        mock_request_to_pay.assert_called_once_with(
-            "access-token", "sub-key", "256771234567", 25000, "deposit-ref-123"
-        )
-        self.assertFalse(
-            SavingsTransaction.objects.filter(reference="deposit-ref-123").exists()
-        )
-        self.assertFalse(
-            SavingsTransaction.objects.filter(reference="deposit-ref-123-FEE").exists()
-        )
-        pending_deposit = self.client.session["pending_mobile_money_savings_deposits"][
-            "deposit-ref-123"
-        ]
+        mock_request_to_pay.assert_called_once_with("access-token", "sub-key", "256771234567", 25000, "deposit-ref-123")
+        self.assertFalse(SavingsTransaction.objects.filter(reference="deposit-ref-123").exists())
+        self.assertFalse(SavingsTransaction.objects.filter(reference="deposit-ref-123-FEE").exists())
+        pending_deposit = self.client.session["pending_mobile_money_savings_deposits"]["deposit-ref-123"]
         self.assertEqual(pending_deposit["amount"], "25000.00")
         self.assertEqual(pending_deposit["fee_amount"], "500.00")
 
@@ -209,9 +199,7 @@ class SavingsModuleTests(TestCase):
         }
         session.save()
 
-        response = self.client.get(
-            reverse("client_savings_deposit_status", args=["deposit-ref-456"])
-        )
+        response = self.client.get(reverse("client_savings_deposit_status", args=["deposit-ref-456"]))
 
         self.assertEqual(response.json()["status"], "SUCCESSFUL")
         deposit = SavingsTransaction.objects.get(reference="deposit-ref-456")
@@ -233,9 +221,7 @@ class SavingsModuleTests(TestCase):
 
     @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
     def test_client_withdrawal_request_notifies_finance_team(self):
-        hof = User.objects.create_user(
-            username="hof", email="hof@example.com", password="pass12345"
-        )
+        hof = User.objects.create_user(username="hof", email="hof@example.com", password="pass12345")
         accountant = User.objects.create_user(
             username="accountant",
             email="accountant@example.com",
@@ -272,9 +258,7 @@ class SavingsModuleTests(TestCase):
         self.assertEqual(request_txn.transaction_type, "withdrawal")
         self.assertEqual(request_txn.status, "pending")
         self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(
-            set(mail.outbox[0].to), {"hof@example.com", "accountant@example.com"}
-        )
+        self.assertEqual(set(mail.outbox[0].to), {"hof@example.com", "accountant@example.com"})
 
     def test_staff_can_approve_client_savings_request(self):
         request_txn = SavingsTransaction.objects.create(
@@ -286,13 +270,9 @@ class SavingsModuleTests(TestCase):
         )
         self.client.force_login(self.staff)
 
-        response = self.client.post(
-            reverse("savings_transaction_approve", args=[request_txn.id])
-        )
+        response = self.client.post(reverse("savings_transaction_approve", args=[request_txn.id]))
 
-        self.assertRedirects(
-            response, reverse("savings_account_detail", args=[self.account.id])
-        )
+        self.assertRedirects(response, reverse("savings_account_detail", args=[self.account.id]))
         request_txn.refresh_from_db()
         self.assertEqual(request_txn.status, "approved")
         self.assertEqual(request_txn.approved_by, self.staff)
@@ -300,13 +280,9 @@ class SavingsModuleTests(TestCase):
 
     def test_staff_and_client_savings_pages_render(self):
         self.client.force_login(self.staff)
+        self.assertEqual(self.client.get(reverse("savings_account_list")).status_code, 200)
         self.assertEqual(
-            self.client.get(reverse("savings_account_list")).status_code, 200
-        )
-        self.assertEqual(
-            self.client.get(
-                reverse("savings_account_detail", args=[self.account.id])
-            ).status_code,
+            self.client.get(reverse("savings_account_detail", args=[self.account.id])).status_code,
             200,
         )
 

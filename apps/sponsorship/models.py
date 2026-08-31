@@ -29,12 +29,8 @@ SPONSORSHIP_TYPE_CHOICES = (
 
 # =================================== CHILD SPONSORSHIP MODEL ===================================
 class ChildSponsorship(models.Model):
-    sponsor = models.ForeignKey(
-        Sponsor, on_delete=models.CASCADE, related_name="sponsored_children"
-    )
-    child = models.ForeignKey(
-        Child, on_delete=models.CASCADE, related_name="sponsorships_received"
-    )
+    sponsor = models.ForeignKey(Sponsor, on_delete=models.CASCADE, related_name="sponsored_children")
+    child = models.ForeignKey(Child, on_delete=models.CASCADE, related_name="sponsorships_received")
     sponsorship_type = models.CharField(
         max_length=20,
         choices=SPONSORSHIP_TYPE_CHOICES,
@@ -65,9 +61,7 @@ class StaffSponsorship(models.Model):
         verbose_name="Sponsor",
         related_name="sponsored_staff",
     )
-    staff = models.ForeignKey(
-        Staff, on_delete=models.CASCADE, related_name="sponsorships_received"
-    )
+    staff = models.ForeignKey(Staff, on_delete=models.CASCADE, related_name="sponsorships_received")
     sponsorship_type = models.CharField(
         max_length=20,
         choices=SPONSORSHIP_TYPE_CHOICES,

@@ -16,9 +16,7 @@ class CategoryForm(forms.ModelForm):
         model = Category
         fields = ["name", "description"]
         widgets = {
-            "name": forms.TextInput(
-                attrs={"class": "form-control", "placeholder": "Enter category name"}
-            ),
+            "name": forms.TextInput(attrs={"class": "form-control", "placeholder": "Enter category name"}),
             "description": forms.TextInput(
                 attrs={
                     "class": "form-control",
@@ -46,9 +44,7 @@ class ProductForm(forms.ModelForm):
             "supplier",
         ]
         widgets = {
-            "name": forms.TextInput(
-                attrs={"class": "form-control", "placeholder": "Enter product name"}
-            ),
+            "name": forms.TextInput(attrs={"class": "form-control", "placeholder": "Enter product name"}),
             "description": forms.Textarea(
                 attrs={
                     "class": "form-control",
@@ -89,31 +85,19 @@ class ProductVariantForm(forms.ModelForm):
         ]
         widgets = {
             "product": forms.Select(attrs={"class": "form-control"}),
-            "name": forms.TextInput(
-                attrs={"class": "form-control", "placeholder": "Example: Blue / Large"}
-            ),
-            "sku": forms.TextInput(
-                attrs={"class": "form-control", "placeholder": "Unique variant SKU"}
-            ),
-            "barcode": forms.TextInput(
-                attrs={"class": "form-control", "placeholder": "Optional barcode"}
-            ),
+            "name": forms.TextInput(attrs={"class": "form-control", "placeholder": "Example: Blue / Large"}),
+            "sku": forms.TextInput(attrs={"class": "form-control", "placeholder": "Unique variant SKU"}),
+            "barcode": forms.TextInput(attrs={"class": "form-control", "placeholder": "Optional barcode"}),
             "option_value": forms.TextInput(
                 attrs={
                     "class": "form-control",
                     "placeholder": "Size, color, pack, etc.",
                 }
             ),
-            "cost": forms.NumberInput(
-                attrs={"class": "form-control", "step": "0.01", "min": "0"}
-            ),
-            "price": forms.NumberInput(
-                attrs={"class": "form-control", "step": "0.01", "min": "0"}
-            ),
+            "cost": forms.NumberInput(attrs={"class": "form-control", "step": "0.01", "min": "0"}),
+            "price": forms.NumberInput(attrs={"class": "form-control", "step": "0.01", "min": "0"}),
             "quantity": forms.NumberInput(attrs={"class": "form-control", "min": "0"}),
-            "low_stock_threshold": forms.NumberInput(
-                attrs={"class": "form-control", "min": "0"}
-            ),
+            "low_stock_threshold": forms.NumberInput(attrs={"class": "form-control", "min": "0"}),
             "status": forms.Select(attrs={"class": "form-control"}),
             "is_default": forms.CheckboxInput(attrs={"class": "form-check-input"}),
         }
@@ -156,9 +140,7 @@ class InventoryForm(forms.ModelForm):
         fields = ["product", "quantity", "low_stock_threshold"]
         widgets = {
             "product": forms.Select(attrs={"class": "form-control"}),
-            "quantity": forms.NumberInput(
-                attrs={"class": "form-control", "placeholder": "Enter stock quantity"}
-            ),
+            "quantity": forms.NumberInput(attrs={"class": "form-control", "placeholder": "Enter stock quantity"}),
             "low_stock_threshold": forms.NumberInput(
                 attrs={
                     "class": "form-control",
@@ -181,9 +163,7 @@ class StockAdjustmentForm(forms.Form):
         label="Base Product",
     )
     variant = forms.ModelChoiceField(
-        queryset=ProductVariant.objects.select_related("product")
-        .all()
-        .order_by("product__name", "name"),
+        queryset=ProductVariant.objects.select_related("product").all().order_by("product__name", "name"),
         required=False,
         widget=forms.Select(attrs={"class": "form-control"}),
         label="Product Variant",

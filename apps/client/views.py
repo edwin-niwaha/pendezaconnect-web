@@ -26,9 +26,9 @@ from .models import Client, ClientProfilePicture, SevenHillsRegistration
 @login_required
 @admin_or_manager_or_staff_required
 def client_list(request):
-    base_queryset = Client.objects.prefetch_related(
-        "loans__documents", "profile_pictures"
-    ).order_by(F("reg_number").asc(nulls_last=True), "id")
+    base_queryset = Client.objects.prefetch_related("loans__documents", "profile_pictures").order_by(
+        F("reg_number").asc(nulls_last=True), "id"
+    )
     queryset = base_queryset
 
     search_query = request.GET.get("search", "").strip()
@@ -87,9 +87,7 @@ def upload_client_photo(request):
         uploaded_picture = form.cleaned_data.get("picture")
 
         if remove_requested and not uploaded_picture:
-            ClientProfilePicture.objects.filter(client=client, is_current=True).update(
-                is_current=False
-            )
+            ClientProfilePicture.objects.filter(client=client, is_current=True).update(is_current=False)
             client.picture = None
             client.save(update_fields=["picture", "updated_at"])
             messages.success(
@@ -100,9 +98,7 @@ def upload_client_photo(request):
             return redirect("upload_client_photo")
 
         if uploaded_picture:
-            ClientProfilePicture.objects.filter(client=client, is_current=True).update(
-                is_current=False
-            )
+            ClientProfilePicture.objects.filter(client=client, is_current=True).update(is_current=False)
             photo = ClientProfilePicture.objects.create(
                 client=client,
                 picture=uploaded_picture,
@@ -178,17 +174,13 @@ def register_client(request):
         if form.is_valid():
             client = form.save()
             if client.picture:
-                ClientProfilePicture.objects.filter(client=client, is_current=True).update(
-                    is_current=False
-                )
+                ClientProfilePicture.objects.filter(client=client, is_current=True).update(is_current=False)
                 ClientProfilePicture.objects.create(
                     client=client,
                     picture=client.picture,
                     is_current=True,
                 )
-            messages.success(
-                request, "Record saved successfully!", extra_tags="bg-success"
-            )
+            messages.success(request, "Record saved successfully!", extra_tags="bg-success")
             return redirect("register_client")
         else:
             # Display an error message if the form is not valid
@@ -223,31 +215,23 @@ def update_client(request, pk, template_name="client/client_update.html"):
         form = ClientForm(request.POST, request.FILES, instance=client_record)
         if form.is_valid():
             uploaded_picture = request.FILES.get("picture")
-            remove_picture = (
-                request.POST.get("remove_picture") == "1" and not uploaded_picture
-            )
+            remove_picture = request.POST.get("remove_picture") == "1" and not uploaded_picture
             client = form.save(commit=False)
             if remove_picture:
                 client.picture = None
             client.save()
 
             if uploaded_picture and client.picture:
-                ClientProfilePicture.objects.filter(client=client, is_current=True).update(
-                    is_current=False
-                )
+                ClientProfilePicture.objects.filter(client=client, is_current=True).update(is_current=False)
                 ClientProfilePicture.objects.create(
                     client=client,
                     picture=client.picture,
                     is_current=True,
                 )
             elif remove_picture:
-                ClientProfilePicture.objects.filter(client=client, is_current=True).update(
-                    is_current=False
-                )
+                ClientProfilePicture.objects.filter(client=client, is_current=True).update(is_current=False)
 
-            messages.success(
-                request, "Client record updated successfully!", extra_tags="bg-success"
-            )
+            messages.success(request, "Client record updated successfully!", extra_tags="bg-success")
             return redirect("client_list")
     else:
         # Pre-populate the form with existing data
@@ -296,14 +280,10 @@ def import_client_data(request):
                             extra_tags="bg-success",
                         )
                 except Exception as e:
-                    messages.error(
-                        request, f"Error importing data: {e}", extra_tags="bg-danger"
-                    )
+                    messages.error(request, f"Error importing data: {e}", extra_tags="bg-danger")
                 return redirect("client_list")
             else:
-                messages.error(
-                    request, "Please upload a valid Excel file.", extra_tags="bg-danger"
-                )
+                messages.error(request, "Please upload a valid Excel file.", extra_tags="bg-danger")
     else:
         form = ImportClientsForm()
     return render(
@@ -361,9 +341,7 @@ def seven_hills_registration_view(request):
 
         if form.is_valid():
             form.save()
-            messages.success(
-                request, "Record saved successfully!", extra_tags="bg-success"
-            )
+            messages.success(request, "Record saved successfully!", extra_tags="bg-success")
             return redirect("seven_hills_registration")
         else:
             # Display error messages if the form is invalid
@@ -439,9 +417,7 @@ def update_seven_hills(request, pk, template_name="client/seven_hills_update.htm
         if form.is_valid():
             form.save()
 
-            messages.success(
-                request, "Record updated successfully!", extra_tags="bg-success"
-            )
+            messages.success(request, "Record updated successfully!", extra_tags="bg-success")
             return redirect("seven_hills_list")
     else:
         # Pre-populate the form with existing data

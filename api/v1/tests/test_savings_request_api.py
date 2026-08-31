@@ -71,6 +71,4 @@ class SavingsRequestApiTests(APITestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(
-            SavingsTransaction.objects.filter(transaction_type="deposit").count(), 1
-        )
+        self.assertEqual(SavingsTransaction.objects.filter(transaction_type="deposit").count(), 1)

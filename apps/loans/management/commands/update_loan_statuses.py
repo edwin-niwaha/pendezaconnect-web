@@ -42,9 +42,7 @@ class Command(BaseCommand):
         if loans_to_save:
             self._save_batch(loans_to_save)
 
-        self.stdout.write(
-            self.style.SUCCESS(f"Done! Checked {total} loans → {updated} updated.")
-        )
+        self.stdout.write(self.style.SUCCESS(f"Done! Checked {total} loans → {updated} updated."))
 
     @staticmethod
     @transaction.atomic

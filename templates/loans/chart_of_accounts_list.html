@@ -1,195 +1,14 @@
 {% extends 'sms/base_rpts.html' %}
-{% load crispy_forms_tags %}
+{% load crispy_forms_tags static %}
 
 {% block content %}
-<style>
-  .coa-page {
-    max-width: 1320px;
-    margin: 0 auto;
-    padding: 28px 16px 44px;
-  }
-
-  .coa-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
-    margin-bottom: 18px;
-  }
-
-  .coa-title {
-    margin: 0;
-    color: #1f2937;
-    font-size: 1.55rem;
-    font-weight: 800;
-  }
-
-  .coa-subtitle {
-    margin: 4px 0 0;
-    color: #6b7280;
-    font-size: .9rem;
-  }
-
-  .coa-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    justify-content: flex-end;
-  }
-
-  .coa-toolbar {
-    display: grid;
-    grid-template-columns: minmax(220px, 1fr) auto;
-    gap: 12px;
-    align-items: center;
-    margin-bottom: 18px;
-  }
-
-  .coa-search {
-    position: relative;
-  }
-
-  .coa-search i {
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #6b7280;
-  }
-
-  .coa-search input {
-    padding-left: 38px;
-    min-height: 42px;
-  }
-
-  .coa-summary {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
-    gap: 10px;
-    margin-bottom: 18px;
-  }
-
-  .coa-summary-item {
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    background: #fff;
-    padding: 12px 14px;
-  }
-
-  .coa-summary-item span {
-    display: block;
-    color: #6b7280;
-    font-size: .76rem;
-    font-weight: 700;
-    text-transform: uppercase;
-  }
-
-  .coa-summary-item strong {
-    display: block;
-    color: #111827;
-    font-size: 1.35rem;
-    line-height: 1.2;
-  }
-
-  .coa-section {
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    background: #fff;
-    overflow: hidden;
-    margin-bottom: 14px;
-  }
-
-  .coa-section-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 12px 16px;
-    border-bottom: 1px solid #e5e7eb;
-    background: #f8fafc;
-  }
-
-  .coa-section-title {
-    margin: 0;
-    color: #111827;
-    font-size: .98rem;
-    font-weight: 800;
-  }
-
-  .coa-count {
-    border-radius: 999px;
-    background: #e0f2fe;
-    color: #075985;
-    padding: 4px 10px;
-    font-size: .75rem;
-    font-weight: 800;
-  }
-
-  .coa-table {
-    margin-bottom: 0;
-  }
-
-  .coa-table thead th {
-    border-top: 0;
-    color: #4b5563;
-    font-size: .72rem;
-    text-transform: uppercase;
-    letter-spacing: 0;
-    white-space: nowrap;
-  }
-
-  .coa-number {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 70px;
-    border-radius: 6px;
-    background: #eef2ff;
-    color: #3730a3;
-    padding: 4px 8px;
-    font-weight: 800;
-  }
-
-  .coa-account-name {
-    color: #111827;
-    font-weight: 700;
-  }
-
-  .coa-description {
-    color: #4b5563;
-  }
-
-  .coa-empty {
-    border: 1px dashed #cbd5e1;
-    border-radius: 8px;
-    background: #f8fafc;
-    color: #64748b;
-    padding: 24px;
-    text-align: center;
-  }
-
-  @media (max-width: 768px) {
-    .coa-header,
-    .coa-toolbar {
-      display: block;
-    }
-
-    .coa-actions {
-      justify-content: flex-start;
-      margin-top: 12px;
-    }
-
-    .coa-toolbar .btn {
-      margin-top: 10px;
-    }
-  }
-</style>
+<link rel="stylesheet" href="{% static 'css/compact-chart-accounts.css' %}">
 
 <div class="coa-page">
   <div class="coa-header print-hide">
     <div>
       <h1 class="coa-title">{{ table_title|default:'Chart of Accounts' }}</h1>
-      <p class="coa-subtitle">Manage ledger accounts grouped by accounting class.</p>
+
     </div>
     <div class="coa-actions">
       <a href="{% url 'loans:add_chart_of_account' %}" class="btn btn-dark btn-sm">
@@ -235,11 +54,11 @@
             <table class="table table-hover table-sm align-middle coa-table">
               <thead>
                 <tr>
-                  <th style="width: 16%;">Number</th>
-                  <th style="width: 28%;">Account Name</th>
-                  <th style="width: 14%;">Type</th>
+                  <th>Number</th>
+                  <th>Account Name</th>
+                  <th>Type</th>
                   <th>Description</th>
-                  <th class="text-end print-hide" style="width: 12%;">Actions</th>
+                  <th class="text-end print-hide">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -296,29 +115,6 @@
   </div>
 </div>
 
-<script>
-  (function () {
-    const search = document.getElementById('coaSearch');
-    const empty = document.getElementById('coaNoResults');
-    if (!search) return;
 
-    search.addEventListener('input', function () {
-      const query = this.value.trim().toLowerCase();
-      let visibleRows = 0;
-
-      document.querySelectorAll('[data-coa-section]').forEach((section) => {
-        let sectionRows = 0;
-        section.querySelectorAll('[data-coa-row]').forEach((row) => {
-          const show = !query || row.textContent.toLowerCase().includes(query);
-          row.classList.toggle('d-none', !show);
-          if (show) sectionRows += 1;
-        });
-        section.classList.toggle('d-none', sectionRows === 0);
-        visibleRows += sectionRows;
-      });
-
-      if (empty) empty.classList.toggle('d-none', visibleRows > 0);
-    });
-  })();
-</script>
+<script defer src="{% static 'js/compact-chart-accounts.js' %}"></script>
 {% endblock %}

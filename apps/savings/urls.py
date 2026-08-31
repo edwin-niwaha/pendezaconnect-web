@@ -10,9 +10,7 @@ urlpatterns = [
         name="financial_services_dashboard",
     ),
     path("savings/", views.savings_account_list, name="savings_account_list"),
-    path(
-        "savings/create/", views.savings_account_create, name="savings_account_create"
-    ),
+    path("savings/create/", views.savings_account_create, name="savings_account_create"),
     path(
         "savings/<int:account_id>/",
         views.savings_account_detail,

@@ -78,9 +78,7 @@ class Supplier(models.Model):
             # Check phone number length
             phone_length = len(self.phone)
             if phone_length < 8 or phone_length > 15:
-                raise ValidationError(
-                    "Phone number must be between 8 and 15 characters long."
-                )
+                raise ValidationError("Phone number must be between 8 and 15 characters long.")
 
             # Validate phone number format
             try:

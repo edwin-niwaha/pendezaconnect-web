@@ -55,9 +55,7 @@ class PublicMobileMoneyApiTests(APITestCase):
             status="SUCCESSFUL",
         )
 
-        response = self.client.get(
-            f"/api/v1/payments/mobile-money/{transaction.reference_id}/status/"
-        )
+        response = self.client.get(f"/api/v1/payments/mobile-money/{transaction.reference_id}/status/")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["status"], "SUCCESSFUL")

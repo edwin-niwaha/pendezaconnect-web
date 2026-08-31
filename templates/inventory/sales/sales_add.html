@@ -16,6 +16,11 @@
     <!-- Select2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    <title>New sale | Pendeza Connect</title>
+    <style>
+      :root{--sale-green:#13745d;--sale-dark:#123b36;--sale-ink:#172b3f;--sale-muted:#667085;--sale-line:#e3e9ef}body{background:#f4f7f6;color:var(--sale-ink);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}.sale-page{margin:0 auto;max-width:1480px;padding:8px 18px 34px}.sale-header{align-items:center;background:linear-gradient(125deg,var(--sale-dark),#21836c);border-radius:18px;box-shadow:0 16px 36px rgba(18,59,54,.17);display:flex;gap:16px;justify-content:space-between;margin-bottom:16px;overflow:hidden;padding:22px 24px;position:relative}.sale-header:after{border:22px solid rgba(255,255,255,.06);border-radius:50%;content:"";height:170px;position:absolute;right:-35px;top:-74px;width:170px}.sale-heading,.sale-actions{position:relative;z-index:1}.sale-eyebrow{color:rgba(255,255,255,.68);font-size:.7rem;font-weight:800;letter-spacing:.09em;margin:0 0 3px;text-transform:uppercase}.sale-header h1{color:#fff;font-size:clamp(1.4rem,2vw,1.8rem);font-weight:900;letter-spacing:-.02em;margin:0}.sale-header p{color:rgba(255,255,255,.76);font-size:.84rem;margin:4px 0 0}.sale-actions{display:flex;gap:8px}.sale-actions .btn{align-items:center;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.4);border-radius:9px;color:#fff;display:inline-flex;font-weight:800;gap:6px;min-height:38px}.checkout-grid{align-items:start;display:grid;gap:16px;grid-template-columns:minmax(0,1fr) 360px}.checkout-card{background:#fff;border:1px solid var(--sale-line);border-radius:14px;box-shadow:0 12px 30px rgba(31,50,70,.07);overflow:hidden}.checkout-card-head{align-items:center;border-bottom:1px solid #edf1f5;display:flex;gap:12px;justify-content:space-between;padding:15px 17px}.checkout-card-head h2{font-size:1rem;font-weight:900;margin:0}.checkout-card-head span{background:#e9f6f1;border-radius:999px;color:var(--sale-green);font-size:.73rem;font-weight:800;padding:5px 9px}.checkout-card-body{padding:17px}.product-search label,.payment-field label{color:#475467;display:block;font-size:.74rem;font-weight:800;margin-bottom:6px}.select2-container--bootstrap-5 .select2-selection,.payment-field .form-control{border-color:#d7dee7;border-radius:9px;min-height:42px}.basket-hint{color:var(--sale-muted);font-size:.76rem;margin:9px 0 14px}.basket-table{font-size:.8rem;margin:0;white-space:nowrap}.basket-table thead th{background:#f7f9fb;color:#536273;font-size:.68rem;letter-spacing:.03em;text-transform:uppercase}.basket-table td,.basket-table th{border-color:#edf1f5;padding:.62rem;vertical-align:middle}.basket-table .quantity-input{max-width:90px;min-height:36px}.basket-table .delete-product{border-radius:8px}.payment-card{position:sticky;top:88px}.payment-card .checkout-card-body{display:grid;gap:13px}.payment-grid{display:grid;gap:12px;grid-template-columns:1fr 1fr}.payment-field.full{grid-column:1/-1}.totals-panel{background:#f7faf9;border:1px solid #e2ece8;border-radius:11px;margin-top:2px;padding:4px 12px}.total-row{align-items:center;border-bottom:1px solid #e4ebe8;display:flex;gap:10px;justify-content:space-between;padding:9px 0}.total-row:last-child{border:0}.total-row label{color:var(--sale-muted);font-size:.74rem;font-weight:700;margin:0}.total-row input{background:transparent;border:0;color:var(--sale-ink);font-size:.88rem;font-weight:800;max-width:150px;padding:0;text-align:right}.total-row.grand label,.total-row.grand input{color:var(--sale-green);font-size:1rem;font-weight:900}.complete-sale{border-radius:10px;font-weight:900;min-height:46px;width:100%}.sale-note{color:var(--sale-muted);font-size:.72rem;line-height:1.45;margin:0;text-align:center}@media(max-width:980px){.checkout-grid{grid-template-columns:1fr}.payment-card{position:static}}@media(max-width:640px){.sale-page{padding:4px 8px 24px}.sale-header{align-items:flex-start;border-radius:14px;flex-direction:column;padding:19px}.sale-actions{width:100%}.sale-actions .btn{flex:1;justify-content:center}.checkout-card-body{padding:13px}.payment-grid{grid-template-columns:1fr}.payment-field.full{grid-column:auto}}
+      .basket-empty{background:#f8faf9;border:1px dashed #cbd8d3;border-radius:10px;color:var(--sale-muted);font-size:.8rem;margin:2px 0 14px;padding:18px;text-align:center}
+    </style>
 
     <!-- jQuery (Required for Select2) -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -28,7 +33,7 @@
   </head>
 
   <body>
-    <div class="container-fluid" style="margin-top: 80px;">
+    <div class="container-fluid" style="padding:0; margin-top:80px;">
       <!-- Topbar -->
       {% include 'accounts/_partials/navbar.html' %}
 
@@ -37,31 +42,16 @@
           <!-- Messages -->
           {% include '_partials/messages.html' %}
 
-          <div class="row mb-3">
-            <div class="col-md-12 d-flex justify-content-between align-items-center">
-              <a href="{% url 'sales:sales_list' %}"><button type="button" class="btn btn-info font-weight-bold"><i class="mdi mdi-arrow-left-bold mr-2"></i>Go back</button></a>
-              <div class="d-flex">
-                <a href="{% url 'sales:sales_list' %}" class="btn btn-dark ml-2"><i class="mdi mdi-cart-outline mr-2"></i>Sales</a>
-              </div>
-            </div>
-          </div>
-          <hr />
-          <!-- Sale Form -->
+          <main class="sale-page">
+          <header class="sale-header"><div class="sale-heading"><p class="sale-eyebrow">Point of sale</p><h1>Create a new sale</h1><p>Add products, confirm payment, and complete the transaction.</p></div><nav class="sale-actions"><a href="{% url 'sales:sales_list' %}" class="btn"><i class="mdi mdi-format-list-bulleted"></i> Sales history</a></nav></header>
           <form action="{% url 'sales:sales_add' %}" class="saleForm" method="post">
             {% csrf_token %}
-
-            <div class="row">
-              <!-- Left Column: Products Selection -->
-              <div class="col-md-8">
-                <div class="card card-secondary">
-                  <div class="card-header">
-                    SALE PRODUCTS <span class="count count-varient2 bg-primary text-white px-2 py-1 rounded">{{ total_stock }}</span>
-                  </div>
-
-                  <div class="card-body">
-                    <!-- Search Product -->
-                    <div class="form-group">
-                      <label for="searchbox_products">Search Product:</label>
+            <div class="checkout-grid">
+              <section class="checkout-card">
+                <div class="checkout-card-head"><h2>Products</h2><span>{{ total_stock|intcomma }} units in stock</span></div>
+                <div class="checkout-card-body">
+                    <div class="product-search">
+                      <label for="searchbox_products">Add a product</label>
                       <select class="form-control select2" id="searchbox_products" name="searchbox_products">
                         <option value="" selected disabled hidden>Select a product</option>
                         {% for item in sale_items %}
@@ -69,10 +59,10 @@
                         {% endfor %}
                       </select>
                     </div>
-
-                    <!-- Products Table -->
-                    <div class="table-responsive mt-4">
-                      <table class="table table-hover text-nowrap" id="table_products">
+                    <p class="basket-hint">Search and select a product. Adjust its quantity in the basket below.</p>
+                    <div id="basket-empty" class="basket-empty"><i class="mdi mdi-basket-outline"></i> No products added yet</div>
+                    <div class="table-responsive">
+                      <table class="table table-hover basket-table" id="table_products">
                         <thead>
                           <tr>
                             <th>#</th>
@@ -84,21 +74,16 @@
                           </tr>
                         </thead>
                         <tbody>
-                          <!-- Dynamic product rows will be added here -->
                         </tbody>
                       </table>
                     </div>
-                  </div>
                 </div>
-              </div>
-
-              <!-- Right Column: Sale Details -->
-              <div class="col-md-4">
-                <div class="card card-secondary">
-                  <div class="card-header">Sale Details</div>
-                  <div class="card-body">
-                    <!-- Customer Selection -->
-                    <div class="form-group">
+              </section>
+              <aside class="checkout-card payment-card">
+                  <div class="checkout-card-head"><h2>Payment</h2><span>Sale summary</span></div>
+                  <div class="checkout-card-body">
+                    <div class="payment-grid">
+                    <div class="payment-field full">
                       <label for="searchbox_customers">Customer</label>
                       <select name="customer" class="form-control select2" id="searchbox_customers" required>
                         <option value="" selected disabled hidden>Select the customer</option>
@@ -107,47 +92,27 @@
                         {% endfor %}
                       </select>
                     </div>
-
-                    <!-- Sale Details Fields -->
-                    <div class="form-group mt-4">
+                    <div class="payment-field">
                       <label for="trans_date">Date</label>
                       <input name="trans_date" class="form-control" id="trans_date" type="date" required />
                     </div>
-                    <div class="form-group mt-4">
-                      <label for="sub_total">Subtotal</label>
-                      <input name="sub_total" class="form-control" id="sub_total" type="number" readonly />
-                    </div>
-                    <div class="form-group">
-                      <label for="tax_percentage">Tax Inclusive (%)</label>
+                    <div class="payment-field">
+                      <label for="tax_percentage">Tax (%)</label>
                       <input name="tax_percentage" class="form-control" id="tax_percentage" type="number" value="0" required />
                     </div>
-                    <div class="form-group">
-                      <label for="tax_amount">Tax Amount</label>
-                      <input name="tax_amount" class="form-control" id="tax_amount" type="number" readonly />
-                    </div>
-                    <div class="form-group">
-                      <label for="grand_total">Grand Total</label>
-                      <input name="grand_total" class="form-control" id="grand_total" type="number" readonly />
-                    </div>
-                    <div class="form-group">
+                    <div class="payment-field full">
                       <label for="amount_payed">Amount Paid</label>
                       <input name="amount_payed" class="form-control" id="amount_payed" type="number" required />
                     </div>
-                    <!-- Amount Change -->
-                    <div class="form-group">
-                      <label for="amount_change">Change</label>
-                      <input name="amount_change" class="form-control" id="amount_change" type="number" readonly />
                     </div>
-
-                    <!-- Submit Button -->
-                    <div class="form-group mt-4 mb-0">
-                      <button type="submit" class="btn btn-dark btn-block" onclick="return confirm('Are you sure you want to proceed?') && validateForm()">Create Sale</button>
-                    </div>
+                    <div class="totals-panel"><div class="total-row"><label for="sub_total">Subtotal</label><input name="sub_total" id="sub_total" type="number" readonly /></div><div class="total-row"><label for="tax_amount">Tax</label><input name="tax_amount" id="tax_amount" type="number" readonly /></div><div class="total-row grand"><label for="grand_total">Total</label><input name="grand_total" id="grand_total" type="number" readonly /></div><div class="total-row"><label for="amount_change">Change</label><input name="amount_change" id="amount_change" type="number" readonly /></div></div>
+                    <button type="submit" class="btn btn-success complete-sale" onclick="return validateForm()"><i class="mdi mdi-check-circle"></i> Complete sale</button>
+                    <p class="sale-note">The amount paid must cover the full transaction total.</p>
                   </div>
-                </div>
-              </div>
+              </aside>
             </div>
           </form>
+          </main>
         </div>
       </div>
     </div>
@@ -179,6 +144,12 @@
         const amountPayedInput = document.getElementById('amount_payed');
         const amountChangeInput = document.getElementById('amount_change');
         const form = document.querySelector('.saleForm');
+        const basketEmpty = document.getElementById('basket-empty');
+        const transactionDate = document.getElementById('trans_date');
+
+        if (transactionDate && !transactionDate.value) {
+          transactionDate.value = new Date().toISOString().slice(0, 10);
+        }
 
         let productIndex = 0;
         let selectedProducts = [];
@@ -192,7 +163,6 @@
           const productPrice = parseFloat(selectedOption.getAttribute('data-price'));
           const availableStock = parseInt(selectedOption.getAttribute('data-stock')) || 0;
 
-          console.log('Selected product:', { productId, productName, productPrice, availableStock });
 
           if (productId && !selectedProducts.includes(productId)) {
             selectedProducts.push(productId);
@@ -208,12 +178,11 @@
               <td class="text-center"><button type="button" class="btn btn-danger btn-sm delete-product" data-product-id="${productId}"><i class="mdi mdi-trash-can-outline"></i></button></td>
             `;
             productTableBody.appendChild(newRow);
-            console.log('Row added to table:', newRow.innerHTML);
+            basketEmpty.hidden = true;
 
             updateTotals();
             $('#searchbox_products').val(null).trigger('change'); // Clear the select box
           } else {
-            console.warn('Product already selected or invalid:', productId);
           }
         });
 
@@ -234,7 +203,7 @@
             productIndex--;
             updateRowNumbers();
             updateTotals();
-            console.log('Product removed:', productId);
+            basketEmpty.hidden = selectedProducts.length > 0;
           }
         });
 
@@ -261,7 +230,6 @@
           }
           const productTotal = price * quantity;
           input.closest('tr').querySelector('.product-total').textContent = productTotal.toFixed(2);
-          console.log('Updated product total:', productTotal);
         }
 
         // Update subtotal, tax amount, grand total, and amount change
@@ -283,7 +251,6 @@
           const amountChange = amountPayed - grandTotal;
           amountChangeInput.value = amountChange.toFixed(2);
 
-          console.log('Totals updated:', { subtotal, taxAmount, grandTotal, amountChange });
         }
 
         // Validate form and add hidden inputs before submission
@@ -342,7 +309,6 @@
             return false;
           }
 
-          console.log('Form validated, hidden inputs added:', selectedProducts);
           return true;
         };
       });

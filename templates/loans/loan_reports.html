@@ -2,7 +2,11 @@
 {% load static %}
 {% load humanize %}
 
+{% block title %}Loan reports | Pendeza Connect
+{% endblock %}
+
 {% block content %}
+  <link rel="stylesheet" href="{% static 'css/loan-reports-dashboard.css' %}">
   <div class="reports-dashboard">
     <header class="reports-header">
       <div>
@@ -26,6 +30,21 @@
       </nav>
     </header>
 
+    <div class="reports-toolbar">
+      <label class="report-search" for="report-search">
+        <i class="bi bi-search" aria-hidden="true"></i>
+        <span class="sr-only">Search reports</span>
+        <input id="report-search" type="search" placeholder="Search reports by name or description" autocomplete="off">
+        <button id="clear-report-search" type="button" aria-label="Clear report search" hidden><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+      </label>
+      <span id="report-search-status" class="report-search-status" aria-live="polite">All reports</span>
+    </div>
+
+    <div id="report-empty-state" class="report-empty-state" hidden>
+      <i class="bi bi-search" aria-hidden="true"></i>
+      <strong>No reports found</strong>
+      <span>Try a different report name or category.</span>
+    </div>
     <section class="featured-reports" aria-label="Primary reports">
       <a href="{% url 'loans:loan_portfolio_report' %}" class="featured-card">
         <span class="report-icon primary"><i class="bi bi-clipboard-data" aria-hidden="true"></i></span>
@@ -161,223 +180,5 @@
       </section>
     </div>
   </div>
-
-  <style>
-    .reports-dashboard {
-      color: #233142;
-      padding: 8px 0 28px;
-    }
-
-    .reports-header {
-      align-items: flex-start;
-      border-bottom: 1px solid #d8dee6;
-      display: flex;
-      justify-content: space-between;
-      gap: 16px;
-      margin-bottom: 18px;
-      padding-bottom: 14px;
-    }
-
-    .reports-header h1 {
-      color: #1f344d;
-      font-size: 1.55rem;
-      font-weight: 700;
-      letter-spacing: 0;
-      line-height: 1.2;
-      margin: 0;
-    }
-
-    .eyebrow,
-    .report-kicker,
-    .group-heading span {
-      color: #687789;
-      font-size: 0.76rem;
-      font-weight: 700;
-      text-transform: uppercase;
-    }
-
-    .header-copy {
-      color: #516173;
-      margin: 6px 0 0;
-      max-width: 720px;
-    }
-
-    .header-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      justify-content: flex-end;
-    }
-
-    .header-actions .btn {
-      align-items: center;
-      border-radius: 6px;
-      display: inline-flex;
-      gap: 6px;
-      min-height: 34px;
-    }
-
-    .featured-reports {
-      display: grid;
-      gap: 14px;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      margin-bottom: 18px;
-    }
-
-    .featured-card,
-    .report-group {
-      background: #fff;
-      border: 1px solid #d8dee6;
-      border-radius: 6px;
-    }
-
-    .featured-card {
-      color: inherit;
-      display: flex;
-      gap: 14px;
-      min-height: 142px;
-      padding: 16px;
-      text-decoration: none;
-    }
-
-    .featured-card:hover,
-    .report-link:hover {
-      background: #f8fafc;
-      color: inherit;
-      text-decoration: none;
-    }
-
-    .featured-card strong {
-      color: #1f344d;
-      display: block;
-      font-size: 1rem;
-      margin: 3px 0 6px;
-    }
-
-    .featured-card p,
-    .report-link small {
-      color: #687789;
-      display: block;
-      line-height: 1.35;
-      margin: 0;
-    }
-
-    .report-groups {
-      display: grid;
-      gap: 18px;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .report-group {
-      min-width: 0;
-      padding: 16px;
-    }
-
-    .group-heading {
-      align-items: center;
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 10px;
-    }
-
-    .group-heading h2 {
-      color: #1f344d;
-      font-size: 1rem;
-      font-weight: 700;
-      margin: 0;
-    }
-
-    .report-list {
-      display: grid;
-      gap: 0;
-    }
-
-    .report-link {
-      align-items: center;
-      border-top: 1px solid #edf0f4;
-      color: inherit;
-      display: grid;
-      gap: 12px;
-      grid-template-columns: 38px minmax(0, 1fr) 18px;
-      min-height: 72px;
-      padding: 12px 0;
-      text-decoration: none;
-    }
-
-    .report-link:first-child {
-      border-top: 0;
-    }
-
-    .report-link strong {
-      color: #1f344d;
-      display: block;
-      font-size: 0.93rem;
-      margin-bottom: 2px;
-    }
-
-    .report-link > .bi-chevron-right {
-      color: #9aa6b2;
-    }
-
-    .report-icon {
-      align-items: center;
-      border-radius: 6px;
-      display: inline-flex;
-      flex: 0 0 auto;
-      font-size: 1rem;
-      height: 36px;
-      justify-content: center;
-      width: 36px;
-    }
-
-    .featured-card .report-icon {
-      height: 42px;
-      width: 42px;
-    }
-
-    .report-icon.primary { background: #edf2ff; color: #3157a4; }
-    .report-icon.success { background: #eaf7ef; color: #247a43; }
-    .report-icon.warning { background: #fff4db; color: #a86f00; }
-    .report-icon.danger { background: #fdecec; color: #b94141; }
-    .report-icon.info { background: #e8f5fb; color: #187795; }
-    .report-icon.neutral { background: #f1f4f7; color: #516173; }
-
-    @media (max-width: 1199.98px) {
-      .featured-reports {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    @media (max-width: 991.98px) {
-      .report-groups {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    @media (max-width: 767.98px) {
-      .reports-header {
-        flex-direction: column;
-      }
-
-      .header-actions {
-        justify-content: flex-start;
-        width: 100%;
-      }
-
-      .header-actions .btn {
-        flex: 1 1 auto;
-        justify-content: center;
-      }
-
-      .featured-card {
-        min-height: 0;
-      }
-
-      .group-heading {
-        align-items: flex-start;
-        flex-direction: column;
-      }
-    }
-  </style>
+  <script defer src="{% static 'js/loan-reports-dashboard.js' %}"></script>
 {% endblock %}

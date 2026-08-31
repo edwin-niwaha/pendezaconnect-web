@@ -46,6 +46,52 @@
     .empty-state { border: 1px dashed #b8c2cc; border-radius: 6px; color: #667085; margin: 14px; padding: 34px; text-align: center; }
     .pagination .page-link { color: #26384d; }
     .pagination .active .page-link { background: #26384d; border-color: #26384d; color: #fff; }
+    /* Smart review queue */
+    body { background: #f4f7f6; }
+    .applications-shell { max-width: 1380px; margin: 30px auto 48px; padding: 0 18px; }
+    .queue-header { background: linear-gradient(125deg,#0b4635,#116149 62%,#17785b); border: 0; border-radius: 20px; box-shadow: 0 18px 45px rgba(16,78,59,.16); color: #fff; margin-bottom: 18px; overflow: hidden; padding: 26px 28px; position: relative; }
+    .queue-header::after { background: rgba(255,255,255,.07); border-radius: 50%; content: ""; height: 210px; position: absolute; right: -50px; top: -105px; width: 210px; }
+    .queue-header-content, .queue-actions { position: relative; z-index: 1; }
+    .queue-eyebrow { color: #bce7d7; font-size: .72rem; font-weight: 800; letter-spacing: .14em; margin-bottom: 6px; text-transform: uppercase; }
+    .queue-title { color: #fff; font-size: clamp(1.5rem,3vw,2rem); letter-spacing: -.025em; }
+    .queue-subtitle { color: rgba(255,255,255,.76); font-size: .9rem; margin-top: 6px; max-width: 600px; }
+    .queue-actions .btn { border-color: rgba(255,255,255,.28); color: #fff; font-weight: 700; padding: .58rem .85rem; }
+    .queue-actions .btn-primary { background: #fff; border-color: #fff; color: #0b4635; }
+    .queue-actions .btn:hover { background: #fff; border-color: #fff; color: #0b4635; }
+    .summary-grid { grid-template-columns: minmax(210px,1.35fr) repeat(3,minmax(140px,1fr)); gap: 12px; margin-bottom: 16px; }
+    .summary-card { border: 1px solid #e2e8e5; border-radius: 14px; box-shadow: 0 5px 18px rgba(31,45,61,.04); padding: 16px 17px; }
+    .summary-card:first-child { border-left: 4px solid #116149; }
+    .summary-label { color: #748075; font-size: .68rem; letter-spacing: .07em; }
+    .summary-value { color: #172235; font-size: 1.2rem; margin-top: 3px; }
+    .filter-panel { border: 1px solid #e2e8e5; border-radius: 14px; box-shadow: 0 5px 18px rgba(31,45,61,.04); margin-bottom: 16px; padding: 16px; }
+    .filter-panel .form-control, .filter-panel .form-select { border-color: #d7dedb; border-radius: 9px; min-height: 40px; }
+    .filter-panel .form-control:focus, .filter-panel .form-select:focus { border-color: #116149; box-shadow: 0 0 0 .2rem rgba(17,97,73,.11); }
+    .filter-panel .btn { border-radius: 9px; font-weight: 700; min-height: 40px; }
+    .filter-panel .btn-primary { background: #116149; border-color: #116149; }
+    .queue-table-card { border: 1px solid #e2e8e5; border-radius: 14px; box-shadow: 0 8px 24px rgba(31,45,61,.05); }
+    .table-toolbar { background: #fbfcfb; border-color: #e7ece9; padding: 13px 16px; }
+    .table { font-size: .84rem; }
+    .table thead th { background: #f0f4f2; border-color: #e1e7e4; color: #4c5b53; font-size: .68rem; letter-spacing: .055em; padding: 12px 10px; text-transform: uppercase; }
+    .table tbody td { border-color: #edf0ee; padding: 13px 10px; }
+    .table tbody tr:hover { background: #f7fbf9; }
+    .status-badge { font-size: .68rem; padding: 5px 9px; }
+    .status-pending { background: #fff4d6; color: #8a5a00; }
+    .status-boo_approved { background: #e8f3fb; color: #176786; }
+    .status-hof_approved { background: #e7f5ed; color: #1d6a3c; }
+    .action-group { flex-wrap: nowrap; min-width: auto; }
+    .action-group .btn { border-radius: 8px; height: 34px; min-width: 35px; }
+    .empty-state { background: #fbfcfb; border-color: #cbd7d1; border-radius: 12px; padding: 48px 24px; }
+    .empty-state i { color: #9aaba2; display: block; font-size: 2rem; margin-bottom: 7px; }
+    .pagination .active .page-link { background: #116149; border-color: #116149; }
+    @media (max-width: 991.98px) { .summary-grid { grid-template-columns: repeat(2,1fr); } }
+    @media (max-width: 768px) {
+      .applications-shell { margin: 14px auto 30px; padding: 0 12px; }
+      .queue-header { border-radius: 15px; padding: 22px 20px; }
+      .queue-actions { width: 100%; }
+      .queue-actions .btn { flex: 1; }
+      .summary-grid { grid-template-columns: 1fr 1fr; }
+      .summary-value { font-size: 1rem; }
+    }
     @media (max-width: 768px) {
       .applications-shell { margin: 12px auto; padding: 0 10px; }
       .queue-title { font-size: 1.2rem; }
@@ -62,30 +108,16 @@
 
   <main class="applications-shell">
     <header class="queue-header d-flex flex-wrap justify-content-between align-items-start gap-3">
-      <div>
+      <div class="queue-header-content">
         <h1 class="queue-title">{{ table_title }}</h1>
-        <div class="queue-subtitle">
-          Review queue for pending BOO, HOF, and ED approvals. Logged in as
-          <strong>{{ user.username|title }}</strong>{% if user.profile.role %} ({{ user.profile.get_role_display|title }}){% endif %}.
-        </div>
       </div>
-      <div class="no-print d-flex flex-wrap gap-2">
+      <div class="queue-actions no-print d-flex flex-wrap gap-2">
         <a href="{% url 'loans:apply_for_loan' %}" class="btn btn-dark btn-sm"><i class="mdi mdi-plus"></i> New Application</a>
-        {% if user.profile.role in 'administrator manager boo hof ed' %}
-          <a href="{% url 'loans:approve_all_loans' %}" class="btn btn-outline-success btn-sm" onclick="return confirm('Approve all eligible loan applications?');">
-            <i class="mdi mdi-check-all"></i> Approve Eligible
-          </a>
-        {% endif %}
         <a href="{% url 'loans:loan_reports_dashboard' %}" class="btn btn-outline-primary btn-sm"><i class="mdi mdi-chart-box-outline"></i> Reports</a>
-        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.print()"><i class="mdi mdi-printer"></i> Print</button>
       </div>
     </header>
 
     <section class="summary-grid">
-      <div class="summary-card">
-        <div class="summary-label">Applications</div>
-        <div class="summary-value">{{ total_applications|intcomma }}</div>
-      </div>
       <div class="summary-card">
         <div class="summary-label">Requested Principal</div>
         <div class="summary-value">UGX {{ total_principal|floatformat:0|intcomma }}</div>
@@ -144,7 +176,6 @@
             No applications found
           {% endif %}
         </span>
-        <span class="text-muted small no-print">Use the action buttons to review, approve, reject, edit, or open schedules.</span>
       </div>
 
       {% if loans %}
@@ -154,14 +185,9 @@
               <tr>
                 <th>Loan No.</th>
                 <th>Client</th>
-                <th>Product</th>
-                <th class="amount">Principal</th>
-                <th class="amount">Interest</th>
-                <th>Term</th>
-                <th>Rate</th>
-                <th>Applied By</th>
+                <th>Product / Term</th>
+                <th class="amount">Requested</th>
                 <th>Applied On</th>
-                <th>Documents</th>
                 <th>Stage</th>
                 <th class="text-end no-print">Actions</th>
               </tr>
@@ -177,22 +203,9 @@
                       {% if loan.borrower.mobile_telephone %} | {{ loan.borrower.mobile_telephone }}{% endif %}
                     </div>
                   </td>
-                  <td>{{ loan.get_loan_purpose_display }}</td>
-                  <td class="amount">UGX {{ loan.principal_amount|floatformat:0|intcomma }}</td>
-                  <td class="amount">UGX {{ loan.total_interest|default:0|floatformat:0|intcomma }}</td>
-                  <td>{{ loan.loan_period_months }} mo.</td>
-                  <td>{{ loan.interest_rate|floatformat:2 }}%</td>
-                  <td>{{ loan.applied_by|default:'-' }}</td>
-                  <td>{{ loan.start_date|date:'d M Y' }}</td>
-                  <td>
-                    {% if loan.has_required_documents %}
-                      <span class="doc-badge doc-complete">Complete</span>
-                    {% else %}
-                      <span class="doc-badge doc-missing" title="Missing required documents">
-                        Missing {{ loan.missing_required_documents|length }}
-                      </span>
-                    {% endif %}
-                  </td>
+                  <td><div class="fw-semibold">{{ loan.get_loan_purpose_display }}</div><div class="text-muted small">{{ loan.loan_period_months }} months at {{ loan.interest_rate|floatformat:2 }}%</div></td>
+                  <td class="amount fw-semibold">UGX {{ loan.principal_amount|floatformat:0|intcomma }}</td>
+                  <td>{{ loan.start_date|date:'d M Y' }}<div class="text-muted small">by {{ loan.applied_by|default:'-' }}</div></td>
                   <td>
                     <span class="status-badge status-{{ loan.status }}">{{ loan.get_status_display }}</span>
                   </td>
@@ -291,7 +304,7 @@
         </div>
       {% else %}
         <div class="empty-state">
-          No loan applications match the selected filters.
+          <i class="mdi mdi-inbox-outline"></i><strong>No applications found</strong><div class="small mt-1">Try changing your search or workflow stage.</div>
         </div>
       {% endif %}
 

@@ -1,6 +1,7 @@
+import base64
 from datetime import date
 from decimal import Decimal
-import base64
+from unittest.mock import Mock, patch
 from uuid import uuid4
 
 from django.contrib.auth.models import User
@@ -10,7 +11,6 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 from social_django.models import UserSocialAuth
-from unittest.mock import Mock, patch
 
 from apps.client.models import Client
 from apps.finance.models import Payment, SupportProgram
@@ -336,9 +336,7 @@ class MobileGoogleLoginTests(APITestCase):
         self.assertEqual(user.profile.account_type, "guest")
         self.assertEqual(response.data["user"]["id"], user.id)
         self.assertTrue(
-            UserSocialAuth.objects.filter(
-                user=user, provider="google-oauth2", uid="google-user-123"
-            ).exists()
+            UserSocialAuth.objects.filter(user=user, provider="google-oauth2", uid="google-user-123").exists()
         )
 
     @override_settings(SOCIAL_AUTH_REQUESTS_TIMEOUT=3)
@@ -361,9 +359,7 @@ class MobileGoogleLoginTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["user"]["id"], self.user.id)
-        self.assertEqual(
-            User.objects.filter(email__iexact=self.user.email).count(), 1
-        )
+        self.assertEqual(User.objects.filter(email__iexact=self.user.email).count(), 1)
 
     @override_settings(SOCIAL_AUTH_REQUESTS_TIMEOUT=3)
     @patch("api.v1.serializers.google_auth_serializers.requests.get")
@@ -390,9 +386,7 @@ class MobileGoogleLoginTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["user"]["id"], self.user.id)
-        self.assertFalse(
-            User.objects.filter(email="updated.google.email@example.com").exists()
-        )
+        self.assertFalse(User.objects.filter(email="updated.google.email@example.com").exists())
 
 
 class MobileDeviceInstallationTests(APITestCase):
@@ -476,6 +470,3 @@ class MobileNotificationInboxTests(APITestCase):
         self.assertEqual(marked.status_code, status.HTTP_200_OK)
         self.assertTrue(marked.data["is_read"])
         self.assertEqual(after.data["count"], 0)
-
-
-

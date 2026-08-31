@@ -24,15 +24,11 @@ class GoogleLoginSerializer(serializers.Serializer):
         elif token:
             payload = self._validate_id_token(token)
         else:
-            raise serializers.ValidationError(
-                {"detail": "Google access token or ID token is required."}
-            )
+            raise serializers.ValidationError({"detail": "Google access token or ID token is required."})
 
         email = (payload.get("email") or "").strip().lower()
         if not email or not payload.get("email_verified"):
-            raise serializers.ValidationError(
-                {"detail": "Google account email must be verified."}
-            )
+            raise serializers.ValidationError({"detail": "Google account email must be verified."})
 
         try:
             user = self._resolve_or_create_user(email, payload)
@@ -40,11 +36,7 @@ class GoogleLoginSerializer(serializers.Serializer):
             user = User.objects.filter(email__iexact=email, is_active=True).first()
             if user is None:
                 raise serializers.ValidationError(
-                    {
-                        "detail": (
-                            "An account with this email already exists. Please try again."
-                        )
-                    }
+                    {"detail": ("An account with this email already exists. Please try again.")}
                 ) from exc
             Profile.objects.get_or_create(
                 user=user,
@@ -58,9 +50,9 @@ class GoogleLoginSerializer(serializers.Serializer):
     def _resolve_or_create_user(self, email, payload):
         google_uid = str(payload.get("sub") or "").strip()
         if google_uid:
-            social = UserSocialAuth.objects.select_related("user").filter(
-                provider="google-oauth2", uid=google_uid
-            ).first()
+            social = (
+                UserSocialAuth.objects.select_related("user").filter(provider="google-oauth2", uid=google_uid).first()
+            )
             if social:
                 if not social.user.is_active:
                     raise serializers.ValidationError(
@@ -72,9 +64,7 @@ class GoogleLoginSerializer(serializers.Serializer):
                 )
                 return social.user
 
-        users = list(
-            User.objects.select_for_update().filter(email__iexact=email).order_by("id")[:2]
-        )
+        users = list(User.objects.select_for_update().filter(email__iexact=email).order_by("id")[:2])
         if len(users) > 1:
             raise serializers.ValidationError(
                 {
@@ -87,9 +77,7 @@ class GoogleLoginSerializer(serializers.Serializer):
         if users:
             user = users[0]
             if not user.is_active:
-                raise serializers.ValidationError(
-                    {"detail": "The account linked to this Google email is inactive."}
-                )
+                raise serializers.ValidationError({"detail": "The account linked to this Google email is inactive."})
         else:
             user = User(
                 username=self._available_username(email),
@@ -111,9 +99,7 @@ class GoogleLoginSerializer(serializers.Serializer):
                 defaults={"user": user},
             )
             if not created and social.user_id != user.id:
-                raise serializers.ValidationError(
-                    {"detail": "This Google account is linked to another user."}
-                )
+                raise serializers.ValidationError({"detail": "This Google account is linked to another user."})
         return user
 
     def _available_username(self, email):
@@ -134,9 +120,7 @@ class GoogleLoginSerializer(serializers.Serializer):
                 timeout=getattr(settings, "SOCIAL_AUTH_REQUESTS_TIMEOUT", 10),
             )
         except requests.RequestException as exc:
-            raise serializers.ValidationError(
-                {"detail": "Unable to reach Google authentication service."}
-            ) from exc
+            raise serializers.ValidationError({"detail": "Unable to reach Google authentication service."}) from exc
 
         if response.status_code != 200:
             raise serializers.ValidationError({"detail": "Invalid Google access token."})
@@ -148,9 +132,7 @@ class GoogleLoginSerializer(serializers.Serializer):
             from google.auth.transport import requests as google_requests
             from google.oauth2 import id_token
         except ImportError as exc:
-            raise serializers.ValidationError(
-                {"detail": "Google ID-token verification is not installed."}
-            ) from exc
+            raise serializers.ValidationError({"detail": "Google ID-token verification is not installed."}) from exc
 
         client_ids = getattr(settings, "MOBILE_GOOGLE_CLIENT_IDS", [])
         if not client_ids:
@@ -159,15 +141,11 @@ class GoogleLoginSerializer(serializers.Serializer):
         last_error = None
         for audience in client_ids:
             try:
-                return id_token.verify_oauth2_token(
-                    token, google_requests.Request(), audience
-                )
+                return id_token.verify_oauth2_token(token, google_requests.Request(), audience)
             except ValueError as exc:
                 last_error = exc
 
-        raise serializers.ValidationError(
-            {"detail": "Invalid Google sign-in token."}
-        ) from last_error
+        raise serializers.ValidationError({"detail": "Invalid Google sign-in token."}) from last_error
 
 
 class GoogleLoginResponseSerializer(serializers.Serializer):

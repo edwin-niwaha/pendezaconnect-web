@@ -1,6 +1,13 @@
 {% load static %}
 
 <nav class="sidebar sidebar-offcanvas" id="sidebar">
+  <style>
+    #sidebar .sidebar-section-label { background: #f2f4f7; border-left: 3px solid #13745d; color: #344054; font-size: .68rem; font-weight: 900; letter-spacing: .075em; line-height: 1.2; margin: 12px 12px 5px; padding: 8px 14px; text-transform: uppercase; }
+    #sidebar .sidebar-divider { border-color: rgba(152, 162, 179, .2); margin: .55rem 1.5rem !important; }
+    #sidebar .menu-title { text-transform: none; }
+    body.sidebar-icon-only #sidebar .sidebar-section-label { display: none; }
+    body.sidebar-icon-only #sidebar .sidebar-divider { margin-left: .5rem !important; margin-right: .5rem !important; }
+  </style>
   <div class="text-center sidebar-brand-wrapper d-flex align-items-center">
     <a class="sidebar-brand brand-logo" href="/" style="color:#127D61;">
       <img src="{% static 'images/file.png' %}" height="40" width="30" alt="Brand Logo" loading="lazy" />
@@ -8,12 +15,12 @@
   </div>
 
   <ul class="nav">
-    <li><hr class="sidebar-divider my-3" /></li>
+    <li class="sidebar-section-label">Workspaces</li>
 
     <li class="nav-item">
       <a class="nav-link" data-toggle="collapse" href="#dashboardsMenu" aria-expanded="false" aria-controls="dashboardsMenu">
         <i class="mdi mdi-view-dashboard menu-icon"></i>
-        <span class="menu-title">DASHBOARDS</span>
+        <span class="menu-title">Dashboards</span>
         <i class="menu-arrow"></i>
       </a>
       <div class="collapse" id="dashboardsMenu">
@@ -21,17 +28,17 @@
           <li class="nav-item"><a class="nav-link" href="{% url 'main-dashboard' %}"><i class="mdi mdi-gift menu-icon"></i> Sponsorship</a></li>
           <li class="nav-item"><a class="nav-link" href="{% url 'inventory-dashboard' %}"><i class="mdi mdi-warehouse menu-icon"></i> Inventory</a></li>
           <li class="nav-item"><a class="nav-link" href="{% url 'loans-dashboard' %}"><i class="mdi mdi-cash-multiple menu-icon"></i> Loan Manager</a></li>
-          <li class="nav-item"><a class="nav-link" href="{% url 'savings_account_list' %}"><i class="mdi mdi-bank menu-icon"></i> Manage Savings</a></li>
         </ul>
       </div>
     </li>
 
-    <li><hr class="sidebar-divider my-3" /></li>
+    <li><hr class="sidebar-divider" /></li>
+    <li class="sidebar-section-label">Customers &amp; savings</li>
 
     <li class="nav-item">
       <a class="nav-link" data-toggle="collapse" href="#financeClientsMenu" aria-expanded="false" aria-controls="financeClientsMenu">
         <i class="mdi mdi-account-group menu-icon"></i>
-        <span class="menu-title">Manage Clients</span>
+        <span class="menu-title">Clients</span>
         <i class="menu-arrow"></i>
       </a>
       <div class="collapse" id="financeClientsMenu">
@@ -46,7 +53,7 @@
     <li class="nav-item">
       <a class="nav-link" data-toggle="collapse" href="#savingsManagementMenu" aria-expanded="false" aria-controls="savingsManagementMenu">
         <i class="mdi mdi-piggy-bank menu-icon"></i>
-        <span class="menu-title">Manage Savings</span>
+        <span class="menu-title">Savings</span>
         <i class="menu-arrow"></i>
       </a>
       <div class="collapse" id="savingsManagementMenu">
@@ -58,7 +65,8 @@
       </div>
     </li>
 
-    <li><hr class="sidebar-divider my-3" /></li>
+    <li><hr class="sidebar-divider" /></li>
+    <li class="sidebar-section-label">Lending</li>
 
     <li class="nav-item">
       <a class="nav-link" data-toggle="collapse" href="#loanApplicationsMenu" aria-expanded="false" aria-controls="loanApplicationsMenu">
@@ -80,27 +88,24 @@
     <li class="nav-item">
       <a class="nav-link" data-toggle="collapse" href="#loanPortfolioMenu" aria-expanded="false" aria-controls="loanPortfolioMenu">
         <i class="mdi mdi-bank-transfer menu-icon"></i>
-        <span class="menu-title">Disbursement</span>
+        <span class="menu-title">Disbursements</span>
         <i class="menu-arrow"></i>
       </a>
       <div class="collapse" id="loanPortfolioMenu">
         <ul class="nav flex-column sub-menu">
           <li class="nav-item"><a class="nav-link" href="{% url 'loans:disburse_loan' %}">Disburse Loan</a></li>
           <li class="nav-item"><a class="nav-link" href="{% url 'loans:disbursed_loans' %}">Disbursed Loans</a></li>
-          {% if loan %}
-            <li class="nav-item"><a class="nav-link" href="{% url 'loans:loan_detail' loan.id %}">Current Loan Details</a></li>
-          {% else %}
-            <li class="nav-item"><a class="nav-link" href="{% url 'loans:disbursed_loans' %}">Loan Details</a></li>
-          {% endif %}
+          {% if loan %}<li class="nav-item"><a class="nav-link" href="{% url 'loans:loan_detail' loan.id %}">Current Loan</a></li>{% endif %}
           <li class="nav-item"><a class="nav-link" href="{% url 'loans:loan_portfolio_report' %}">Portfolio Report</a></li>
         </ul>
       </div>
     </li>
 
+    <li class="sidebar-section-label">Daily servicing</li>
     <li class="nav-item">
       <a class="nav-link" data-toggle="collapse" href="#loanServicingMenu" aria-expanded="false" aria-controls="loanServicingMenu">
         <i class="mdi mdi-credit-card menu-icon"></i>
-        <span class="menu-title">Loan Servicing</span>
+        <span class="menu-title">Repayments &amp; penalties</span>
         <i class="menu-arrow"></i>
       </a>
       <div class="collapse" id="loanServicingMenu">
@@ -114,12 +119,13 @@
       </div>
     </li>
 
-    <li><hr class="sidebar-divider my-3" /></li>
+    <li><hr class="sidebar-divider" /></li>
+    <li class="sidebar-section-label">Insights</li>
 
     <li class="nav-item">
       <a class="nav-link" data-toggle="collapse" href="#financeReportsMenu" aria-expanded="false" aria-controls="financeReportsMenu">
         <i class="mdi mdi-file-chart menu-icon"></i>
-        <span class="menu-title">Reports</span>
+        <span class="menu-title">Reports &amp; risk</span>
         <i class="menu-arrow"></i>
       </a>
       <div class="collapse" id="financeReportsMenu">
@@ -134,6 +140,7 @@
       </div>
     </li>
 
+    <li class="sidebar-section-label">Administration</li>
     {% if user.profile.role == 'administrator' %}
       <li class="nav-item">
         <a class="nav-link" data-toggle="collapse" href="#financeSettingsMenu" aria-expanded="false" aria-controls="financeSettingsMenu">

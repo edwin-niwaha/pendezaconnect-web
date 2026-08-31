@@ -81,9 +81,7 @@ class RegisterView(View):
             Profile.objects.get_or_create(user=user)
 
             username = form.cleaned_data.get("username")
-            messages.success(
-                request, f"Account created for {username}", extra_tags="bg-success"
-            )
+            messages.success(request, f"Account created for {username}", extra_tags="bg-success")
 
             return redirect(to="login")
 
@@ -246,11 +244,7 @@ class ChangePasswordView(PasswordChangeView):
 @admin_required
 def profile_list(request):
     # Fetch all profiles and related user data
-    queryset = (
-        Profile.objects.select_related("user", "client", "sponsor")
-        .all()
-        .order_by("user__username")
-    )
+    queryset = Profile.objects.select_related("user", "client", "sponsor").all().order_by("user__username")
     all_profiles = queryset
 
     # Search functionality
@@ -292,26 +286,10 @@ def profile_list(request):
             "table_title": "Profile List",
             "search_query": search_query,
             "total_profiles": all_profiles.count(),
-            "staff_profiles": sum(
-                1
-                for profile in all_profiles
-                if profile.resolved_account_type == "staff"
-            ),
-            "client_profiles": sum(
-                1
-                for profile in all_profiles
-                if profile.resolved_account_type == "client"
-            ),
-            "sponsor_profiles": sum(
-                1
-                for profile in all_profiles
-                if profile.resolved_account_type == "sponsor"
-            ),
-            "guest_profiles_count": sum(
-                1
-                for profile in all_profiles
-                if profile.resolved_account_type == "guest"
-            ),
+            "staff_profiles": sum(1 for profile in all_profiles if profile.resolved_account_type == "staff"),
+            "client_profiles": sum(1 for profile in all_profiles if profile.resolved_account_type == "client"),
+            "sponsor_profiles": sum(1 for profile in all_profiles if profile.resolved_account_type == "sponsor"),
+            "guest_profiles_count": sum(1 for profile in all_profiles if profile.resolved_account_type == "guest"),
         },
     )
 
@@ -344,22 +322,16 @@ def profile(request):
         profile_instance = request.user.profile
     except ObjectDoesNotExist:
         # If the user doesn't have a profile, create one
-        profile_instance = Profile.objects.create(
-            user=request.user, bio="", avatar="default.jpg"
-        )
+        profile_instance = Profile.objects.create(user=request.user, bio="", avatar="default.jpg")
 
     if request.method == "POST":
         user_form = UpdateUserForm(request.POST, instance=request.user)
-        profile_form = UpdateProfileForm(
-            request.POST, request.FILES, instance=profile_instance
-        )
+        profile_form = UpdateProfileForm(request.POST, request.FILES, instance=profile_instance)
 
         if user_form.is_valid() and profile_form.is_valid():
             user_form.save()
             profile_form.save()
-            messages.success(
-                request, "Your profile is updated successfully", extra_tags="bg-success"
-            )
+            messages.success(request, "Your profile is updated successfully", extra_tags="bg-success")
             return redirect(to="users-profile")
     else:
         user_form = UpdateUserForm(instance=request.user)
@@ -402,9 +374,7 @@ def policy_list(request):
     total_policies = Policy.objects.count()
     valid_policies = Policy.objects.filter(is_valid=True).count()
     pending_validation = Policy.objects.filter(is_valid=False).count()
-    unread_policies = (
-        Policy.objects.exclude(policyread__user=request.user).distinct().count()
-    )
+    unread_policies = Policy.objects.exclude(policyread__user=request.user).distinct().count()
 
     paginator = Paginator(queryset, 50)
     page = request.GET.get("page")
@@ -445,9 +415,7 @@ def upload_policy(request):
 
         if form.is_valid():
             form.save()
-            messages.success(
-                request, "Record saved successfully!", extra_tags="bg-success"
-            )
+            messages.success(request, "Record saved successfully!", extra_tags="bg-success")
             return redirect("policy_list")
         else:
             # Display an error message if the form is not valid
@@ -483,9 +451,7 @@ def update_policy(request, pk, template_name="accounts/policy_upload.html"):
         if form.is_valid():
             form.save()
 
-            messages.success(
-                request, "Policy updated successfully!", extra_tags="bg-success"
-            )
+            messages.success(request, "Policy updated successfully!", extra_tags="bg-success")
             return redirect("policy_list")
     else:
         form = PolicyForm(instance=policy)
@@ -541,9 +507,7 @@ def validate_policy(request, policy_id):
             policy.is_valid = True
             policy.save()
 
-            messages.success(
-                request, "Policy validated successfully!", extra_tags="bg-success"
-            )
+            messages.success(request, "Policy validated successfully!", extra_tags="bg-success")
             return HttpResponseRedirect(reverse("policy_list"))
 
     return HttpResponseBadRequest("Invalid request")
@@ -562,13 +526,9 @@ def read_policy(request, policy_id):
         _, created = PolicyRead.objects.get_or_create(user=request.user, policy=policy)
 
         if created:
-            messages.success(
-                request, "Policy marked as read successfully!", extra_tags="bg-success"
-            )
+            messages.success(request, "Policy marked as read successfully!", extra_tags="bg-success")
         else:
-            messages.info(
-                request, "You have already read this policy.", extra_tags="bg-danger"
-            )
+            messages.info(request, "You have already read this policy.", extra_tags="bg-danger")
 
     return HttpResponseRedirect(reverse("policy_list"))
 
@@ -618,9 +578,7 @@ def upload_ebook(request):
 
         if form.is_valid():
             form.save()
-            messages.success(
-                request, "Record saved successfully!", extra_tags="bg-success"
-            )
+            messages.success(request, "Record saved successfully!", extra_tags="bg-success")
             return redirect("ebook_list")
         else:
             # Display an error message if the form is not valid
@@ -650,9 +608,7 @@ def ebook_list(request):
 
     search_query = request.GET.get("search", "").strip()
     if search_query:
-        queryset = queryset.filter(
-            Q(title__icontains=search_query) | Q(author__icontains=search_query)
-        )
+        queryset = queryset.filter(Q(title__icontains=search_query) | Q(author__icontains=search_query))
 
     paginator = Paginator(queryset, 50)
     page = request.GET.get("page")
@@ -696,9 +652,7 @@ def update_ebook(request, pk, template_name="accounts/ebook_upload.html"):
             form.save()
 
             # Add a success message and redirect to the ebook list
-            messages.success(
-                request, "Client record updated successfully!", extra_tags="bg-success"
-            )
+            messages.success(request, "Client record updated successfully!", extra_tags="bg-success")
             return redirect("ebook_list")  # Adjust the redirect as needed
     else:
         # Pre-populate the form with existing data
@@ -733,9 +687,7 @@ def contact_us(request):
                 subject = "Your message has been received"
                 message = f"Hello {instance.name},\n\nYour message has been received. \
 We will get back to you soon!\n\nThanks,\nPerpetual - SMS\nManagement"
-                from_email = (
-                    settings.EMAIL_HOST_USER
-                )  # Use default from email from settings
+                from_email = settings.EMAIL_HOST_USER  # Use default from email from settings
                 to = [instance.email]  # Access email entered in the form
                 send_mail(subject, message, from_email, to)
 
@@ -814,9 +766,7 @@ def validate_user_feedback(request, contact_id):
             user_feedback.is_valid = True
             user_feedback.save()
 
-            messages.success(
-                request, "User validated successfully!", extra_tags="bg-success"
-            )
+            messages.success(request, "User validated successfully!", extra_tags="bg-success")
             return HttpResponseRedirect(reverse("user_feedback"))
 
     return HttpResponseBadRequest("Invalid request")
@@ -868,9 +818,7 @@ def upload_doc(request):
 
         if form.is_valid():
             form.save()
-            messages.success(
-                request, "Record saved successfully!", extra_tags="bg-success"
-            )
+            messages.success(request, "Record saved successfully!", extra_tags="bg-success")
             return redirect("doc_list")
         else:
             # Display an error message if the form is not valid
@@ -906,9 +854,7 @@ def update_doc(request, pk, template_name="accounts/default_upload.html"):
             form.save()
 
             # Add a success message and redirect to the doc list
-            messages.success(
-                request, "Record updated successfully!", extra_tags="bg-success"
-            )
+            messages.success(request, "Record updated successfully!", extra_tags="bg-success")
             return redirect("doc_list")  # Adjust the redirect as needed
     else:
         # Pre-populate the form with existing data

@@ -3,67 +3,44 @@
 {% load humanize %}
 
 {% block content %}
-<div class="container-fluid mt-4">
-  <div class="page-header d-flex justify-content-between align-items-center flex-wrap">
-    <h3 class="mb-0">{{ table_title|upper }}</h3>
-    <div class="mt-2 mt-md-0">
-      <button onclick="printDiv('printSection')" class="btn btn-success btn-sm">
-        <i class="mdi mdi-printer"></i> Print Report
-      </button>
-      <a href="{% url 'loans:loan_reports_dashboard' %}" class="btn btn-info btn-sm">
-        <i class="mdi mdi-arrow-left"></i> Back
-      </a>
-    </div>
-  </div>
-  <hr class="border-3 border-primary">
+<link rel="stylesheet" href="{% static 'css/loan-operations.css' %}">
+<style>
+  .penalty-manager{margin-top:20px;padding-bottom:32px}.penalty-manager .operation-header{--op:#8f4b3e;--op-dark:#5e3028}.manager-selector{align-items:end;background:#fff;border:1px solid #e3e9ef;border-radius:14px;box-shadow:0 10px 24px rgba(31,50,70,.06);display:grid;gap:12px;grid-template-columns:minmax(0,1fr) auto;margin-bottom:16px;padding:16px}.manager-selector label{color:#3f4f60;font-size:.76rem;font-weight:800;margin-bottom:6px}.manager-selector .btn{border-radius:9px;min-height:40px}.penalty-summary{display:grid;gap:10px;grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:16px}.penalty-summary div{background:#fff;border:1px solid #e3e9ef;border-radius:12px;padding:13px 15px}.penalty-summary span{color:#667085;display:block;font-size:.7rem;font-weight:800;text-transform:uppercase}.penalty-summary strong{color:#172b3f;display:block;font-size:1.05rem;margin-top:5px}.penalty-section{background:#fff;border:1px solid #e3e9ef;border-radius:14px;box-shadow:0 12px 30px rgba(31,50,70,.07);margin-bottom:16px;overflow:hidden}.penalty-section-head{align-items:center;border-bottom:1px solid #edf1f5;display:flex;gap:12px;justify-content:space-between;padding:14px 16px}.penalty-section-head h2{color:#172b3f;font-size:1rem;font-weight:900;margin:0}.penalty-section-head span{color:#667085;font-size:.76rem}.penalty-manager table{font-size:.8rem;margin:0;white-space:nowrap}.penalty-manager thead th{background:#f7f9fb;color:#536273;font-size:.7rem;text-transform:uppercase}.penalty-manager td,.penalty-manager th{border-color:#edf1f5;padding:.62rem}.penalty-manager .table-warning,.penalty-manager .table-success{--bs-table-bg:#fff}.penalty-empty{color:#667085;padding:30px;text-align:center}.penalty-reverse{border-top:1px solid #edf1f5;padding:12px 16px;text-align:right}@media(max-width:640px){.manager-selector{grid-template-columns:1fr}.penalty-summary{grid-template-columns:1fr}.penalty-section-head{align-items:flex-start;flex-direction:column}}
+</style>
+<style>.penalty-manager{margin-top:6px}@media(max-width:640px){.penalty-manager{margin-top:4px}}</style>
+<main class="container-fluid penalty-manager">
+  <header class="operation-header">
+    <div class="operation-heading"><p class="operation-eyebrow">Loan servicing</p><h1>Penalty management</h1><p>Review balances and reverse unpaid penalties when necessary.</p></div>
+    <nav class="operation-actions"><a href="{% url 'loans:loan_penalty_create' %}" class="btn primary-light"><i class="mdi mdi-plus"></i> Add penalty</a><button onclick="printDiv('printSection')" class="btn"><i class="mdi mdi-printer"></i> Print</button><a href="{% url 'loans:loan_reports_dashboard' %}" class="btn"><i class="mdi mdi-arrow-left"></i> Reports</a></nav>
+  </header>
 
   <!-- Client Selection -->
-  <form method="POST" class="card p-4 mb-4 bg-light shadow-sm">
+  <form method="POST" class="manager-selector">
     {% csrf_token %}
-    <div class="row g-3 align-items-end">
-      <div class="col-md-8">
+      <div>
         <label class="form-label fw-bold">Select Client</label>
         <select name="client_id" class="form-select chzn-select" required>
-          <option value="" disabled {% if not selected_client %}selected{% endif %}>-- Choose Client with Loans --</option>
+          <option value="" disabled {% if not selected_client %}selected{% endif %}>Choose a client with loans</option>
           {% for client in clients %}
             <option value="{{ client.id }}" {% if selected_client.id == client.id %}selected{% endif %}>
               {{ client.full_name }} ({{ client.reg_number }})
             </option>
           {% endfor %}
         </select>
-      </div>
-      <div class="col-md-4">
-        <button type="submit" class="btn btn-primary w-100">
-          <i class="mdi mdi-magnify"></i> Load Penalties
-        </button>
-      </div>
-    </div>
+      </div><button type="submit" class="btn btn-primary"><i class="mdi mdi-magnify"></i> View penalties</button>
   </form>
 
   {% if selected_client %}
     <div id="printSection">
-      <div class="text-center my-4">
-        <h3 class="text-primary fw-bold">LOAN PENALTIES REPORT</h3>
-        <h5>{{ selected_client.full_name }}</h5>
-        <p class="text-muted">Reg No: {{ selected_client.reg_number }}</p>
-      </div>
+      <div class="penalty-summary"><div><span>Client</span><strong>{{ selected_client.full_name }}</strong></div><div><span>Outstanding</span><strong>{{ unpaid_total|floatformat:2|intcomma }} UGX</strong></div><div><span>Paid to date</span><strong>{{ paid_total|floatformat:2|intcomma }} UGX</strong></div></div>
 
       <!-- UNPAID PENALTIES -->
-      <div class="card mb-4 border-danger">
-        <div class="card-header bg-danger text-white">
-          <h5 class="mb-0">
-            <i class="mdi mdi-alert"></i> UNPAID PENALTIES
-            <span class="float-end">
-              Total: <strong>{{ unpaid_total|floatformat:2|intcomma }} UGX</strong>
-              ({{ unpaid_count }} item{{ unpaid_count|pluralize }})
-            </span>
-          </h5>
-        </div>
+      <section class="penalty-section">
+        <div class="penalty-section-head"><h2><i class="mdi mdi-alert-circle-outline text-danger"></i> Unpaid penalties</h2><span>{{ unpaid_count }} item{{ unpaid_count|pluralize }} · {{ unpaid_total|floatformat:2|intcomma }} UGX outstanding</span></div>
         {% if unpaid_penalties %}
           <form method="POST" onsubmit="return confirm('Reverse the unpaid balance for the selected penalties?\nThe original penalties will remain in the audit trail.');">
             {% csrf_token %}
             <input type="hidden" name="client_id" value="{{ selected_client.id }}">
-            <div class="card-body">
               <div class="table-responsive">
                 <table class="table table-bordered table-hover mb-0">
                   <thead class="table-light">
@@ -92,31 +69,20 @@
                   </tbody>
                 </table>
               </div>
-              <div class="d-flex justify-content-end mt-3">
+              <div class="penalty-reverse">
                 <button type="submit" name="delete_selected" class="btn btn-outline-danger btn-sm">
                   <i class="mdi mdi-backup-restore"></i> Reverse Selected
                 </button>
               </div>
-            </div>
           </form>
         {% else %}
-          <div class="card-body text-center text-success py-4">
-            <h5>No unpaid penalties found</h5>
-          </div>
+          <div class="penalty-empty"><i class="mdi mdi-check-circle-outline text-success"></i> No unpaid penalties</div>
         {% endif %}
-      </div>
+      </section>
 
       <!-- PAID PENALTIES -->
-      <div class="card border-success mb-4">
-        <div class="card-header bg-success text-white">
-          <h5 class="mb-0">
-            PAID / CLEARED PENALTIES
-            <span class="float-end">
-              Total Paid: <strong>{{ paid_total|floatformat:2|intcomma }} UGX</strong>
-              ({{ paid_count }} item{{ paid_count|pluralize }})
-            </span>
-          </h5>
-        </div>
+      <section class="penalty-section">
+        <div class="penalty-section-head"><h2><i class="mdi mdi-check-circle-outline text-success"></i> Paid penalties</h2><span>{{ paid_count }} item{{ paid_count|pluralize }} · {{ paid_total|floatformat:2|intcomma }} UGX paid</span></div>
         {% if paid_penalties %}
             <div class="table-responsive">
               <table class="table table-bordered table-hover mb-0">
@@ -147,28 +113,14 @@
               </table>
             </div>
         {% else %}
-          <div class="card-body text-center text-muted py-4">
-            <h5>No paid penalties recorded</h5>
-          </div>
+          <div class="penalty-empty">No paid penalties recorded</div>
         {% endif %}
-      </div>
-
-      <!-- Summary -->
-      <div class="text-center mt-4 p-4 bg-light rounded">
-        <h5>Penalty Summary for {{ selected_client.full_name }}</h5>
-        <p class="mb-0">
-          <span class="text-danger fw-bold">Unpaid:</span> {{ unpaid_total|floatformat:2|intcomma }} UGX &nbsp; | &nbsp;
-          <span class="text-success fw-bold">Paid:</span> {{ paid_total|floatformat:2|intcomma }} UGX &nbsp; | &nbsp;
-          <span class="text-primary fw-bold">Total Penalties Ever:</span> {{ total_ever|floatformat:2|intcomma }} UGX
-        </p>
-      </div>
+      </section>
     </div>
   {% else %}
-    <div class="alert alert-info text-center">
-      Please select a client above to view their full loan penalty history (paid + unpaid).
-    </div>
+    <div class="penalty-empty">Select a client to review their penalties.</div>
   {% endif %}
-</div>
+</main>
 
 <script>
   document.getElementById('selectUnpaid')?.addEventListener('change', function() {

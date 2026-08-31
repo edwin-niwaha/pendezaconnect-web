@@ -108,12 +108,8 @@ urlpatterns = [
         views.loan_product_performance_report,
         name="loan_product_performance_report",
     ),
-    path(
-        "portfolio-at-risk/", views.portfolio_at_risk, name="portfolio_at_risk_report"
-    ),
-    path(
-        "loans/non-performing/", views.non_performing_loans, name="non_performing_loans"
-    ),
+    path("portfolio-at-risk/", views.portfolio_at_risk, name="portfolio_at_risk_report"),
+    path("loans/non-performing/", views.non_performing_loans, name="non_performing_loans"),
     path("import/", views.import_loan_data, name="import_loan_data"),
     # Chart of accounts URLs
     path("accounts/add/", views.add_chart_of_account_view, name="add_chart_of_account"),

@@ -60,17 +60,13 @@ def reports_dash(request):
     # Children
     children_count = Child.objects.count()
     sponsored_count = Child.objects.filter(is_departed=False, is_sponsored=True).count()
-    non_sponsored_count = Child.objects.filter(
-        is_departed=False, is_sponsored=False
-    ).count()
+    non_sponsored_count = Child.objects.filter(is_departed=False, is_sponsored=False).count()
     children_departed_count = Child.objects.filter(is_departed=True).count()
 
     # Staff
     staff_count = Staff.objects.count()
     sponsored_staff_count = StaffSponsorship.objects.filter(is_active=True).count()
-    non_sponsored_staff_count = Staff.objects.filter(
-        is_departed=False, is_sponsored=False
-    ).count()
+    non_sponsored_staff_count = Staff.objects.filter(is_departed=False, is_sponsored=False).count()
     departed_staff_count = Staff.objects.filter(is_departed=True).count()
 
     context = {
@@ -96,9 +92,7 @@ def reports_dash(request):
 @admin_or_manager_or_staff_required
 def children_master_list(request):
     queryset = (
-        Child.objects.filter(is_sponsored=True)
-        .prefetch_related("sponsorships_received__sponsor")
-        .order_by("full_name")
+        Child.objects.filter(is_sponsored=True).prefetch_related("sponsorships_received__sponsor").order_by("full_name")
     )
     search_query = request.GET.get("search")
     queryset = filter_by_search(queryset, search_query, ["full_name"])
@@ -106,9 +100,7 @@ def children_master_list(request):
     # Group the queryset by child
     grouped_sponsorships = defaultdict(list)
     for child in queryset:
-        grouped_sponsorships[child].extend(
-            child.sponsorships_received.filter(is_active=True)
-        )
+        grouped_sponsorships[child].extend(child.sponsorships_received.filter(is_active=True))
 
     page = request.GET.get("page")
     records = paginate_queryset(list(grouped_sponsorships.items()), page)
@@ -150,9 +142,7 @@ def sponsored_children(request):
     # Filter children where is_sponsored is True
     queryset = (
         Child.objects.filter(is_sponsored=True)
-        .prefetch_related(
-            "sponsorships_received__sponsor"
-        )  # Use prefetch_related for reverse ForeignKey
+        .prefetch_related("sponsorships_received__sponsor")  # Use prefetch_related for reverse ForeignKey
         .order_by("full_name")
     )
 
@@ -163,9 +153,7 @@ def sponsored_children(request):
     # Group the queryset by child
     grouped_sponsorships = defaultdict(list)
     for child in queryset:
-        grouped_sponsorships[child].extend(
-            child.sponsorships_received.filter(is_active=True)
-        )
+        grouped_sponsorships[child].extend(child.sponsorships_received.filter(is_active=True))
 
     page = request.GET.get("page")
     records = paginate_queryset(list(grouped_sponsorships.items()), page)
@@ -186,9 +174,7 @@ def un_sponsored_children(request):
     """
     Render a paginated list of all non-sponsored children.
     """
-    queryset = Child.objects.filter(is_departed=False, is_sponsored=False).order_by(
-        "id"
-    )
+    queryset = Child.objects.filter(is_departed=False, is_sponsored=False).order_by("id")
     search_query = request.GET.get("search")
     queryset = filter_by_search(queryset, search_query, ["full_name"])
 
@@ -211,11 +197,7 @@ def departed_children(request):
     """
     Render a paginated list of all departed children.
     """
-    queryset = (
-        Child.objects.filter(is_departed=True)
-        .order_by("id")
-        .prefetch_related("departures")
-    )
+    queryset = Child.objects.filter(is_departed=True).order_by("id").prefetch_related("departures")
     search_query = request.GET.get("search")
     queryset = filter_by_search(queryset, search_query, ["full_name"])
 
@@ -259,11 +241,7 @@ def sponsor_payments_child(request):
     """
     Render a paginated list of all sponsor payments for children.
     """
-    queryset = (
-        ChildPayments.objects.filter(is_valid=True)
-        .select_related("sponsor", "child")
-        .order_by("id")
-    )
+    queryset = ChildPayments.objects.filter(is_valid=True).select_related("sponsor", "child").order_by("id")
     search_query = request.GET.get("search")
     queryset = filter_by_search(queryset, search_query, ["sponsor__first_name"])
 
@@ -293,11 +271,7 @@ def sponsor_payments_staff(request):
     """
     Render a paginated list of all sponsor payments for staff.
     """
-    queryset = (
-        StaffPayments.objects.filter(is_valid=True)
-        .select_related("sponsor", "staff")
-        .order_by("id")
-    )
+    queryset = StaffPayments.objects.filter(is_valid=True).select_related("sponsor", "staff").order_by("id")
     search_query = request.GET.get("search")
     queryset = filter_by_search(queryset, search_query, ["sponsor__first_name"])
 
@@ -328,14 +302,10 @@ def sponsored_staff(request):
     Render a paginated list of all sponsored staff, grouped by staff.
     """
     queryset = (
-        StaffSponsorship.objects.filter(is_active=True)
-        .select_related("staff", "sponsor")
-        .order_by("staff", "id")
+        StaffSponsorship.objects.filter(is_active=True).select_related("staff", "sponsor").order_by("staff", "id")
     )
     search_query = request.GET.get("search")
-    queryset = filter_by_search(
-        queryset, search_query, ["staff__first_name", "staff__last_name"]
-    )
+    queryset = filter_by_search(queryset, search_query, ["staff__first_name", "staff__last_name"])
 
     # Group the queryset by staff
     grouped_sponsorships = defaultdict(list)
@@ -361,9 +331,7 @@ def non_sponsored_staff(request):
     """
     Render a paginated list of all non-sponsored staff.
     """
-    queryset = Staff.objects.filter(is_sponsored=False, is_departed=False).order_by(
-        "id"
-    )
+    queryset = Staff.objects.filter(is_sponsored=False, is_departed=False).order_by("id")
     search_query = request.GET.get("search")
     queryset = filter_by_search(queryset, search_query, ["first_name", "last_name"])
 

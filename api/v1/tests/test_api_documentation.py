@@ -1,6 +1,7 @@
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
+
 @override_settings(STATICFILES_STORAGE="django.contrib.staticfiles.storage.StaticFilesStorage")
 class ApiDocumentationTests(TestCase):
     def test_documentation_pages_are_public(self):

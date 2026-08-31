@@ -1,6 +1,7 @@
-﻿from rest_framework import serializers
+from rest_framework import serializers
 
 from apps.child.models import Child, ChildProfilePicture
+
 from .media import absolute_media_url
 
 

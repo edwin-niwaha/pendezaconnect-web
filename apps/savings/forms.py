@@ -30,9 +30,7 @@ class SavingsAccountForm(forms.ModelForm):
                     "placeholder": "Leave blank to auto-generate",
                 }
             ),
-            "opening_date": forms.DateInput(
-                attrs={"type": "date", "class": "form-control"}
-            ),
+            "opening_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
             "status": forms.Select(attrs={"class": "form-control"}),
             "notes": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
         }
@@ -40,9 +38,7 @@ class SavingsAccountForm(forms.ModelForm):
 
 class SavingsTransactionForm(forms.ModelForm):
     account = forms.ModelChoiceField(
-        queryset=SavingsAccount.objects.select_related("client").filter(
-            status="active"
-        ),
+        queryset=SavingsAccount.objects.select_related("client").filter(status="active"),
         widget=forms.Select(
             attrs={
                 "class": "form-control",
@@ -66,12 +62,8 @@ class SavingsTransactionForm(forms.ModelForm):
         ]
         widgets = {
             "transaction_type": forms.Select(attrs={"class": "form-control"}),
-            "amount": forms.NumberInput(
-                attrs={"class": "form-control", "min": "0.01", "step": "0.01"}
-            ),
-            "transaction_date": forms.DateInput(
-                attrs={"type": "date", "class": "form-control"}
-            ),
+            "amount": forms.NumberInput(attrs={"class": "form-control", "min": "0.01", "step": "0.01"}),
+            "transaction_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
             "payment_method": forms.Select(attrs={"class": "form-control"}),
             "reference": forms.TextInput(attrs={"class": "form-control"}),
             "notes": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
@@ -81,9 +73,7 @@ class SavingsTransactionForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         account = kwargs.pop("account", None)
         super().__init__(*args, **kwargs)
-        self.fields["transaction_date"].initial = (
-            self.fields["transaction_date"].initial or timezone.localdate()
-        )
+        self.fields["transaction_date"].initial = self.fields["transaction_date"].initial or timezone.localdate()
         if account is not None:
             self.fields["account"].initial = account
             self.fields["account"].widget = forms.HiddenInput()
@@ -95,9 +85,7 @@ class ClientSavingsRequestForm(forms.ModelForm):
         fields = ["transaction_type", "amount", "payment_method", "reference", "notes"]
         widgets = {
             "transaction_type": forms.Select(attrs={"class": "form-control"}),
-            "amount": forms.NumberInput(
-                attrs={"class": "form-control", "min": "0.01", "step": "0.01"}
-            ),
+            "amount": forms.NumberInput(attrs={"class": "form-control", "min": "0.01", "step": "0.01"}),
             "payment_method": forms.Select(attrs={"class": "form-control"}),
             "reference": forms.TextInput(
                 attrs={
@@ -158,7 +146,5 @@ class ClientMobileMoneyDepositForm(forms.Form):
     def clean_phone(self):
         phone = self.cleaned_data["phone"].strip().replace(" ", "")
         if not re.match(r"^07\d{8}$", phone):
-            raise forms.ValidationError(
-                "Enter a valid MTN mobile money number, for example 0771234567."
-            )
+            raise forms.ValidationError("Enter a valid MTN mobile money number, for example 0771234567.")
         return phone

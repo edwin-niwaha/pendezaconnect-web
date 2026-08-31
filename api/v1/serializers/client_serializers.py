@@ -5,6 +5,7 @@ from rest_framework import serializers
 
 from apps.client.models import Client
 from apps.savings.models import SavingsAccount, SavingsTransaction
+
 from .media import absolute_media_url, thumbnail_url
 
 
@@ -92,13 +93,9 @@ class SavingsTransactionSerializer(serializers.ModelSerializer):
 
 
 class SavingsRequestSerializer(serializers.Serializer):
-    amount = serializers.DecimalField(
-        max_digits=15, decimal_places=2, min_value=Decimal("0.01")
-    )
+    amount = serializers.DecimalField(max_digits=15, decimal_places=2, min_value=Decimal("0.01"))
     notes = serializers.CharField(allow_blank=True, max_length=2000, required=False)
-    payment_method = serializers.ChoiceField(
-        choices=("mobile_money", "bank_transfer", "cash", "cheque")
-    )
+    payment_method = serializers.ChoiceField(choices=("mobile_money", "bank_transfer", "cash", "cheque"))
     reference = serializers.CharField(allow_blank=True, max_length=80, required=False)
     transaction_type = serializers.ChoiceField(choices=("deposit", "withdrawal"))
 
@@ -108,27 +105,24 @@ class SavingsRequestSerializer(serializers.Serializer):
         transaction_type = attrs["transaction_type"]
 
         if transaction_type == "deposit" and not reference:
-            raise serializers.ValidationError(
-                {"reference": "Enter the Mobile Money transaction ID."}
+            raise serializers.ValidationError({"reference": "Enter the Mobile Money transaction ID."})
+        if (
+            transaction_type == "deposit"
+            and account.transactions.filter(
+                reference__iexact=reference,
+                transaction_type="deposit",
             )
-        if transaction_type == "deposit" and account.transactions.filter(
-            reference__iexact=reference,
-            transaction_type="deposit",
-        ).exclude(status="rejected").exists():
-            raise serializers.ValidationError(
-                {"reference": "A deposit with this transaction ID already exists."}
-            )
+            .exclude(status="rejected")
+            .exists()
+        ):
+            raise serializers.ValidationError({"reference": "A deposit with this transaction ID already exists."})
         if transaction_type == "withdrawal":
-            pending = account.transactions.filter(
-                transaction_type="withdrawal", status="pending"
-            ).aggregate(total=Sum("amount"))["total"] or Decimal("0")
+            pending = account.transactions.filter(transaction_type="withdrawal", status="pending").aggregate(
+                total=Sum("amount")
+            )["total"] or Decimal("0")
             if attrs["amount"] > account.balance - pending:
                 raise serializers.ValidationError(
-                    {
-                        "amount": (
-                            "The withdrawal cannot exceed your available savings balance."
-                        )
-                    }
+                    {"amount": ("The withdrawal cannot exceed your available savings balance.")}
                 )
 
         attrs["reference"] = reference

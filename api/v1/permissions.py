@@ -1,4 +1,4 @@
-﻿from rest_framework import permissions
+from rest_framework import permissions
 
 from api.v1.selectors import is_internal_user, linked_client_id, linked_sponsor_id
 

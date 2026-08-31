@@ -82,9 +82,7 @@ def child_sponsorship(request):
                             sponsor=sponsor_instance,
                             child=child_instance,
                         )
-                        sponsorship.sponsorship_type = form.cleaned_data[
-                            "sponsorship_type"
-                        ]
+                        sponsorship.sponsorship_type = form.cleaned_data["sponsorship_type"]
                         sponsorship.start_date = form.cleaned_data["start_date"]
                         sponsorship.end_date = None
                         sponsorship.is_active = True
@@ -92,23 +90,15 @@ def child_sponsorship(request):
 
                         # Update sponsor status to "departed"
                         child_instance.is_sponsored = True
-                        child_instance.save(
-                            update_fields=["is_sponsored", "updated_at"]
-                        )
+                        child_instance.save(update_fields=["is_sponsored", "updated_at"])
                         sponsor_instance.is_child_sponsor = True
-                        sponsor_instance.save(
-                            update_fields=["is_child_sponsor", "updated_at"]
-                        )
+                        sponsor_instance.save(update_fields=["is_child_sponsor", "updated_at"])
 
-                    messages.success(
-                        request, "Assigned successfully!", extra_tags="bg-success"
-                    )
+                    messages.success(request, "Assigned successfully!", extra_tags="bg-success")
                     return redirect("child_sponsorship")
                 except IntegrityError:
                     # Handle integrity error if any
-                    messages.error(
-                        request, "An error occurred while processing the request."
-                    )
+                    messages.error(request, "An error occurred while processing the request.")
         else:
             messages.error(request, "Form is invalid.", extra_tags="bg-danger")
     else:
@@ -231,9 +221,7 @@ def edit_child_sponsorship(request, sponsorship_id):
                 "Child sponsorship updated successfully!",
                 extra_tags="bg-success",
             )
-            return redirect(
-                "child_sponsorship_report"
-            )  # Redirect to a report or list view
+            return redirect("child_sponsorship_report")  # Redirect to a report or list view
     else:
         form = ChildSponsorshipEditForm(instance=sponsorship)
 
@@ -281,9 +269,7 @@ def terminate_child_sponsorship(request, sponsorship_id):
                 ).exists()
                 sponsored_child.save(update_fields=["is_sponsored", "updated_at"])
 
-            messages.success(
-                request, "Sponsorship terminated successfully!", extra_tags="bg-success"
-            )
+            messages.success(request, "Sponsorship terminated successfully!", extra_tags="bg-success")
             return HttpResponseRedirect(reverse("child_sponsorship_report"))
 
     return HttpResponseBadRequest("Invalid request")
@@ -321,9 +307,7 @@ def staff_sponsorship_create(request):
                 sponsor=sponsor_instance, staff=staff_instance
             ).first()
             if existing_sponsorship and existing_sponsorship.is_active:
-                messages.error(
-                    request, "Sponsorship already exists for this staff and sponsor."
-                )
+                messages.error(request, "Sponsorship already exists for this staff and sponsor.")
             else:
                 try:
                     # Create the sponsorship instance
@@ -332,9 +316,7 @@ def staff_sponsorship_create(request):
                             sponsor=sponsor_instance,
                             staff=staff_instance,
                         )
-                        sponsorship.sponsorship_type = form.cleaned_data[
-                            "sponsorship_type"
-                        ]
+                        sponsorship.sponsorship_type = form.cleaned_data["sponsorship_type"]
                         sponsorship.start_date = form.cleaned_data["start_date"]
                         sponsorship.end_date = None
                         sponsorship.is_active = True
@@ -342,23 +324,15 @@ def staff_sponsorship_create(request):
 
                         # Update sponsorship status
                         staff_instance.is_sponsored = True
-                        staff_instance.save(
-                            update_fields=["is_sponsored", "updated_at"]
-                        )
+                        staff_instance.save(update_fields=["is_sponsored", "updated_at"])
                         sponsor_instance.is_staff_sponsor = True
-                        sponsor_instance.save(
-                            update_fields=["is_staff_sponsor", "updated_at"]
-                        )
+                        sponsor_instance.save(update_fields=["is_staff_sponsor", "updated_at"])
 
-                    messages.success(
-                        request, "Assigned successfully!", extra_tags="bg-success"
-                    )
+                    messages.success(request, "Assigned successfully!", extra_tags="bg-success")
                     return redirect("staff_sponsorship_create")
                 except IntegrityError:
                     # Handle integrity error if any
-                    messages.error(
-                        request, "An error occurred while processing the request."
-                    )
+                    messages.error(request, "An error occurred while processing the request.")
         else:
             messages.error(request, "Form is invalid.", extra_tags="bg-danger")
     else:
@@ -477,9 +451,7 @@ def edit_staff_sponsorship(request, sponsorship_id):
                 "Staff sponsorship updated successfully!",
                 extra_tags="bg-success",
             )
-            return redirect(
-                "staff_sponsorship_report"
-            )  # Redirect to a report or list view
+            return redirect("staff_sponsorship_report")  # Redirect to a report or list view
     else:
         form = StaffSponsorshipEditForm(instance=sponsorship)
 
@@ -520,16 +492,12 @@ def terminate_staff_sponsorship(request, sponsorship_id):
             sponsorship.save()
 
             # Assuming a direct ForeignKey relationship to Staff
-            staff_member = (
-                sponsorship.staff
-            )  # Replace 'staff' with actual related name if different
+            staff_member = sponsorship.staff  # Replace 'staff' with actual related name if different
             if staff_member:
                 staff_member.is_sponsored = False
                 staff_member.save()
 
-            messages.success(
-                request, "Sponsorship terminated successfully!", extra_tags="bg-success"
-            )
+            messages.success(request, "Sponsorship terminated successfully!", extra_tags="bg-success")
             return HttpResponseRedirect(reverse("staff_sponsorship_report"))
 
     return HttpResponseBadRequest("Invalid request")
@@ -558,24 +526,16 @@ def initiate_payment(request):
             if amount < 5000:
                 raise ValueError
         except ValueError:
-            messages.error(
-                request, "Amount must be 5,000 UGX or more.", extra_tags="alert-danger"
-            )
+            messages.error(request, "Amount must be 5,000 UGX or more.", extra_tags="alert-danger")
             return render(request, "sponsorship/initiate_payment.html")
 
-        token = create_access_token(
-            settings.MOMO_API_USER, settings.MOMO_API_KEY, settings.SUBSCRIPTION_KEY
-        )
+        token = create_access_token(settings.MOMO_API_USER, settings.MOMO_API_KEY, settings.SUBSCRIPTION_KEY)
         if not token:
-            messages.error(
-                request, "Service temporarily unavailable.", extra_tags="alert-danger"
-            )
+            messages.error(request, "Service temporarily unavailable.", extra_tags="alert-danger")
             return render(request, "sponsorship/initiate_payment.html")
 
         ref = generate_uuid()
-        status, res_text = request_to_pay(
-            token, settings.SUBSCRIPTION_KEY, api_phone, amount, ref
-        )
+        status, res_text = request_to_pay(token, settings.SUBSCRIPTION_KEY, api_phone, amount, ref)
         print("RequestToPay Status:", status)
         print("RequestToPay Response:", res_text)
 
@@ -593,9 +553,7 @@ def initiate_payment(request):
             return HttpResponseRedirect(reverse("waiting") + f"?{query}")
 
         else:
-            messages.error(
-                request, "Payment failed. Try again.", extra_tags="alert-danger"
-            )
+            messages.error(request, "Payment failed. Try again.", extra_tags="alert-danger")
 
     return render(request, "sponsorship/initiate_payment.html")
 
@@ -633,9 +591,7 @@ def get_transaction_status(request, ref_id):
     No API keys exposed to the browser.
     """
     # 1. Generate token using YOUR secrets (never exposed)
-    token = create_access_token(
-        settings.MOMO_API_USER, settings.MOMO_API_KEY, settings.SUBSCRIPTION_KEY
-    )
+    token = create_access_token(settings.MOMO_API_USER, settings.MOMO_API_KEY, settings.SUBSCRIPTION_KEY)
     if not token:
         return JsonResponse({"status": "PENDING"})  # Don't leak errors
 
@@ -667,7 +623,6 @@ def get_transaction_status(request, ref_id):
 # ---------------- MoMo Callback Handler ---------------- #
 @csrf_exempt
 def momo_callback(request):
-
     if request.method != "POST":
         return JsonResponse({"error": "Invalid method"}, status=405)
 
@@ -709,9 +664,7 @@ def momo_callback(request):
         txn.save()
         logger.info(f"Transaction {external_id} updated to {status}")
     else:
-        logger.info(
-            f"Transaction {external_id} callback received but status already {status}"
-        )
+        logger.info(f"Transaction {external_id} callback received but status already {status}")
 
     return JsonResponse({"status": "ok"})
 

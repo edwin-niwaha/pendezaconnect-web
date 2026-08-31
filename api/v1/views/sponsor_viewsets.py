@@ -1,4 +1,4 @@
-﻿from rest_framework import filters, permissions, viewsets
+from rest_framework import filters, permissions, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
@@ -43,12 +43,8 @@ class SponsorViewSet(viewsets.ReadOnlyModelViewSet):
         sponsor = self.get_object()
         return Response(
             {
-                "child_payments": ChildPaymentSerializer(
-                    child_payments_for_sponsor(sponsor)[:25], many=True
-                ).data,
-                "staff_payments": StaffPaymentSerializer(
-                    staff_payments_for_sponsor(sponsor)[:25], many=True
-                ).data,
+                "child_payments": ChildPaymentSerializer(child_payments_for_sponsor(sponsor)[:25], many=True).data,
+                "staff_payments": StaffPaymentSerializer(staff_payments_for_sponsor(sponsor)[:25], many=True).data,
                 "sponsor_payments": PaymentSerializer(
                     payments_for_user(request.user).filter(sponsor=sponsor)[:25], many=True
                 ).data,

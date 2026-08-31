@@ -88,18 +88,12 @@ def child_sponsor_payment(request):
                     payment.child = child_instance
                     payment.save()
                     sponsor_instance.is_child_sponsor = True
-                    sponsor_instance.save(
-                        update_fields=["is_child_sponsor", "updated_at"]
-                    )
+                    sponsor_instance.save(update_fields=["is_child_sponsor", "updated_at"])
 
-                messages.success(
-                    request, "Payment submitted successfully!", extra_tags="bg-success"
-                )
+                messages.success(request, "Payment submitted successfully!", extra_tags="bg-success")
                 return redirect("child_sponsor_payment")
             except IntegrityError:
-                messages.error(
-                    request, "An error occurred while processing the request."
-                )
+                messages.error(request, "An error occurred while processing the request.")
         else:
             messages.error(request, "Form is invalid.", extra_tags="bg-danger")
     else:
@@ -146,14 +140,10 @@ def sponsor_payment_without_child(request):
                     payment.save()
                     apply_sponsor_flags_for_program(sponsor_instance, payment.program)
 
-                messages.success(
-                    request, "Payment submitted successfully!", extra_tags="bg-success"
-                )
+                messages.success(request, "Payment submitted successfully!", extra_tags="bg-success")
                 return redirect("sponsor_payment_without_child")
             except IntegrityError:
-                messages.error(
-                    request, "An error occurred while processing the request."
-                )
+                messages.error(request, "An error occurred while processing the request.")
         else:
             messages.error(request, "Form is invalid.", extra_tags="bg-danger")
     else:
@@ -189,9 +179,7 @@ def donor_payment_view(request):
                 donor_payment.save()
                 sponsor_instance = None
                 if donor_instance.email:
-                    sponsor_instance = Sponsor.objects.filter(
-                        email__iexact=donor_instance.email
-                    ).first()
+                    sponsor_instance = Sponsor.objects.filter(email__iexact=donor_instance.email).first()
                 if sponsor_instance is None:
                     full_name = donor_instance.full_name or "Unknown"
                     first_name, _, last_name = full_name.partition(" ")
@@ -205,9 +193,7 @@ def donor_payment_view(request):
                     )
                 sync_donor_payment_to_unified(donor_payment, sponsor_instance)
 
-                messages.success(
-                    request, "Payment submitted successfully!", extra_tags="bg-success"
-                )
+                messages.success(request, "Payment submitted successfully!", extra_tags="bg-success")
                 return redirect("donor_payment")
 
             except IntegrityError:
@@ -318,18 +304,12 @@ def staff_sponsor_payment(request):
                     payment.staff = staff_instance
                     payment.save()
                     sponsor_instance.is_staff_sponsor = True
-                    sponsor_instance.save(
-                        update_fields=["is_staff_sponsor", "updated_at"]
-                    )
+                    sponsor_instance.save(update_fields=["is_staff_sponsor", "updated_at"])
 
-                messages.success(
-                    request, "Payment submitted successfully!", extra_tags="bg-success"
-                )
+                messages.success(request, "Payment submitted successfully!", extra_tags="bg-success")
                 return redirect("staff_sponsor_payment")
             except IntegrityError:
-                messages.error(
-                    request, "An error occurred while processing the request."
-                )
+                messages.error(request, "An error occurred while processing the request.")
         else:
             messages.error(request, "Form is invalid.", extra_tags="bg-danger")
     else:
@@ -368,9 +348,7 @@ def validate_child_payment(request, payment_id):
             sponsor_payments.save()
             sync_child_payment_to_unified(sponsor_payments)
 
-            messages.success(
-                request, "Pyament validated successfully!", extra_tags="bg-success"
-            )
+            messages.success(request, "Pyament validated successfully!", extra_tags="bg-success")
             return HttpResponseRedirect(reverse("child_sponsor_payments_report"))
 
     return HttpResponseBadRequest("Invalid request")
@@ -429,9 +407,7 @@ def validate_staff_payment(request, payment_id):
             sponsor_payments.save()
             sync_staff_payment_to_unified(sponsor_payments)
 
-            messages.success(
-                request, "Pyament validated successfully!", extra_tags="bg-success"
-            )
+            messages.success(request, "Pyament validated successfully!", extra_tags="bg-success")
             return HttpResponseRedirect(reverse("staff_sponsor_payments_report"))
 
     return HttpResponseBadRequest("Invalid request")
@@ -488,10 +464,7 @@ def group_payments_by_year(payments):
 
 
 def calculate_subtotals(payments_by_year):
-    return {
-        year: sum(p.amount for p in payments)
-        for year, payments in payments_by_year.items()
-    }
+    return {year: sum(p.amount for p in payments) for year, payments in payments_by_year.items()}
 
 
 def group_sponsor_level_payments_by_year(payments):
@@ -513,13 +486,9 @@ def generate_payments_report(request, report_title, template_name, payment_model
         sponsor_id = request.POST.get("id")
         if sponsor_id:
             selected_sponsor = get_object_or_404(Sponsor, id=sponsor_id)
-            sponsor_payments = payment_model.objects.select_related("sponsor").filter(
-                sponsor_id=sponsor_id
-            )
+            sponsor_payments = payment_model.objects.select_related("sponsor").filter(sponsor_id=sponsor_id)
             related_fields = {
-                field.name
-                for field in payment_model._meta.get_fields()
-                if getattr(field, "many_to_one", False)
+                field.name for field in payment_model._meta.get_fields() if getattr(field, "many_to_one", False)
             }
             if "child" in related_fields:
                 sponsor_payments = sponsor_payments.select_related("child")
@@ -630,6 +599,7 @@ def sponsor_payment_without_child_report(request):
         "finance/sponsor_payment_without_child_rpt.html",
         context,
     )
+
 
 @login_required
 @admin_or_manager_or_staff_required

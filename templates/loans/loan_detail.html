@@ -337,6 +337,43 @@
       justify-content: flex-end;
     }
 
+    /* Compact decision-focused detail view */
+    .loan-detail-page { background: #f4f7f6; margin-top: -18px; padding: 18px 16px 32px; }
+    .loan-detail-header { background: linear-gradient(125deg,#0b4635,#116149 62%,#17785b); border: 0; border-radius: 16px; box-shadow: 0 14px 34px rgba(16,78,59,.16); color: #fff; margin-bottom: 12px; overflow: hidden; padding: 18px 20px; position: relative; }
+    .loan-detail-header::after { background: rgba(255,255,255,.07); border-radius: 50%; content: ""; height: 170px; position: absolute; right: -40px; top: -90px; width: 170px; }
+    .loan-detail-header > * { position: relative; z-index: 1; }
+    .loan-eyebrow { color: #bce7d7; font-size: .68rem; letter-spacing: .12em; }
+    .loan-detail-header h3 { color: #fff; font-size: 1.35rem; margin-top: 2px; }
+    .loan-detail-header .loan-muted { color: rgba(255,255,255,.72); }
+    .loan-header-status { align-items: center; display: flex; gap: 8px; margin-top: 7px; }
+    .loan-header-status .loan-status-pill { background: rgba(255,255,255,.16); color: #fff; margin: 0; }
+    .loan-actions .btn { border-radius: 8px; font-weight: 700; min-height: 36px; }
+    .loan-detail-header .loan-actions .btn { border-color: rgba(255,255,255,.3); color: #fff; }
+    .loan-detail-header .loan-actions .btn:hover { background: #fff; color: #0b4635; }
+    .loan-metrics { gap: 8px; grid-template-columns: repeat(4,minmax(0,1fr)); margin-bottom: 10px; }
+    .loan-metric { border-color: #e2e8e5; border-radius: 12px; box-shadow: 0 5px 16px rgba(31,45,61,.04); min-height: 72px; padding: 11px 12px; }
+    .loan-metric.primary { background: #123e32; border-color: #123e32; }
+    .loan-metric span { font-size: .65rem; letter-spacing: .055em; }
+    .loan-metric strong { font-size: .94rem; margin-top: 4px; }
+    .loan-detail-panel { border-color: #e2e8e5; border-radius: 12px; box-shadow: 0 5px 18px rgba(31,45,61,.04); margin-bottom: 10px; }
+    .loan-panel-head { padding: 11px 14px; }
+    .loan-panel-head h5 { font-size: .9rem; }
+    .loan-panel-head span { font-size: .76rem; }
+    .loan-panel-body { padding: 12px; }
+    .loan-upload-form { border-color: #e2e8e5; border-radius: 10px; margin-bottom: 10px; padding: 10px; }
+    .loan-warning { border-radius: 10px; font-size: .8rem; margin-bottom: 10px; padding: 9px 11px; }
+    .loan-table { min-width: 620px; }
+    .loan-table thead th { background: #f1f5f3; font-size: .67rem; padding: 9px; }
+    .loan-table tbody td, .loan-table tfoot th { font-size: .8rem; padding: 9px; }
+    .loan-info-grid { gap: 8px; grid-template-columns: repeat(3,minmax(0,1fr)); }
+    .loan-info-tile { border-color: #e2e8e5; border-radius: 9px; padding: 9px 10px; }
+    .loan-info-tile span { font-size: .65rem; }
+    .loan-info-tile strong { font-size: .83rem; margin-top: 3px; }
+    .loan-detail-grid { display: block; }
+    .loan-document-actions .btn { border-radius: 7px; padding: 4px 7px; }
+    .pagination .active .page-link { background: #116149; border-color: #116149; }
+    @media (max-width: 991.98px) { .loan-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); } .loan-info-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+    @media (max-width: 575.98px) { .loan-detail-page { padding: 10px 8px 24px; } .loan-metrics,.loan-info-grid { grid-template-columns: 1fr; } }
     @media print {
       .print-hide {
         display: none !important;
@@ -385,12 +422,16 @@
       <div>
         <span class="loan-eyebrow">Loan Details</span>
         <h3>{{ borrower_name }} | Loan #{{ loan.id }}</h3>
-        <div class="loan-muted">Reg No: {{ loan.borrower.reg_number|default:'Not recorded' }}</div>
+        <div class="loan-header-status"><span class="loan-status-pill">{{ loan.get_status_display|default:loan.status }}</span><span class="loan-muted">Reg {{ loan.borrower.reg_number|default:'not recorded' }}</span></div>
       </div>
       <div class="loan-actions">
-        <a href="{% url 'loans:disburse_loan' %}" class="btn btn-outline-primary btn-sm"><i class="mdi mdi-bank-transfer"></i> Disburse</a>
-        <a href="{% url 'loans:loan_repayment_create' %}" class="btn btn-outline-primary btn-sm"><i class="mdi mdi-cash-plus"></i> Repayment</a>
-        <button title="Print" type="button" class="btn btn-dark btn-sm" onclick="printDiv('printMe')"><i class="mdi mdi-printer"></i> Print</button>
+        <a href="{% url 'loans:loan_applications' %}" class="btn btn-outline-light btn-sm"><i class="mdi mdi-arrow-left"></i> Applications</a>
+        {% if loan.status == 'approved' %}
+          <a href="{% url 'loans:disburse_loan' %}" class="btn btn-outline-light btn-sm"><i class="mdi mdi-bank-transfer"></i> Disburse</a>
+        {% endif %}
+        {% if loan.status == 'disbursed' or loan.status == 'active' %}
+          <a href="{% url 'loans:loan_repayment_create' %}" class="btn btn-outline-light btn-sm"><i class="mdi mdi-cash-plus"></i> Record Repayment</a>
+        {% endif %}
       </div>
     </div>
 
@@ -412,27 +453,20 @@
           <span>Due Date</span>
           <strong>{{ loan.due_date|default:'Not set' }}</strong>
         </div>
-        <div class="loan-metric">
-          <span>Status</span>
-          <strong>{{ loan.get_status_display|default:loan.status }}</strong>
-          <span class="loan-status-pill">{{ loan.status }}</span>
-        </div>
       </section>
 
       <section class="loan-detail-panel">
         <div class="loan-panel-head">
           <div>
             <h5>Attached Documents</h5>
-            <span>Supporting files available for BOO, HOF, and ED review</span>
+            <span>Required files and supporting evidence</span>
           </div>
         </div>
         <div class="loan-panel-body">
           {% if missing_required_documents %}
               <div class="loan-warning">
                   <i class="mdi mdi-alert-circle-outline me-2"></i>
-                  <strong>Required documents missing.</strong><br>
-                  A valid <strong>National ID</strong> and <strong>Bank Statement</strong> must be attached before this loan application can be reviewed, approved, or disbursed by BOO, HOF, or ED.
-                  Approval and review actions are blocked until the required documents are attached.
+                  <strong>Required documents missing.</strong> Approval and review actions are blocked until the National ID and Bank Statement are attached.
               </div>
           {% endif %}
 
@@ -462,25 +496,18 @@
             <table class="table table-hover align-middle loan-table">
               <thead>
                 <tr>
-                  <th>Document Name / Type</th>
-                  <th>File Name</th>
+                  <th>Document</th>
                   <th>Uploaded By</th>
-                  <th>Upload Date</th>
-                  <th>Status</th>
+                  <th>Date</th>
                   <th class="text-end">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {% for document in documents %}
                   <tr>
-                    <td>
-                      <strong>{{ document.get_document_type_display }}</strong>
-                      {% if document.description %}<div class="loan-muted">{{ document.description }}</div>{% endif %}
-                    </td>
-                    <td>{{ document.file.name|default:'Attached file' }}</td>
+                    <td><strong>{{ document.get_document_type_display }}</strong>{% if document.description %}<div class="loan-muted">{{ document.description }}</div>{% endif %}</td>
                     <td>{{ document.uploaded_by|default:'-' }}</td>
-                    <td>{{ document.created_at|date:'M d, Y H:i' }}</td>
-                    <td><span class="loan-document-status attached">Attached</span></td>
+                    <td>{{ document.created_at|date:'M d, Y' }}</td>
                     <td class="text-end">
                       {% if document.file %}
                         <span class="loan-document-actions">
@@ -492,7 +519,7 @@
                   </tr>
                 {% empty %}
                   <tr>
-                    <td colspan="6" class="text-center text-muted py-3">
+                    <td colspan="4" class="text-center text-muted py-3">
                       No supporting documents have been attached to this loan application.
                     </td>
                   </tr>
@@ -565,25 +592,6 @@
             </div>
           </section>
         </div>
-
-        <aside>
-          <section class="loan-detail-panel">
-            <div class="loan-panel-head">
-              <div>
-                <h5>Balance Snapshot</h5>
-                <span>Current outstanding components</span>
-              </div>
-            </div>
-            <div class="loan-panel-body">
-              <div class="loan-balance-list">
-                <div class="loan-balance-row total"><span>Total remaining</span><strong>UGX {{ total_remaining_balance|floatformat:'2'|intcomma }}</strong></div>
-                <div class="loan-balance-row"><span>Principal</span><strong>UGX {{ remaining_principal|floatformat:'2'|intcomma }}</strong></div>
-                <div class="loan-balance-row"><span>Interest</span><strong>UGX {{ remaining_interest|floatformat:'2'|intcomma }}</strong></div>
-                <div class="loan-balance-row"><span>Penalty</span><strong>UGX {{ remaining_penalty|floatformat:'2'|intcomma }}</strong></div>
-              </div>
-            </div>
-          </section>
-        </aside>
       </div>
 
       <section class="loan-detail-panel">
@@ -652,15 +660,4 @@
       </section>
     </div>
   </div>
-
-  <script>
-    function printDiv(divId) {
-      var printContents = document.getElementById(divId).outerHTML
-      var originalContents = document.body.innerHTML
-      document.body.innerHTML = printContents
-      window.print()
-      document.body.innerHTML = originalContents
-      window.location.reload()
-    }
-  </script>
 {% endblock %}

@@ -37,9 +37,7 @@ class ClientForm(forms.ModelForm):
 
         if full_name and len(full_name) < 3:
             self.add_error("full_name", "Full name must be at least 3 characters long.")
-            self.fields["full_name"].widget.attrs.update(
-                {"class": "form-control is-invalid"}
-            )
+            self.fields["full_name"].widget.attrs.update({"class": "form-control is-invalid"})
 
         return cleaned_data
 
@@ -74,12 +72,8 @@ class SevenHillsRegistrationForm(forms.ModelForm):
         model = SevenHillsRegistration
         fields = "__all__"
         widgets = {
-            "registration_date": forms.DateInput(
-                attrs={"type": "date", "class": "form-control"}
-            ),
-            "date_of_birth": forms.DateInput(
-                attrs={"type": "date", "class": "form-control"}
-            ),
+            "registration_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+            "date_of_birth": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
             "email": forms.EmailInput(attrs={"class": "form-control"}),
             "telephone_1": forms.TextInput(attrs={"class": "form-control"}),
             "telephone_2": forms.TextInput(attrs={"class": "form-control"}),
@@ -87,9 +81,7 @@ class SevenHillsRegistrationForm(forms.ModelForm):
             "next_of_kin_telephone_2": forms.TextInput(attrs={"class": "form-control"}),
             "min_savings_amount": forms.NumberInput(attrs={"class": "form-control"}),
             "saving_goal": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
-            "additional_comments": forms.Textarea(
-                attrs={"class": "form-control", "rows": 3}
-            ),
+            "additional_comments": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
         }
 
     # Custom fields
@@ -117,36 +109,24 @@ class SevenHillsRegistrationForm(forms.ModelForm):
         marital_status = cleaned_data.get("marital_status")
 
         if marital_status == "Married" and not spouse_name:
-            self.add_error(
-                "spouse_name", "Spouse name is required for married individuals."
-            )
+            self.add_error("spouse_name", "Spouse name is required for married individuals.")
 
         return cleaned_data
 
     def clean_services_interested(self):
         services_interested = self.cleaned_data.get("services_interested")
-        valid_services = [
-            choice[0] for choice in SevenHillsRegistration.SERVICES_INTERESTED
-        ]
-        invalid_choices = [
-            choice for choice in services_interested if choice not in valid_services
-        ]
+        valid_services = [choice[0] for choice in SevenHillsRegistration.SERVICES_INTERESTED]
+        invalid_choices = [choice for choice in services_interested if choice not in valid_services]
         if invalid_choices:
-            raise forms.ValidationError(
-                f"Invalid services: {', '.join(invalid_choices)}"
-            )
+            raise forms.ValidationError(f"Invalid services: {', '.join(invalid_choices)}")
         return services_interested
 
     def clean_ministry_groups(self):
         ministry_groups = self.cleaned_data.get("ministry_groups")
         valid_groups = [choice[0] for choice in SevenHillsRegistration.MINISTRY_GROUPS]
-        invalid_choices = [
-            choice for choice in ministry_groups if choice not in valid_groups
-        ]
+        invalid_choices = [choice for choice in ministry_groups if choice not in valid_groups]
         if invalid_choices:
-            raise forms.ValidationError(
-                f"Invalid ministry groups: {', '.join(invalid_choices)}"
-            )
+            raise forms.ValidationError(f"Invalid ministry groups: {', '.join(invalid_choices)}")
         return ministry_groups
 
     def __init__(self, *args, **kwargs):

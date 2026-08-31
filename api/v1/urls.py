@@ -1,4 +1,4 @@
-﻿from django.urls import include, path
+from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView
 
@@ -9,11 +9,12 @@ from api.v1.views import (
     DashboardViewSet,
     DeviceInstallationViewSet,
     FeedbackViewSet,
+    InventoryViewSet,
     LoanViewSet,
-    UserNotificationViewSet,
     PaymentViewSet,
     SponsorViewSet,
     StaffViewSet,
+    UserNotificationViewSet,
 )
 
 router = DefaultRouter()
@@ -24,6 +25,7 @@ router.register("sponsors", SponsorViewSet, basename="mobile-sponsors")
 router.register("clients", ClientViewSet, basename="mobile-clients")
 router.register("staff", StaffViewSet, basename="mobile-staff")
 router.register("loans", LoanViewSet, basename="mobile-loans")
+router.register("inventory", InventoryViewSet, basename="mobile-inventory")
 router.register("payments", PaymentViewSet, basename="mobile-payments")
 router.register("device-installations", DeviceInstallationViewSet, basename="mobile-device-installations")
 router.register("notifications", UserNotificationViewSet, basename="mobile-notifications")

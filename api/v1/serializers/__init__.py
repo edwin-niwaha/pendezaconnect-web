@@ -5,14 +5,13 @@ from api.v1.serializers.auth_serializers import (
     UserProfileUpdateSerializer,
 )
 from api.v1.serializers.child_serializers import ChildPhotoUploadSerializer, ChildSerializer
-from api.v1.serializers.device_installation_serializers import DeviceInstallationSerializer
-from api.v1.serializers.device_installation_serializers import DeviceInstallationSerializer
 from api.v1.serializers.client_serializers import (
     ClientSerializer,
     SavingsAccountSerializer,
     SavingsRequestSerializer,
     SavingsTransactionSerializer,
 )
+from api.v1.serializers.device_installation_serializers import DeviceInstallationSerializer
 from api.v1.serializers.google_auth_serializers import GoogleLoginSerializer
 from api.v1.serializers.loan_serializers import (
     LoanActionSerializer,
