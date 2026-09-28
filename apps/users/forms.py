@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth.models import User
+from django.core.files.uploadedfile import UploadedFile
 
 from apps.client.models import Client
 from apps.sponsor.models import Sponsor
@@ -256,7 +257,8 @@ class PolicyForm(forms.ModelForm):
 
     def clean_upload(self):
         upload = self.cleaned_data.get("upload")
-        if upload:
+        # An unchanged document is a CloudinaryResource, not an UploadedFile.
+        if isinstance(upload, UploadedFile):
             if not upload.name.lower().endswith(".pdf"):
                 raise forms.ValidationError("Only PDF files are allowed.")
             if upload.size > 10 * 1024 * 1024:  # 10 MB limit

@@ -1,3 +1,6 @@
+import logging
+
+from cloudinary.exceptions import Error as CloudinaryError
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login as auth_login
@@ -50,6 +53,8 @@ from .models import (
     Profile,
 )
 from .roles import get_login_redirect_url
+
+logger = logging.getLogger(__name__)
 
 
 # =================================== Home User  ===================================
@@ -406,6 +411,23 @@ def policy_list(request):
 # =================================== Register Policy  ===================================
 
 
+def _save_policy_form(form):
+    try:
+        # Roll back the save before rendering a storage error, so the surrounding
+        # request transaction remains usable by template/context queries.
+        with transaction.atomic():
+            form.save()
+    except CloudinaryError:
+        logger.exception("Could not upload policy document to Cloudinary")
+        form.add_error(
+            "upload",
+            "The document could not be uploaded. Please select the PDF again and retry. "
+            "If this continues, contact an administrator.",
+        )
+        return False
+    return True
+
+
 @login_required
 @admin_or_manager_required
 @transaction.atomic
@@ -414,9 +436,9 @@ def upload_policy(request):
         form = PolicyForm(request.POST, request.FILES)
 
         if form.is_valid():
-            form.save()
-            messages.success(request, "Record saved successfully!", extra_tags="bg-success")
-            return redirect("policy_list")
+            if _save_policy_form(form):
+                messages.success(request, "Record saved successfully!", extra_tags="bg-success")
+                return redirect("policy_list")
         else:
             # Display an error message if the form is not valid
             messages.error(
@@ -448,9 +470,7 @@ def update_policy(request, pk, template_name="accounts/policy_upload.html"):
 
     if request.method == "POST":
         form = PolicyForm(request.POST, request.FILES, instance=policy)
-        if form.is_valid():
-            form.save()
-
+        if form.is_valid() and _save_policy_form(form):
             messages.success(request, "Policy updated successfully!", extra_tags="bg-success")
             return redirect("policy_list")
     else:
