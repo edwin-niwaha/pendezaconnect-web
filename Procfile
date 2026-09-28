@@ -1,4 +1,4 @@
-release: python manage.py migrate
+release: python manage.py check --deploy && python manage.py makemigrations --check --dry-run && python manage.py migrate --noinput
 
 web: python manage.py collectstatic --noinput && gunicorn core.wsgi:application --bind 0.0.0.0:$PORT --timeout 120 --workers 1 --threads 4 --max-requests 1000 --max-requests-jitter 100 --log-level info --access-logfile - --error-logfile -
 

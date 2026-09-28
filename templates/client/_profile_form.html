@@ -1,0 +1,10 @@
+{% load crispy_forms_tags %}
+{{ form.non_field_errors }}
+{% for title, fields in form.profile_sections %}
+<fieldset class="border rounded p-3 mb-3">
+  <legend class="w-auto px-2 h6">{{ title }}</legend>
+  {% if title == 'Group details' %}<p class="small text-muted">Complete for group clients where applicable.</p>{% endif %}
+  <div class="row">{% for field in fields %}<div class="col-md-6">{{ field|as_crispy_field }}</div>{% endfor %}</div>
+</fieldset>
+{% endfor %}
+{{ form.picture|as_crispy_field }}

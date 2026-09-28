@@ -4,6 +4,7 @@ from django.db.models import Sum
 from rest_framework import serializers
 
 from apps.client.models import Client
+from apps.client.profile_fields import PROFILE_FIELDS
 from apps.savings.models import SavingsAccount, SavingsTransaction
 
 from .media import absolute_media_url, thumbnail_url
@@ -24,10 +25,9 @@ class ClientSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "prefixed_id",
-            "reg_number",
-            "full_name",
-            "email",
-            "mobile_telephone",
+            *PROFILE_FIELDS,
+            "created_at",
+            "updated_at",
             "active_loans_count",
             "savings_balance",
             "current_picture_url",

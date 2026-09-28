@@ -2,6 +2,7 @@ import datetime
 from datetime import date
 
 from cloudinary.models import CloudinaryField
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import (
     EmailValidator,
@@ -10,28 +11,33 @@ from django.core.validators import (
     RegexValidator,
 )
 from django.db import models
+from django.utils import timezone
 from phonenumber_field.modelfields import PhoneNumberField
 
 
 # Clients registration
 class Client(models.Model):
+    GENDER_CHOICES = (
+        ("Male", "Male"),
+        ("Female", "Female"),
+    )
     # Basic info
     reg_number = models.CharField(
-        max_length=10,
-        verbose_name="Registration ID",
+        max_length=50,
+        verbose_name="Reg. No",
         null=True,
         blank=True,
-        default="G01-001",
+        default="",
     )
     full_name = models.CharField(
-        max_length=50,
+        max_length=255,
         verbose_name="Full Name",
-        validators=[RegexValidator(r"^[A-Za-z]+(?:\s[A-Za-z]+)*$", "Only letters and spaces are allowed")],
     )
+    gender = models.CharField(max_length=6, choices=GENDER_CHOICES, blank=True, default="", verbose_name="Gender")
     email = models.EmailField(
         verbose_name="Email",
         blank=True,
-        default="no-email@example.com",
+        default="",
         validators=[
             RegexValidator(
                 r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
@@ -45,7 +51,60 @@ class Client(models.Model):
         null=True,
         blank=True,
     )
-    mobile_telephone = PhoneNumberField(verbose_name="Mobile Telephone", null=True, blank=True, default="+256999999999")
+    mobile_telephone = PhoneNumberField(verbose_name="Mobile Telephone", null=True, blank=True, default="", region="UG")
+    client_type = models.CharField(
+        max_length=20,
+        choices=[
+            ("individual", "Individual"),
+            ("group", "Group"),
+            ("joint", "Joint"),
+            ("organization", "Organization"),
+        ],
+        default="individual",
+        verbose_name="Client type",
+    )
+    date_of_birth = models.DateField(null=True, blank=True)
+    registration_date = models.DateField(null=True, blank=True)
+    village = models.CharField(max_length=150, blank=True)
+    current_address = models.TextField(blank=True)
+    workplace = models.CharField(max_length=255, blank=True)
+    occupation = models.CharField(max_length=150, blank=True)
+    employment_status = models.CharField(max_length=100, blank=True)
+    employment_sector = models.CharField(max_length=100, blank=True)
+    marital_status = models.CharField(max_length=50, blank=True)
+    highest_education_level = models.CharField(max_length=100, blank=True)
+    next_of_kin_name = models.CharField(max_length=255, blank=True)
+    next_of_kin_phone = PhoneNumberField(blank=True, region="UG")
+    next_of_kin_relationship = models.CharField(max_length=100, blank=True)
+    referred_by = models.CharField(max_length=255, blank=True)
+    savings_goal = models.TextField(blank=True)
+    services_interested = models.TextField(blank=True, verbose_name="Services interested in")
+    savings_frequency = models.CharField(
+        max_length=20,
+        blank=True,
+        choices=[
+            ("daily", "Daily"),
+            ("weekly", "Weekly"),
+            ("monthly", "Monthly"),
+            ("quarterly", "Quarterly"),
+            ("annually", "Annually"),
+            ("irregular", "Irregular"),
+        ],
+    )
+    minimum_savings_amount = models.DecimalField(
+        max_digits=15,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(0)],
+    )
+    group_member_count = models.PositiveIntegerField(null=True, blank=True)
+    group_objective = models.TextField(blank=True)
+    group_savings_cycle_months = models.PositiveIntegerField(null=True, blank=True, validators=[MinValueValidator(1)])
+    group_chairperson = models.CharField(max_length=255, blank=True)
+    group_secretary = models.CharField(max_length=255, blank=True)
+    group_treasurer = models.CharField(max_length=255, blank=True)
+    branch = models.CharField(max_length=150, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created at")
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -56,6 +115,19 @@ class Client(models.Model):
 
     def __str__(self):
         return self.full_name
+
+    def clean(self):
+        super().clean()
+        errors = {}
+        today = timezone.localdate()
+        for field in ("date_of_birth", "registration_date"):
+            value = getattr(self, field)
+            if value and value > today:
+                errors[field] = "Date cannot be in the future."
+        if self.date_of_birth and self.registration_date and self.date_of_birth > self.registration_date:
+            errors["registration_date"] = "Registration date cannot be before date of birth."
+        if errors:
+            raise ValidationError(errors)
 
     def get_full_name(self):
         return f"{self.full_name}".strip()
@@ -254,3 +326,13 @@ class SevenHillsRegistration(models.Model):
             - ((today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day))
         )
         return age
+
+
+class ClientRegistrationDraft(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    data = models.JSONField(default=dict)
+    step = models.PositiveSmallIntegerField(default=0)
+    revision = models.PositiveIntegerField(default=0)
+    photo = models.BinaryField(null=True, blank=True)
+    photo_name = models.CharField(max_length=255, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)

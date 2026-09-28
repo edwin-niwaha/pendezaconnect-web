@@ -9,6 +9,7 @@ from apps.users.forms import LoginForm
 from apps.users.views import (
     ChangePasswordView,
     CustomLoginView,
+    CustomLogoutView,
     LoginVerificationView,
     ResetPasswordView,
 )
@@ -27,7 +28,7 @@ urlpatterns = [
     ),
     path(
         "logout/",
-        auth_views.LogoutView.as_view(template_name="accounts/logout.html"),
+        CustomLogoutView.as_view(),
         name="logout",
     ),
     path(

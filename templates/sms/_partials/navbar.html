@@ -149,8 +149,8 @@
                         <i class="mdi mdi-settings"></i>Users Profile </a>
                     <a class="dropdown-item" href="{% url 'user_feedback' %}">
                         <i class="mdi mdi-message"></i>Feedback </a>
-                    <a class="dropdown-item" href="{% url 'logout' %}">
-                        <i class="mdi mdi-logout mr-2 text-primary"></i> Signout </a>
+                    <form method="post" action="{% url 'logout' %}" style="margin:0">{% csrf_token %}<button type="submit" class="dropdown-item" style="background:transparent;border:0;width:100%;text-align:left;cursor:pointer">
+                        <i class="mdi mdi-logout mr-2 text-primary"></i> Signout </button></form>
                 </div>
             </li>
         </ul>

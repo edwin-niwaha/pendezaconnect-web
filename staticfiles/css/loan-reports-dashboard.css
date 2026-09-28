@@ -178,7 +178,7 @@
     .report-icon.info { background: #e8f5fb; color: #187795; }
     .report-icon.neutral { background: #f1f4f7; color: #516173; }
 
-    @media (max-width: 1199.98px) {
+    @media (max-width: 767.98px) {
       .featured-reports {
         grid-template-columns: 1fr;
       }
@@ -242,4 +242,20 @@
   .reports-toolbar { align-items: stretch; flex-direction: column; gap: 8px; }
   .report-search { max-width: none; width: 100%; }
   .report-search-status { padding-left: 2px; }
+}
+
+/* Keep the nine-card dashboard close to the top and compact on desktop. */
+.reports-dashboard { padding: 0 0 12px; }
+.reports-header { align-items: center; padding: 12px 16px; margin-bottom: 12px; gap: 10px; }
+.reports-header h1 { font-size: clamp(1.2rem, 1.8vw, 1.5rem); }
+.header-copy { font-size: .85rem; margin-top: 4px; }
+.featured-reports { gap: 10px; margin-bottom: 0; }
+.featured-card { min-height: 108px; padding: 12px; gap: 10px; align-items: center; }
+.featured-card .report-icon { height: 34px; width: 34px; }
+.featured-card strong { font-size: .9rem; margin: 2px 0 4px; }
+.featured-card p { font-size: .8rem; }
+.report-kicker { font-size: .65rem; }
+@media (max-width: 767.98px) {
+  .reports-header { align-items: flex-start; }
+  .featured-card { min-height: 88px; }
 }

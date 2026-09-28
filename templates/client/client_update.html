@@ -1,40 +1,11 @@
-{% extends 'loans/base.html' %}
-{% load crispy_forms_tags %}
-
-{% block head %}
-
-{% endblock %}
-
+{% extends 'client/workspace_base.html' %}{% load crispy_forms_tags %}
+{% block title %}Update {{ client_record.full_name }} | Pendeza Connect{% endblock %}
 {% block content %}
-  <div class="container">
-    <div class="page-header flex-wrap">
-      <h3 class="mb-0">{{ form_name|upper }}<span class="pl-0 h6 pl-sm-2 text-muted d-inline-block"></span></h3>
-      <div class="d-flex">
-        <a title="Register Child" class="btn btn-sm ml-3 btn-success" href="{% url 'register_client' %}"><i class="mdi mdi-account-plus btn-icon-prepend"></i></a>
-        <a title="View List..." class="btn btn-sm ml-3 btn-success" href="{% url 'client_list' %}"><i class="mdi mdi-chart-line btn-icon-prepend"></i></a>
-        <a title="Bulk Import" class="btn btn-sm ml-3 btn-success" href="{% url 'import_client_data' %}"><i class="mdi mdi-upload btn-icon-prepend"></i></a>
-      </div>
-    </div>
-    <hr />
-
-    <div class="form-content my-3 p-3">
-      <div class="row justify-content-center">
-        <div class="col-lg-12">
-          <div class="card shadow-lg border-0 rounded-lg mt-0 mb-5">
-            <div class="card-body">
-              <form method="post" enctype="multipart/form-data">
-                {% csrf_token %}
-                <!--  -->
-                {{ form|crispy }}
-                {% include '_partials/profile_photo_picker.html' %}
-                <div class="form-group mt-4 mb-0">
-                  <button type="submit" class="col-md-12 btn btn-dark" onclick="return confirm('Are you sure you want to proceed?') && validateForm()">UPDATE</button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-{% endblock %}
+<header class="page-heading"><div><p class="eyebrow">Client record &middot; {{ client_record.reg_number|default:'No registration number' }}</p><h1>Update client</h1><p class="muted">{{ client_record.full_name }}</p></div><div class="actions"><a class="btn" href="{% url 'client_list' %}">Back to clients</a><a class="btn" href="{% url 'client_profile' client_record.pk %}">View profile</a></div></header>
+<nav class="form-section-nav" aria-label="Form sections">{% for title, fields in form.profile_sections %}<a href="#section-{{ forloop.counter }}">{{ title }}</a>{% endfor %}<a href="#client-photo">Photo</a></nav>
+<form method="post" enctype="multipart/form-data" class="client-edit-form">{% csrf_token %}
+{% if form.errors %}<div class="form-error-summary" role="alert"><strong>Please correct the highlighted fields.</strong>{{ form.non_field_errors }}</div>{% endif %}
+<div class="edit-sections">{% for title, fields in form.profile_sections %}<fieldset class="edit-section" id="section-{{ forloop.counter }}"><legend>{{ title }}</legend>{% if title == 'Group details' %}<p class="muted section-help">For group clients, where applicable.</p>{% endif %}<div class="field-grid">{% for field in fields %}<div>{{ field|as_crispy_field }}</div>{% endfor %}</div></fieldset>{% endfor %}</div>
+<section class="edit-section" id="client-photo"><h2>Profile photo</h2>{{ form.picture|as_crispy_field }}{% include '_partials/profile_photo_picker.html' %}</section>
+<footer class="form-save-bar"><span class="muted">Changes are saved when you select Save changes.</span><div class="actions"><a class="btn" href="{% url 'client_list' %}">Cancel</a><button class="btn btn-primary" type="submit">Save changes</button></div></footer>
+</form>{% endblock %}

@@ -1,6 +1,6 @@
 import csv
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 from typing import Iterable
 
@@ -93,20 +93,28 @@ def filtered_loans(filters, *, date_field="disbursement_date") -> QuerySet:
 
 def loan_financial_row(loan: Loan, today: date | None = None) -> dict:
     today = today or timezone.localdate()
-    repayments = list(loan.repayments.all())
+    repayments = [repayment for repayment in loan.repayments.all() if repayment.repayment_date <= today]
     penalties = list(loan.penalties.all())
     balances = remaining_balances_from_related(loan, repayments, penalties)
+    balances["penalty_balance"] = penalty_balance_as_of(repayments, penalties, today)
     paid_principal = sum((r.principal_payment for r in repayments), Decimal("0.00"))
     paid_interest = sum((r.interest_payment for r in repayments), Decimal("0.00"))
     paid_penalties = sum((r.penalty_payment for r in repayments), Decimal("0.00"))
     total_paid = paid_principal + paid_interest + paid_penalties
     total_outstanding = sum(balances.values())
     arrears = installment_arrears(loan, today, paid_principal + paid_interest, total_outstanding)
+    before = installment_arrears(loan, today - timedelta(days=1), paid_principal + paid_interest, total_outstanding)
+    due_today = max(arrears["overdue_amount"] - before["overdue_amount"], Decimal("0.00"))
     last_repayment_date = max((r.repayment_date for r in repayments), default=None)
 
     return {
         "loan_id": loan.id,
+        "borrower_id": loan.borrower_id,
+        "gender": loan.borrower.gender or "Not recorded",
+        "current_status": loan.status,
+        "penalty_history_incomplete": any(p.is_deleted and not p.deleted_at for p in penalties),
         "client": loan.borrower.full_name,
+        "reg_number": loan.borrower.reg_number or "",
         "loan_product": loan.get_loan_purpose_display(),
         "loan_officer": getattr(loan.applied_by, "username", "") or "-",
         "status": loan.get_status_display(),
@@ -132,6 +140,79 @@ def loan_financial_row(loan: Loan, today: date | None = None) -> dict:
         "last_repayment_date": last_repayment_date,
         "expected_due": arrears["expected_due"],
         "installments_due": arrears["installments_due"],
+        "due_on_date": due_today,
+        "overdue_before_date": before["overdue_amount"],
+        "relevant_due_date": today - timedelta(days=arrears["days_in_arrears"])
+        if arrears["overdue_amount"] > 0
+        else None,
+    }
+
+
+def penalty_balance_as_of(repayments, penalties, as_of):
+    """Replay dated assessments, FIFO payments, and reversals through the cutoff."""
+    events = []
+    for penalty in penalties:
+        if penalty.is_deleted and not penalty.deleted_at:
+            # Legacy deletions without an effective date cannot be reconstructed.
+            continue
+        if penalty.penalty_date <= as_of:
+            events.append((penalty.penalty_date, 0, penalty.pk, penalty.penalty_amount))
+        if penalty.is_deleted and penalty.deleted_at:
+            deleted_on = timezone.localtime(penalty.deleted_at).date()
+            if deleted_on <= as_of:
+                events.append((deleted_on, 2, penalty.pk, Decimal("0.00")))
+    for repayment in repayments:
+        if repayment.repayment_date <= as_of and repayment.penalty_payment > 0:
+            events.append((repayment.repayment_date, 1, repayment.pk, repayment.penalty_payment))
+
+    remaining = {}
+    for _, kind, pk, amount in sorted(events):
+        if kind == 0:
+            remaining[pk] = amount
+        elif kind == 2:
+            remaining[pk] = Decimal("0.00")
+        else:
+            for penalty_id, balance in remaining.items():
+                applied = min(balance, amount)
+                remaining[penalty_id] -= applied
+                amount -= applied
+                if amount <= 0:
+                    break
+    return sum(remaining.values(), Decimal("0.00"))
+
+
+def aging_report_rows(filters):
+    """Select the disbursement cohort, then reconstruct its end-date exposure."""
+    as_of = filters["end_date"]
+    statuses = list(Loan.ACTIVE_STATUSES)
+    if as_of < timezone.localdate():
+        statuses.extend(["repaid", "closed"])
+    loans = filtered_loans(filters).filter(
+        disbursement_date__isnull=False,
+        status__in=statuses,
+    )
+    # A loan repaid since the cutoff must still appear if it owed money then.
+    rows = [loan_financial_row(loan, today=as_of) for loan in loans]
+    return [row for row in rows if row["outstanding_amount"] > 0]
+
+
+def aging_report_summary(rows):
+    borrowers = {row["borrower_id"]: row.get("gender", "Not recorded") for row in rows}
+    principal_total = sum((row["outstanding_principal"] for row in rows), Decimal("0.00"))
+    principal_over_30 = sum(
+        (row["outstanding_principal"] for row in rows if row["days_in_arrears"] > 30), Decimal("0.00")
+    )
+    return {
+        "clients_in_arrears": len(
+            {row["borrower_id"] for row in rows if row["days_in_arrears"] > 0 and row["overdue_amount"] > 0}
+        ),
+        "par_over_30_percent": principal_over_30 / principal_total * 100 if principal_total > 0 else Decimal("0"),
+        "active_borrowers": len(borrowers),
+        "non_performing_loans": sum(row["days_in_arrears"] >= 90 and row["outstanding_amount"] > 0 for row in rows),
+        "female_borrowers": sum(gender == "Female" for gender in borrowers.values()),
+        "male_borrowers": sum(gender == "Male" for gender in borrowers.values()),
+        "unknown_gender_borrowers": sum(gender not in {"Female", "Male"} for gender in borrowers.values()),
+        "principal_over_30": principal_over_30,
     }
 
 
@@ -219,9 +300,11 @@ def installment_arrears(
             1 for month in range(1, term_months + 1) if loan.disbursement_date + relativedelta(months=month) <= today
         )
 
-    expected_due = min(
-        loan.monthly_installment * Decimal(installments_due),
-        loan.total_repayable,
+    # The final installment settles any cents left by monthly rounding.
+    expected_due = (
+        loan.total_repayable
+        if installments_due == term_months
+        else min(loan.monthly_installment * Decimal(installments_due), loan.total_repayable)
     )
     overdue_amount = max(expected_due - paid_principal_interest, Decimal("0.00"))
     if overdue_amount <= 0:
@@ -234,7 +317,12 @@ def installment_arrears(
 
     first_unpaid_due_date = loan.disbursement_date + relativedelta(months=installments_due)
     for month in range(1, installments_due + 1):
-        if paid_principal_interest < loan.monthly_installment * Decimal(month):
+        cumulative_due = (
+            loan.total_repayable
+            if month == term_months
+            else min(loan.monthly_installment * Decimal(month), loan.total_repayable)
+        )
+        if paid_principal_interest < cumulative_due:
             first_unpaid_due_date = loan.disbursement_date + relativedelta(months=month)
             break
 
@@ -326,6 +414,7 @@ def _bucket_order(bucket: str):
     standard_order = {label: index for index, label in enumerate(STANDARD_AGING_BUCKETS)}
     category_order = {
         "Due today": 0,
+        "Due on selected date": 0,
         "In arrears": 1,
         "Past maturity": 2,
         "Current": 3,

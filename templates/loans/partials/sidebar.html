@@ -123,21 +123,10 @@
     <li class="sidebar-section-label">Insights</li>
 
     <li class="nav-item">
-      <a class="nav-link" data-toggle="collapse" href="#financeReportsMenu" aria-expanded="false" aria-controls="financeReportsMenu">
+      <a class="nav-link" href="{% url 'loans:loan_reports_dashboard' %}">
         <i class="mdi mdi-file-chart menu-icon"></i>
-        <span class="menu-title">Reports &amp; risk</span>
-        <i class="menu-arrow"></i>
+        <span class="menu-title">Reports &amp; Risk</span>
       </a>
-      <div class="collapse" id="financeReportsMenu">
-        <ul class="nav flex-column sub-menu">
-          <li class="nav-item"><a class="nav-link" href="{% url 'loans:loan_reports_dashboard' %}">Reports Dashboard</a></li>
-          <li class="nav-item"><a class="nav-link" href="{% url 'loans:ledger_report' %}">General Ledger</a></li>
-          <li class="nav-item"><a class="nav-link" href="{% url 'loans:loan_aging_report' %}">Aging Report</a></li>
-          <li class="nav-item"><a class="nav-link" href="{% url 'loans:loan-arrears-report' %}">Arrears Report</a></li>
-          <li class="nav-item"><a class="nav-link" href="{% url 'loans:portfolio_at_risk_report' %}">Portfolio at Risk</a></li>
-          <li class="nav-item"><a class="nav-link" href="{% url 'loans:non_performing_loans' %}">Non-performing Loans</a></li>
-        </ul>
-      </div>
     </li>
 
     <li class="sidebar-section-label">Administration</li>

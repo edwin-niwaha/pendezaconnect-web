@@ -1,184 +1,114 @@
 {% extends 'loans/base.html' %}
 {% load static %}
-{% load humanize %}
 
 {% block title %}Loan reports | Pendeza Connect
 {% endblock %}
 
 {% block content %}
-  <link rel="stylesheet" href="{% static 'css/loan-reports-dashboard.css' %}">
+  <link rel="stylesheet" href="{% static 'css/loan-reports-dashboard.css' %}?v=20260928-compact">
   <div class="reports-dashboard">
     <header class="reports-header">
       <div>
-        <p class="eyebrow mb-1">Loan reporting</p>
         <h1>{{ form_title|default:'Loan Reports' }}</h1>
-        <p class="header-copy">Standard portfolio, arrears, collection, performance, and accounting reports.</p>
+        <p class="header-copy">Loan aging, arrears, risk, and account management.</p>
       </div>
       <nav class="header-actions" aria-label="Loan report quick actions">
         <a href="{% url 'loans-dashboard' %}" class="btn btn-outline-secondary btn-sm">
           <i class="bi bi-speedometer2" aria-hidden="true"></i>
           <span>Dashboard</span>
         </a>
-        <a href="{% url 'loans:loan_collection_report' %}" class="btn btn-primary btn-sm">
-          <i class="bi bi-receipt" aria-hidden="true"></i>
-          <span>Collections</span>
-        </a>
-        <a href="{% url 'loans:loan_aging_report' %}" class="btn btn-outline-secondary btn-sm">
-          <i class="bi bi-bar-chart-line" aria-hidden="true"></i>
-          <span>Aging</span>
-        </a>
       </nav>
     </header>
 
-    <div class="reports-toolbar">
-      <label class="report-search" for="report-search">
-        <i class="bi bi-search" aria-hidden="true"></i>
-        <span class="sr-only">Search reports</span>
-        <input id="report-search" type="search" placeholder="Search reports by name or description" autocomplete="off">
-        <button id="clear-report-search" type="button" aria-label="Clear report search" hidden><i class="bi bi-x-lg" aria-hidden="true"></i></button>
-      </label>
-      <span id="report-search-status" class="report-search-status" aria-live="polite">All reports</span>
-    </div>
-
-    <div id="report-empty-state" class="report-empty-state" hidden>
-      <i class="bi bi-search" aria-hidden="true"></i>
-      <strong>No reports found</strong>
-      <span>Try a different report name or category.</span>
-    </div>
-    <section class="featured-reports" aria-label="Primary reports">
-      <a href="{% url 'loans:loan_portfolio_report' %}" class="featured-card">
-        <span class="report-icon primary"><i class="bi bi-clipboard-data" aria-hidden="true"></i></span>
-        <div>
-          <span class="report-kicker">Portfolio</span>
-          <strong>Loan Portfolio Summary</strong>
-          <p>Active portfolio balances, repayment progress, and aging signals.</p>
-        </div>
-      </a>
+    <section class="featured-reports" aria-label="Loan reports and accounts">
       <a href="{% url 'loans:loan_aging_report' %}" class="featured-card">
         <span class="report-icon warning"><i class="bi bi-hourglass-split" aria-hidden="true"></i></span>
         <div>
-          <span class="report-kicker">Risk</span>
+          <span class="report-kicker">Aging</span>
           <strong>Loan Aging Report</strong>
-          <p>Current, 1-30, 31-60, 61-90, 91-180, and over 180 day buckets.</p>
+          <p>Balances grouped by days overdue.</p>
         </div>
       </a>
-      <a href="{% url 'loans:loan_collection_report' %}" class="featured-card">
-        <span class="report-icon success"><i class="bi bi-cash-coin" aria-hidden="true"></i></span>
+      <a href="{% url 'loans:loan-arrears-report' %}" class="featured-card">
+        <span class="report-icon danger"><i class="bi bi-exclamation-diamond" aria-hidden="true"></i></span>
         <div>
-          <span class="report-kicker">Cashflow</span>
-          <strong>Loan Collection Report</strong>
-          <p>Principal, interest, fees, penalties, and total collections by period.</p>
+          <span class="report-kicker">Arrears</span>
+          <strong>Loan Arrears Report</strong>
+          <p>Overdue loans and amounts to follow up.</p>
+        </div>
+      </a>
+      <a href="{% url 'loans:portfolio_at_risk_report' %}" class="featured-card">
+        <span class="report-icon warning"><i class="bi bi-graph-up-arrow" aria-hidden="true"></i></span>
+        <div>
+          <span class="report-kicker">Risk</span>
+          <strong>Portfolio at Risk</strong>
+          <p>Portfolio exposure and risk percentages.</p>
+        </div>
+      </a>
+      <a href="{% url 'loans:non_performing_loans' %}" class="featured-card">
+        <span class="report-icon danger"><i class="bi bi-x-octagon" aria-hidden="true"></i></span>
+        <div>
+          <span class="report-kicker">Recovery</span>
+          <strong>Non-Performing Loans</strong>
+          <p>Unpaid loans at least 90 days in arrears.</p>
+        </div>
+      </a>
+      <a href="{% url 'loans:due_overdue_report' %}" class="featured-card">
+        <span class="report-icon info"><i class="bi bi-clock-history" aria-hidden="true"></i></span>
+        <div>
+          <span class="report-kicker">Payments</span>
+          <strong>Due and Overdue Report</strong>
+          <p>Payments due on the selected date and earlier arrears.</p>
+        </div>
+      </a>
+      <a href="{% url 'loans:loan_statement' %}" class="featured-card">
+        <span class="report-icon neutral"><i class="bi bi-file-earmark-text" aria-hidden="true"></i></span>
+        <div>
+          <span class="report-kicker">Statements</span>
+          <strong>Client Loan Statement</strong>
+          <p>Client transactions, repayments, and balances.</p>
+        </div>
+      </a>
+      <a href="{% url 'loans:loan_statement' %}" class="featured-card">
+        <span class="report-icon neutral"><i class="bi bi-file-earmark-text" aria-hidden="true"></i></span>
+        <div>
+          <span class="report-kicker">Statements</span>
+          <strong>Client Loan Statement</strong>
+          <p>Client transactions, repayments, and balances.</p>
+        </div>
+      </a>
+      <a href="{% url 'loans:loan_penalty_management' %}" class="featured-card">
+        <span class="report-icon warning"><i class="bi bi-sliders" aria-hidden="true"></i></span>
+        <div>
+          <span class="report-kicker">Penalties</span>
+          <strong>Penalty Management</strong>
+          <p>Review and manage loan penalties.</p>
+        </div>
+      </a>
+      <a href="{% url 'loans:chart_of_accounts_list' %}" class="featured-card">
+        <span class="report-icon primary"><i class="bi bi-table" aria-hidden="true"></i></span>
+        <div>
+          <span class="report-kicker">Accounts</span>
+          <strong>Chart of Accounts</strong>
+          <p>View and manage accounting accounts.</p>
+        </div>
+      </a>
+      <a href="{% url 'loans:defaulted_loans_report' %}" class="featured-card">
+        <span class="report-icon danger"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></span>
+        <div>
+          <span class="report-kicker">Reports</span>
+          <strong>Defaulted Loans Report</strong>
+          <p>Unpaid loans more than 90 days in arrears.</p>
+        </div>
+      </a>
+      <a href="{% url 'loans:outstanding_balances_report' %}" class="featured-card">
+        <span class="report-icon info"><i class="bi bi-wallet2" aria-hidden="true"></i></span>
+        <div>
+          <span class="report-kicker">Reports</span>
+          <strong>Outstanding Loan Balances Report</strong>
+          <p>Principal, interest, and penalties still outstanding.</p>
         </div>
       </a>
     </section>
-
-    <div class="report-groups">
-      <section class="report-group" aria-labelledby="portfolio-reports-heading">
-        <div class="group-heading">
-          <h2 id="portfolio-reports-heading">Portfolio And Balances</h2>
-          <span>Book position</span>
-        </div>
-        <div class="report-list">
-          <a href="{% url 'loans:loan_disbursement_report' %}" class="report-link">
-            <span class="report-icon success"><i class="bi bi-cash-stack" aria-hidden="true"></i></span>
-            <span><strong>Loan Disbursement Report</strong><small>Loans issued by period, client, and product.</small></span>
-            <i class="bi bi-chevron-right" aria-hidden="true"></i>
-          </a>
-          <a href="{% url 'loans:outstanding_balances_report' %}" class="report-link">
-            <span class="report-icon warning"><i class="bi bi-wallet2" aria-hidden="true"></i></span>
-            <span><strong>Outstanding Loan Balances</strong><small>Principal, interest, penalties, and open totals.</small></span>
-            <i class="bi bi-chevron-right" aria-hidden="true"></i>
-          </a>
-          <a href="{% url 'loans:closed_loans_report' %}" class="report-link">
-            <span class="report-icon success"><i class="bi bi-check2-circle" aria-hidden="true"></i></span>
-            <span><strong>Closed Loans Report</strong><small>Repaid and closed loan accounts.</small></span>
-            <i class="bi bi-chevron-right" aria-hidden="true"></i>
-          </a>
-          <a href="{% url 'loans:loan_statement' %}" class="report-link">
-            <span class="report-icon neutral"><i class="bi bi-file-earmark-text" aria-hidden="true"></i></span>
-            <span><strong>Client Loan Statement</strong><small>Individual client schedule, transactions, and balances.</small></span>
-            <i class="bi bi-chevron-right" aria-hidden="true"></i>
-          </a>
-        </div>
-      </section>
-
-      <section class="report-group" aria-labelledby="risk-reports-heading">
-        <div class="group-heading">
-          <h2 id="risk-reports-heading">Risk And Arrears</h2>
-          <span>Delinquency</span>
-        </div>
-        <div class="report-list">
-          <a href="{% url 'loans:loan-arrears-report' %}" class="report-link">
-            <span class="report-icon danger"><i class="bi bi-exclamation-diamond" aria-hidden="true"></i></span>
-            <span><strong>Loan Arrears Report</strong><small>Past-due loans grouped by delinquency band.</small></span>
-            <i class="bi bi-chevron-right" aria-hidden="true"></i>
-          </a>
-          <a href="{% url 'loans:portfolio_at_risk_report' %}" class="report-link">
-            <span class="report-icon warning"><i class="bi bi-graph-up-arrow" aria-hidden="true"></i></span>
-            <span><strong>Portfolio At Risk</strong><small>PAR exposure and risk ratios.</small></span>
-            <i class="bi bi-chevron-right" aria-hidden="true"></i>
-          </a>
-          <a href="{% url 'loans:defaulted_loans_report' %}" class="report-link">
-            <span class="report-icon danger"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></span>
-            <span><strong>Defaulted Loans Report</strong><small>Loans more than 90 days in arrears.</small></span>
-            <i class="bi bi-chevron-right" aria-hidden="true"></i>
-          </a>
-          <a href="{% url 'loans:non_performing_loans' %}" class="report-link">
-            <span class="report-icon danger"><i class="bi bi-x-octagon" aria-hidden="true"></i></span>
-            <span><strong>Non-Performing Loans</strong><small>NPL details and recovery tracking.</small></span>
-            <i class="bi bi-chevron-right" aria-hidden="true"></i>
-          </a>
-          <a href="{% url 'loans:due_overdue_report' %}" class="report-link">
-            <span class="report-icon info"><i class="bi bi-clock-history" aria-hidden="true"></i></span>
-            <span><strong>Due And Overdue Report</strong><small>Installments due today, in arrears, or past maturity.</small></span>
-            <i class="bi bi-chevron-right" aria-hidden="true"></i>
-          </a>
-        </div>
-      </section>
-
-      <section class="report-group" aria-labelledby="performance-reports-heading">
-        <div class="group-heading">
-          <h2 id="performance-reports-heading">Performance</h2>
-          <span>Accountability</span>
-        </div>
-        <div class="report-list">
-          <a href="{% url 'loans:loan_officer_performance_report' %}" class="report-link">
-            <span class="report-icon neutral"><i class="bi bi-person-workspace" aria-hidden="true"></i></span>
-            <span><strong>Loan Officer Performance</strong><small>Portfolio, collection, outstanding, and overdue totals by officer.</small></span>
-            <i class="bi bi-chevron-right" aria-hidden="true"></i>
-          </a>
-          <a href="{% url 'loans:loan_product_performance_report' %}" class="report-link">
-            <span class="report-icon info"><i class="bi bi-pie-chart" aria-hidden="true"></i></span>
-            <span><strong>Loan Product Performance</strong><small>Performance by product or loan purpose.</small></span>
-            <i class="bi bi-chevron-right" aria-hidden="true"></i>
-          </a>
-        </div>
-      </section>
-
-      <section class="report-group" aria-labelledby="accounting-reports-heading">
-        <div class="group-heading">
-          <h2 id="accounting-reports-heading">Accounting And Setup</h2>
-          <span>GL controls</span>
-        </div>
-        <div class="report-list">
-          <a href="{% url 'loans:ledger_report' %}" class="report-link">
-            <span class="report-icon primary"><i class="bi bi-journal-text" aria-hidden="true"></i></span>
-            <span><strong>Ledger Report</strong><small>Debit and credit entries by chart of account.</small></span>
-            <i class="bi bi-chevron-right" aria-hidden="true"></i>
-          </a>
-          <a href="{% url 'loans:chart_of_accounts_list' %}" class="report-link">
-            <span class="report-icon neutral"><i class="bi bi-table" aria-hidden="true"></i></span>
-            <span><strong>Chart Of Accounts</strong><small>General ledger structure and mappings.</small></span>
-            <i class="bi bi-chevron-right" aria-hidden="true"></i>
-          </a>
-          <a href="{% url 'loans:loan_penalty_management' %}" class="report-link">
-            <span class="report-icon warning"><i class="bi bi-sliders" aria-hidden="true"></i></span>
-            <span><strong>Penalty Management</strong><small>Review, reconcile, and manage penalties.</small></span>
-            <i class="bi bi-chevron-right" aria-hidden="true"></i>
-          </a>
-        </div>
-      </section>
-    </div>
   </div>
-  <script defer src="{% static 'js/loan-reports-dashboard.js' %}"></script>
 {% endblock %}

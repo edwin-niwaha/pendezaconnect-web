@@ -1,14 +1,20 @@
+import base64
+import csv
 import logging
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db import transaction
 from django.db.models import F, Q
-from django.http import HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from openpyxl import load_workbook
+from django.views.decorators.cache import never_cache
+from django.views.decorators.http import require_POST
+
+from core.profile_photos import normalize_profile_photo
 
 logger = logging.getLogger(__name__)
 
@@ -19,14 +25,16 @@ from apps.users.decorators import (
 )
 
 from .forms import ClientForm, ClientPhotoForm, ImportClientsForm, SevenHillsRegistrationForm
-from .models import Client, ClientProfilePicture, SevenHillsRegistration
+from .importing import import_clients
+from .models import Client, ClientProfilePicture, ClientRegistrationDraft, SevenHillsRegistration
+from .profile_fields import PROFILE_FIELDS, profile_sections
 
 
 # =================================== Fetch and display all clients details ===================================
 @login_required
 @admin_or_manager_or_staff_required
 def client_list(request):
-    base_queryset = Client.objects.prefetch_related("loans__documents", "profile_pictures").order_by(
+    base_queryset = Client.objects.prefetch_related("profile_pictures").order_by(
         F("reg_number").asc(nulls_last=True), "id"
     )
     queryset = base_queryset
@@ -38,7 +46,26 @@ def client_list(request):
             | Q(reg_number__icontains=search_query)
             | Q(mobile_telephone__icontains=search_query)
             | Q(email__icontains=search_query)
+            | Q(branch__icontains=search_query)
+            | Q(occupation__icontains=search_query)
         )
+
+    if request.GET.get("export") == "csv":
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="clients.csv"'
+        writer = csv.writer(response)
+        writer.writerow(PROFILE_FIELDS)
+        for client in queryset.iterator(chunk_size=200):
+            values = []
+            for name in PROFILE_FIELDS:
+                value = getattr(client, name)
+                text = str(value) if value is not None else ""
+                # Prevent text values being evaluated as spreadsheet formulas.
+                if text.startswith(("=", "+", "-", "@")):
+                    text = "'" + text
+                values.append(text)
+            writer.writerow(values)
+        return response
 
     paginator = Paginator(queryset, 20)  # Show 20 records per page
     page = request.GET.get("page")
@@ -51,6 +78,9 @@ def client_list(request):
     except EmptyPage:
         # If page is out of range (e.g. 9999), deliver last page of results.
         records = paginator.page(paginator.num_pages)
+
+    for client in records:
+        client.preview_sections = profile_sections(client)
 
     return render(
         request,
@@ -167,9 +197,27 @@ def delete_client_profile_picture(request, pk):
 @login_required
 @admin_or_manager_or_staff_required
 @transaction.atomic
+@never_cache
 def register_client(request):
+    if request.method == "POST" and request.POST.get("draft_id"):
+        draft = (
+            ClientRegistrationDraft.objects.select_for_update()
+            .filter(
+                user=request.user,
+                pk=request.POST["draft_id"],
+            )
+            .first()
+        )
+        if not draft:
+            messages.info(request, "This registration has already been completed. Start a new client below.")
+            return redirect("register_client")
+    else:
+        draft, _ = ClientRegistrationDraft.objects.get_or_create(user=request.user)
     if request.method == "POST":
-        form = ClientForm(request.POST, request.FILES)
+        files = request.FILES.copy()
+        if not files.get("picture") and draft.photo and request.POST.get("remove_picture") != "1":
+            files["picture"] = SimpleUploadedFile(draft.photo_name, bytes(draft.photo), content_type="image/jpeg")
+        form = ClientForm(request.POST, files)
 
         if form.is_valid():
             client = form.save()
@@ -180,6 +228,7 @@ def register_client(request):
                     picture=client.picture,
                     is_current=True,
                 )
+            draft.delete()
             messages.success(request, "Record saved successfully!", extra_tags="bg-success")
             return redirect("register_client")
         else:
@@ -191,13 +240,52 @@ def register_client(request):
             )
 
     else:
-        form = ClientForm()
+        form = ClientForm(initial=draft.data)
 
     return render(
         request,
         "client/client_register.html",
-        {"form_name": "Client Registration", "form": form},
+        {
+            "form_name": "Client Registration",
+            "form": form,
+            "draft": draft,
+            "allow_current_photo_removal": True,
+            "current_photo_url": "data:image/jpeg;base64," + base64.b64encode(bytes(draft.photo)).decode()
+            if draft.photo
+            else "",
+        },
     )
+
+
+@login_required
+@admin_or_manager_or_staff_required
+@require_POST
+@never_cache
+@transaction.atomic
+def save_registration_draft(request):
+    draft = ClientRegistrationDraft.objects.select_for_update().filter(user=request.user).first()
+    if (
+        not draft
+        or request.POST.get("draft_id") != str(draft.pk)
+        or request.POST.get("revision") != str(draft.revision)
+    ):
+        return JsonResponse({"error": "This draft changed in another page. Reload before continuing."}, status=409)
+    data = {name: request.POST.get(name, "") for name in PROFILE_FIELDS}
+    if any(len(value) > 10000 for value in data.values()):
+        return JsonResponse({"error": "A field is too long to save."}, status=400)
+    try:
+        step = max(0, min(6, int(request.POST.get("step", 0))))
+        photo = normalize_profile_photo(request.FILES.get("picture"))
+    except (ValueError, TypeError) as exc:
+        return JsonResponse({"error": str(exc)}, status=400)
+    if photo:
+        draft.photo, draft.photo_name = photo.read(), photo.name[:255]
+    elif request.POST.get("remove_picture") == "1":
+        draft.photo, draft.photo_name = None, ""
+    draft.data, draft.step = data, step
+    draft.revision += 1
+    draft.save()
+    return JsonResponse({"revision": draft.revision, "saved_at": draft.updated_at.isoformat()})
 
 
 # =================================== Update client data ===================================
@@ -238,7 +326,9 @@ def update_client(request, pk, template_name="client/client_update.html"):
         form = ClientForm(instance=client_record)
 
     context = {
-        "form_name": "Client Registration",
+        "form_name": "Update client",
+        "client_record": client_record,
+        "allow_current_photo_removal": True,
         "form": form,
         "current_photo_url": client_record.picture.url if client_record.picture else "",
         "photo_subject": client_record.full_name,
@@ -262,63 +352,41 @@ def delete_client(request, pk):
 @admin_required
 @transaction.atomic
 def import_client_data(request):
+    result = None
     if request.method == "POST":
         form = ImportClientsForm(request.POST, request.FILES)
         if form.is_valid():
-            excel_file = request.FILES.get("excel_file")
-            if excel_file and excel_file.name.endswith(".xlsx"):
-                try:
-                    # Call process_and_import_data function
-                    errors = process_and_import_data(excel_file)
-                    if errors:
-                        for error in errors:
-                            messages.error(request, error, extra_tags="bg-danger")
-                    else:
-                        messages.success(
-                            request,
-                            "Data imported successfully!",
-                            extra_tags="bg-success",
-                        )
-                except Exception as e:
-                    messages.error(request, f"Error importing data: {e}", extra_tags="bg-danger")
-                return redirect("client_list")
+            excel_file = form.cleaned_data["excel_file"]
+            if not excel_file.name.lower().endswith(".xlsx"):
+                form.add_error("excel_file", "Please upload an .xlsx workbook.")
             else:
-                messages.error(request, "Please upload a valid Excel file.", extra_tags="bg-danger")
+                try:
+                    result = import_clients(excel_file, report=True)
+                except Exception:
+                    logger.exception("Client workbook import failed")
+                    form.add_error("excel_file", "Could not read the workbook. Check that it is a valid .xlsx file.")
     else:
         form = ImportClientsForm()
-    return render(
-        request,
-        "client/bulk_import.html",
-        {"form_name": "Import Clients - Excel", "form": form},
-    )
+    return render(request, "client/bulk_import.html", {"form": form, "result": result})
 
 
 # Function to import Excel data
 def process_and_import_data(excel_file):
-    errors = []
-    try:
-        wb = load_workbook(excel_file)
-        sheet = wb.active
-        for row_num, row in enumerate(sheet.iter_rows(min_row=2), start=2):
-            fname = row[0].value
-            picture = row[1].value
-            reg_number = row[2].value
-            mobile_telephone = row[3].value
-            if fname is not None:
-                try:
-                    Client.objects.create(
-                        full_name=fname,
-                        picture=picture,
-                        reg_number=reg_number,
-                        mobile_telephone=mobile_telephone,
-                    )
-                except Exception as e:
-                    errors.append(f"Error on row {row_num}: {e}")
-            else:
-                errors.append(f"Missing full name on row {row_num}")
-    except Exception as e:
-        errors.append(f"Failed to process the Excel file: {e}")
-    return errors
+    return import_clients(excel_file)
+
+
+@login_required
+@admin_or_manager_or_staff_required
+def client_profile(request, pk):
+    client = get_object_or_404(Client, pk=pk)
+    return render(
+        request,
+        "client/client_profile.html",
+        {
+            "client": client,
+            "sections": profile_sections(client),
+        },
+    )
 
 
 # =================================== Delete all records at once ===================================

@@ -1,25 +1,44 @@
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import ButtonHolder, Fieldset, Layout, Submit
 from django import forms
+from django.core.files.uploadedfile import UploadedFile
 
 from core.profile_photos import normalize_profile_photo
 
 from .models import Client, SevenHillsRegistration
+from .profile_fields import PROFILE_FIELDS, PROFILE_SECTIONS
 
 
 class ClientForm(forms.ModelForm):
     class Meta:
         model = Client
-        fields = "__all__"
+        fields = (*PROFILE_FIELDS, "picture")
+        widgets = {
+            "date_of_birth": forms.DateInput(format="%Y-%m-%d", attrs={"type": "date"}),
+            "registration_date": forms.DateInput(format="%Y-%m-%d", attrs={"type": "date"}),
+            **{
+                name: forms.Textarea(attrs={"rows": 2})
+                for name in ("current_address", "savings_goal", "services_interested", "group_objective")
+            },
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs["class"] = "form-control"
+        self.fields["picture"].label = "Profile photo"
         self.fields["picture"].required = False
         self.fields["picture"].widget.attrs.update(
             {"accept": "image/jpeg,image/png,image/webp", "data-photo-input": "true"}
         )
 
+    @property
+    def profile_sections(self):
+        return [(title, [self[name] for name in fields]) for title, fields in PROFILE_SECTIONS]
+
     def clean_picture(self):
+        if not isinstance(self.cleaned_data.get("picture"), UploadedFile):
+            return self.cleaned_data.get("picture")
         try:
             return normalize_profile_photo(self.cleaned_data.get("picture"))
         except ValueError as exc:

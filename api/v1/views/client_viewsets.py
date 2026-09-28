@@ -29,7 +29,7 @@ class ClientViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ClientSerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ["full_name", "reg_number", "email"]
+    search_fields = ["full_name", "reg_number", "email", "mobile_telephone", "branch", "occupation"]
     ordering_fields = ["id", "full_name", "reg_number"]
     ordering = ["id"]
 

@@ -4,6 +4,7 @@ from cloudinary.exceptions import Error as CloudinaryError
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login as auth_login
+from django.contrib.auth import logout as auth_logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.auth.views import LoginView, PasswordChangeView, PasswordResetView
@@ -19,7 +20,10 @@ from django.http import (
 )
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
+from django.utils.decorators import method_decorator
 from django.views import View
+from django.views.decorators.cache import never_cache
+from django.views.decorators.csrf import csrf_protect
 
 from apps.users.decorators import (
     admin_or_manager_or_staff_required,
@@ -894,3 +898,15 @@ def delete_doc(request, pk):
     doc.delete()
     messages.info(request, "Document deleted successfully!", extra_tags="bg-danger")
     return HttpResponseRedirect(reverse("doc_list"))
+
+
+@method_decorator([never_cache, csrf_protect], name="dispatch")
+class CustomLogoutView(View):
+    """Offer confirmation on GET; end the session only on a protected POST."""
+
+    def get(self, request):
+        return render(request, "accounts/logout.html")
+
+    def post(self, request):
+        auth_logout(request)
+        return redirect("logout")

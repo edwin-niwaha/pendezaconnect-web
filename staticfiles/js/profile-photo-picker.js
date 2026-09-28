@@ -7,6 +7,7 @@
     const transfer = new DataTransfer();
     transfer.items.add(file);
     input.files = transfer.files;
+    input.dispatchEvent(new Event("change", {bubbles: true}));
   }
 
   function compress(file, cropSquare) {
@@ -268,6 +269,7 @@
       if (!window.confirm("Remove this client's current profile picture?")) return;
       realInput.value = "";
       removeInput.value = "1";
+      realInput.dispatchEvent(new Event("change", {bubbles: true}));
       preview.hidden = true;
       placeholder.hidden = false;
       removeButton.hidden = true;

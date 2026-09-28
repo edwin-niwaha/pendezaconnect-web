@@ -1,0 +1,4 @@
+{% extends 'client/workspace_base.html' %}
+{% block title %}{{ client.full_name }} | Client profile{% endblock %}
+{% block content %}<header class="page-heading no-print"><div><p class="eyebrow">Client record</p><h1>Client profile</h1></div><div class="actions"><a class="btn" href="{% url 'client_list' %}">Back to clients</a><a class="btn btn-primary" href="{% url 'update_client' client.pk %}">Edit client</a><button class="btn" onclick="window.print()">Print profile</button></div></header>
+<article class="profile-report">{% include 'client/_profile_details.html' %}</article>{% endblock %}

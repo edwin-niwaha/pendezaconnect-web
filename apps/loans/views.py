@@ -17,7 +17,6 @@ from django.db.models import Count, Q, Sum
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
-from django.utils.dateparse import parse_date
 from django.utils.html import strip_tags
 from openpyxl import load_workbook
 
@@ -33,6 +32,7 @@ from .forms import (
     ClientSelfServiceLoanApplicationForm,
     ImportCOAForm,
     ImportLoansForm,
+    LoanAgingReportFilterForm,
     LoanAllDisbursementForm,
     LoanApplicationDocumentForm,
     LoanApplicationForm,
@@ -55,13 +55,14 @@ from .models import (
 from .services.aging import compute_installment_based_days_overdue
 from .services.reporting import (
     ReportColumn,
+    aging_report_rows,
+    aging_report_summary,
     export_rows_csv,
     filtered_loans,
     group_rows_by_bucket,
     loan_financial_row,
     paginate_rows,
     parse_report_filters,
-    portfolio_at_risk_summary,
     repayment_rows,
     summarize_amounts,
 )
@@ -2796,43 +2797,58 @@ def _loan_report_rows(filters, *, date_field="disbursement_date", statuses=None,
 @login_required
 @admin_or_manager_or_staff_required
 def loan_aging_report(request):
-    filters = parse_report_filters(request)
-    rows = [
-        row for row in _loan_report_rows(filters, statuses=["disbursed", "overdue"]) if row["outstanding_amount"] > 0
-    ]
+    filter_form = LoanAgingReportFilterForm(request.GET)
+    valid_filters = filter_form.is_valid()
+    filters = dict(filter_form.cleaned_data)
+    cohort_rows = aging_report_rows(filters) if valid_filters else []
+    summary = aging_report_summary(cohort_rows)
+    rows = cohort_rows
+    if filters.get("arrears_over") == "30":
+        rows = [row for row in rows if row["days_in_arrears"] > 30]
+    if valid_filters:
+        filters["export"] = request.GET.get("export", "").strip().lower()
     rows.sort(key=lambda item: (item["days_in_arrears"], item["client"]))
+    for row in rows:
+        for date_key in ("disbursement_date", "maturity_date", "last_repayment_date"):
+            if row[date_key]:
+                row[date_key] = row[date_key].strftime("%d/%m/%Y")
+    columns = [
+        ReportColumn("disbursement_date", "Disbursed On") if column.key == "disbursement_date" else column
+        for column in AGING_COLUMNS
+        if column.key not in {"loan_id", "loan_product", "loan_officer", "aging_bucket"}
+    ]
+    principal_balance_index = next(index for index, column in enumerate(columns) if column.key == "outstanding_principal")
+    columns.insert(principal_balance_index, ReportColumn("principal", "Principal", "right", True))
+    client_index = next(index for index, column in enumerate(columns) if column.key == "client")
+    columns.insert(client_index + 1, ReportColumn("gender", "Gender"))
     return _standard_report_response(
         request,
         "Loan Aging Report",
         "loan_aging_report.csv",
-        AGING_COLUMNS,
+        columns,
         rows,
         LOAN_TOTAL_KEYS,
         filters,
         group_by="aging_bucket",
+        compact_filters=True,
+        filter_form=filter_form,
+        response_status=200 if valid_filters else 400,
+        extra_context={
+            "aging_summary": summary if valid_filters else None,
+            "as_of": filters.get("end_date") if valid_filters else None,
+            "invalid_filters": not valid_filters,
+            "historical_closures": any(row["current_status"] == "closed" for row in cohort_rows),
+            "incomplete_penalty_history": any(row["penalty_history_incomplete"] for row in cohort_rows),
+        },
     )
 
 
 @login_required
 @admin_or_manager_or_staff_required
 def loan_arrears_report(request):
-    filters = parse_report_filters(request)
-    rows = [
-        row
-        for row in _loan_report_rows(filters, statuses=["disbursed", "overdue"])
-        if row["days_in_arrears"] > 0 and row["outstanding_amount"] > 0
-    ]
-    rows.sort(key=lambda item: (-item["days_in_arrears"], -item["outstanding_amount"]))
-    return _standard_report_response(
-        request,
-        "Loan Arrears Report",
-        "loan_arrears_report.csv",
-        AGING_COLUMNS,
-        rows,
-        LOAN_TOTAL_KEYS,
-        filters,
-        group_by="aging_bucket",
-    )
+    from .risk_reports import risk_report_response
+
+    return risk_report_response(request, "arrears")
 
 
 @login_required
@@ -2854,80 +2870,25 @@ def loan_portfolio_report(request):
 @login_required
 @admin_or_manager_or_staff_required
 def portfolio_at_risk(request):
-    filters = parse_report_filters(request)
-    portfolio_rows = [
-        row for row in _loan_report_rows(filters, statuses=["disbursed", "overdue"]) if row["outstanding_amount"] > 0
-    ]
-    par = portfolio_at_risk_summary(portfolio_rows)
-    rows = [
-        {
-            **band,
-            "portfolio_percent": f"{band['portfolio_percent']:.2f}%",
-        }
-        for band in par["bands"]
-    ]
-    return _standard_report_response(
-        request,
-        "Portfolio at Risk Report",
-        "portfolio_at_risk_report.csv",
-        PAR_COLUMNS,
-        rows,
-        [],
-        filters,
-    )
+    from .risk_reports import risk_report_response
+
+    return risk_report_response(request, "par")
 
 
 @login_required
 @admin_or_manager_or_staff_required
 def non_performing_loans(request):
-    filters = parse_report_filters(request)
-    rows = [
-        row
-        for row in _loan_report_rows(filters, statuses=["disbursed", "overdue"])
-        if row["days_in_arrears"] >= 90 and row["outstanding_amount"] > 0
-    ]
-    rows.sort(key=lambda item: (-item["days_in_arrears"], -item["outstanding_amount"]))
-    return _standard_report_response(
-        request,
-        "Non-Performing Loans Report",
-        "non_performing_loans_report.csv",
-        AGING_COLUMNS,
-        rows,
-        LOAN_TOTAL_KEYS,
-        filters,
-        group_by="aging_bucket",
-    )
+    from .risk_reports import risk_report_response
+
+    return risk_report_response(request, "npl")
 
 
 @login_required
 @admin_or_manager_or_staff_required
 def loan_due_overdue_report(request):
-    filters = parse_report_filters(request)
-    selected_date = parse_date(request.GET.get("date") or "") or timezone.localdate()
-    rows = []
-    for row in _loan_report_rows(filters, statuses=["disbursed", "overdue"], as_of=selected_date):
-        if row["outstanding_amount"] <= 0:
-            continue
-        if row["overdue_amount"] <= 0:
-            continue
-        if row["days_in_arrears"] > 0:
-            category = "In arrears"
-        else:
-            category = "Due today"
-        if row["maturity_date"] and row["maturity_date"] < selected_date:
-            category = "Past maturity"
-        rows.append({**row, "category": category})
-    rows.sort(key=lambda item: (item["category"], -item["days_in_arrears"], item["client"]))
-    return _standard_report_response(
-        request,
-        "Due, Arrears And Past Maturity Report",
-        "due_arrears_past_maturity_report.csv",
-        DUE_OVERDUE_COLUMNS,
-        rows,
-        ["expected_due", "overdue_amount", "outstanding_amount"],
-        filters,
-        group_by="category",
-    )
+    from .risk_reports import risk_report_response
+
+    return risk_report_response(request, "due")
 
 
 @login_required
@@ -2965,40 +2926,17 @@ def loan_collection_report(request):
 @login_required
 @admin_or_manager_or_staff_required
 def outstanding_loan_balances_report(request):
-    filters = parse_report_filters(request)
-    rows = [
-        row for row in (loan_financial_row(loan) for loan in filtered_loans(filters)) if row["outstanding_amount"] > 0
-    ]
-    return _standard_report_response(
-        request,
-        "Outstanding Loan Balances Report",
-        "outstanding_loan_balances_report.csv",
-        STANDARD_LOAN_COLUMNS,
-        rows,
-        LOAN_TOTAL_KEYS,
-        filters,
-    )
+    from .risk_reports import risk_report_response
+
+    return risk_report_response(request, "outstanding")
 
 
 @login_required
 @admin_or_manager_or_staff_required
 def defaulted_loans_report(request):
-    filters = parse_report_filters(request)
-    rows = [
-        row
-        for row in (loan_financial_row(loan) for loan in filtered_loans(filters))
-        if row["days_in_arrears"] > 90 and row["outstanding_amount"] > 0
-    ]
-    return _standard_report_response(
-        request,
-        "Defaulted Loans Report",
-        "defaulted_loans_report.csv",
-        STANDARD_LOAN_COLUMNS,
-        rows,
-        LOAN_TOTAL_KEYS,
-        filters,
-        group_by="aging_bucket",
-    )
+    from .risk_reports import risk_report_response
+
+    return risk_report_response(request, "defaulted")
 
 
 @login_required
@@ -3107,13 +3045,18 @@ def _standard_report_response(
     filters,
     *,
     group_by=None,
+    compact_filters=False,
+    filter_form=None,
+    response_status=200,
+    extra_context=None,
 ):
     if filters.get("export") == "csv":
         return export_rows_csv(csv_filename, columns, rows)
 
     page_obj = paginate_rows(rows, request.GET.get("page"), filters.get("per_page", 50))
     grouped_rows = group_rows_by_bucket(rows, group_by, total_keys) if group_by else []
-    filter_form = LoanReportFilterForm(request.GET or None)
+    if filter_form is None:
+        filter_form = LoanReportFilterForm(request.GET or None)
     filter_form.is_valid()
 
     return render(
@@ -3132,13 +3075,16 @@ def _standard_report_response(
             "total_keys": set(total_keys),
             "filters": filters,
             "filter_form": filter_form,
+            "compact_filters": compact_filters,
             "generated_at": timezone.now(),
             "status_choices": Loan.STATUS_CHOICES,
             "loan_product_choices": Loan.LOAN_PURPOSE_CHOICES,
             "clients": Client.objects.order_by("full_name"),
             "loan_officers": User.objects.filter(applied_loans__isnull=False).distinct().order_by("username"),
             "csv_url": _csv_url(request),
+            **(extra_context or {}),
         },
+        status=response_status,
     )
 
 

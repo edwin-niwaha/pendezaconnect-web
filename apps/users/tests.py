@@ -197,3 +197,32 @@ class PublicLandingTests(TestCase):
             login_view.get_success_url_for_user(sponsor_user),
             reverse("users-home"),
         )
+
+
+class LogoutTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="logout-test")
+        self.client.force_login(self.user)
+        self.client.handler.enforce_csrf_checks = True
+
+    def test_get_offers_confirmation_without_ending_session(self):
+        response = self.client.get(reverse("logout"))
+        self.assertContains(response, "Sign out of Pendeza Connect?")
+        self.assertIn("_auth_user_id", self.client.session)
+        self.assertIn("no-store", response.headers["Cache-Control"])
+
+    def test_post_with_csrf_ends_session_and_shows_signed_out_page(self):
+        self.client.get(reverse("logout"))
+        token = self.client.cookies["csrftoken"].value
+        response = self.client.post(reverse("logout"), {"csrfmiddlewaretoken": token}, follow=True)
+        self.assertNotIn("_auth_user_id", self.client.session)
+        self.assertContains(response, "Your session ended successfully")
+
+    def test_post_without_csrf_does_not_end_session(self):
+        response = self.client.post(reverse("logout"))
+        self.assertEqual(response.status_code, 403)
+        self.assertIn("_auth_user_id", self.client.session)
+
+    def test_anonymous_get_shows_signed_out_page(self):
+        self.client.logout()
+        self.assertContains(self.client.get(reverse("logout")), "Your session ended successfully")

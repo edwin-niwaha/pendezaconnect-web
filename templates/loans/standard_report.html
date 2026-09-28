@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ table_title }} | Pendeza Connect</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'css/compact-loan-report.css' %}">
+  <link rel="stylesheet" href="{% static 'css/compact-loan-report.css' %}?v=20260928-par">
 </head>
 <body>
 <main class="report-shell">
@@ -15,42 +15,81 @@
       <a href="{% url 'loans:loan_reports_dashboard' %}" class="report-back no-print" aria-label="Back to reports">&larr;</a>
       <div>
         <h1>{{ table_title }}</h1>
-        <p>{% if filters.start_date %}{{ filters.start_date|date:'d M Y' }}{% else %}Beginning{% endif %} – {% if filters.end_date %}{{ filters.end_date|date:'d M Y' }}{% else %}Today{% endif %}</p>
+        {% if compact_filters and as_of %}<p class="aging-print-context">As of {{ as_of|date:'d/m/Y' }} &middot; Disbursed: {% if filters.start_date %}{{ filters.start_date|date:'d/m/Y' }}{% else %}Beginning{% endif %} &ndash; {{ as_of|date:'d/m/Y' }}{% if filters.q %} &middot; Search: {{ filters.q }}{% endif %}{% if filters.arrears_over %} &middot; Arrears &gt;30 days{% endif %}</p>{% endif %}
+        <p>{% if compact_filters %}Loan balances and overdue payments{% else %}{% if filters.start_date %}{{ filters.start_date|date:'d M Y' }}{% else %}Beginning{% endif %} – {% if filters.end_date %}{{ filters.end_date|date:'d M Y' }}{% else %}Today{% endif %}{% endif %}</p>
       </div>
     </div>
     <div class="report-actions no-print">
-      <a href="{{ csv_url }}" class="btn btn-outline-success btn-sm">Export CSV</a>
+      {% if not invalid_filters %}<a href="{{ csv_url }}" class="btn btn-outline-success btn-sm">Export CSV</a>{% endif %}
       <button type="button" class="btn btn-dark btn-sm" onclick="window.print()">Print</button>
     </div>
   </header>
 
+  {% if compact_filters %}
+  <section class="filter-panel no-print" aria-labelledby="filter-heading">
+    <h2 id="filter-heading" class="filter-panel-heading">Filters</h2>
+  {% else %}
   <details class="filter-panel no-print"{% if filters.start_date or filters.end_date or filters.status or filters.loan_product or filters.client or filters.loan_officer or filters.q %} open{% endif %}>
     <summary><span>Filters</span><span class="active-filter-summary">Click to refine this report</span></summary>
+  {% endif %}
     <form method="get" class="filter-form">
+      {% if compact_filters %}{{ filter_form.arrears_over }}{{ filter_form.arrears_over.errors }}{% endif %}
       {% if filter_form.non_field_errors %}<div class="alert alert-danger py-1 mb-2">{{ filter_form.non_field_errors }}</div>{% endif %}
-      <div class="filter-grid">
-        <label><span>Start date</span>{{ filter_form.start_date }}</label>
-        <label><span>End date</span>{{ filter_form.end_date }}</label>
+      <div class="filter-grid{% if compact_filters %} filter-grid-compact{% endif %}">
+        <label><span>Start date</span>{{ filter_form.start_date }}{{ filter_form.start_date.errors }}</label>
+        <label><span>End date</span>{{ filter_form.end_date }}{{ filter_form.end_date.errors }}</label>
+        {% if not compact_filters %}
         <label><span>Status</span>{{ filter_form.status }}</label>
         <label><span>Product</span>{{ filter_form.loan_product }}</label>
         <label><span>Client</span>{{ filter_form.client }}</label>
         <label><span>Officer</span>{{ filter_form.loan_officer }}</label>
+        {% endif %}
         <label class="filter-search"><span>Search</span>{{ filter_form.q }}</label>
-        <label><span>Rows</span>{{ filter_form.per_page }}</label>
+        {% if not compact_filters %}<label><span>Rows</span>{{ filter_form.per_page }}</label>{% endif %}
         <div class="filter-actions"><a href="{{ request.path }}" class="btn btn-outline-secondary btn-sm">Reset</a><button type="submit" class="btn btn-primary btn-sm">Apply</button></div>
       </div>
+      {% if compact_filters %}<p class="small text-muted mt-2 mb-0">Disbursements within these dates; balances at End date (blank = today). Blank Start date includes older loans.</p>{% endif %}
     </form>
-  </details>
+  {% if compact_filters %}</section>{% else %}</details>{% endif %}
 
-  <section class="summary-strip" aria-label="Report totals">
-    <div class="summary-item"><span>Records</span><strong>{{ totals.count|intcomma }}</strong></div>
-    {% for key, value in totals.items %}{% if key != 'count' %}<div class="summary-item"><span>{{ key|title }}</span><strong>UGX {{ value|floatformat:0|intcomma }}</strong></div>{% endif %}{% endfor %}
+  {% if historical_closures %}<p class="alert alert-warning small">This period includes loans now marked Closed. Closure dates are not stored, so review their historical balances and active borrower counts before relying on them.</p>{% endif %}
+  {% if incomplete_penalty_history %}<p class="alert alert-warning small">Some reversed penalties have no reversal date. Their historical penalty balances cannot be fully reconstructed; review the original records.</p>{% endif %}
+
+  {% if risk_report and not invalid_filters %}<p class="small text-muted mb-2">{{ report_note }}</p>{% endif %}
+  {% if aging_summary %}
+  <div class="aging-client-summary" aria-label="Clients in selected disbursement period">
+    <span>Active clients: <strong>{{ aging_summary.active_borrowers|intcomma }}</strong></span>
+    <span>Clients in arrears: <strong>{{ aging_summary.clients_in_arrears|intcomma }}</strong></span>
+    <span>Female: <strong>{{ aging_summary.female_borrowers|intcomma }}</strong></span>
+    <span>Male: <strong>{{ aging_summary.male_borrowers|intcomma }}</strong></span>
+    {% if aging_summary.unknown_gender_borrowers %}<span>Gender not recorded: <strong>{{ aging_summary.unknown_gender_borrowers|intcomma }}</strong></span>{% endif %}
+    <span>Principal at risk (&gt;30 days): <strong>UGX {{ aging_summary.principal_over_30|floatformat:0|intcomma }}</strong></span>
+    <span>Non-performing loans (90+ days): <strong>{{ aging_summary.non_performing_loans|intcomma }}</strong></span>
+    <span title="Principal on loans over 30 days in arrears divided by total outstanding principal in the selected period">PAR &gt;30: <strong>{{ aging_summary.par_over_30_percent|floatformat:2 }}%</strong></span>
+  </div>
+  {% endif %}
+  {% if compact_filters and not risk_report and not invalid_filters %}
+  <nav class="d-flex gap-2 mb-2 no-print" aria-label="Arrears selection">
+    <a href="?{% report_querystring arrears_over='' export='' page='' %}" class="btn btn-sm {% if not filters.arrears_over %}btn-dark{% else %}btn-outline-secondary{% endif %}">All running loans</a>
+    <a href="?{% report_querystring arrears_over='30' export='' page='' %}" class="btn btn-sm {% if filters.arrears_over %}btn-dark{% else %}btn-outline-secondary{% endif %}">Arrears &gt;30 days</a>
+  </nav>
+  {% if filters.arrears_over %}<p class="small mb-2">Table and totals: arrears &gt;30 days. Indicators above: all loans in the selected period.</p>{% endif %}
+  {% endif %}
+  {% if not invalid_filters %}
+  <section class="summary-strip{% if compact_filters %} summary-strip-compact{% endif %}" aria-label="Report totals">
+    {% if risk_report %}
+    {% for card in summary_cards %}<div class="summary-item"><span>{{ card.label }}</span><strong>{% if card.unit == 'money' %}UGX {{ card.value|floatformat:0|intcomma }}{% elif card.unit == 'percent' %}{{ card.value|floatformat:2 }}%{% else %}{{ card.value|intcomma }}{% endif %}</strong></div>{% endfor %}
+    {% else %}
+    <div class="summary-item"><span>{% if compact_filters %}Loans{% else %}Records{% endif %}</span><strong>{{ totals.count|intcomma }}</strong></div>
+    {% for key, value in totals.items %}{% if key != 'count' %}<div class="summary-item"><span>{% if compact_filters %}{{ key|report_label }}{% else %}{{ key|title }}{% endif %}</span><strong>UGX {{ value|floatformat:0|intcomma }}</strong></div>{% endif %}{% endfor %}
+    {% endif %}
   </section>
+  {% endif %}
 
   {% if grouped_rows or rows %}
   <section class="report-table-card">
     <div class="table-toolbar no-print">
-      <span>{% if grouped_rows %}{{ totals.count|intcomma }} grouped records{% else %}{{ page_obj.start_index|intcomma }}–{{ page_obj.end_index|intcomma }} of {{ page_obj.paginator.count|intcomma }}{% endif %}</span>
+      <span>{% if hide_table_totals %}Risk thresholds{% elif grouped_rows %}{{ totals.count|intcomma }} grouped records{% else %}{{ page_obj.start_index|intcomma }}–{{ page_obj.end_index|intcomma }} of {{ page_obj.paginator.count|intcomma }}{% endif %}</span>
       <input id="smartTableSearch" type="search" class="form-control form-control-sm" placeholder="Filter visible rows">
     </div>
     <div class="table-responsive">
@@ -60,14 +99,14 @@
         {% if grouped_rows %}
           {% for bucket in grouped_rows %}
             <tr class="bucket-row"><td colspan="{{ columns|length }}">{{ bucket.key }} <span>{{ bucket.totals.count|intcomma }}</span></td></tr>
-            {% for row in bucket.rows %}<tr class="data-row">{% for column in columns %}<td class="{% if column.align == 'right' %}right{% endif %}">{% with value=row|get_item:column.key %}{% if column.is_amount %}{{ value|default:0|floatformat:0|intcomma }}{% else %}{{ value|default:'-' }}{% endif %}{% endwith %}</td>{% endfor %}</tr>{% endfor %}
+            {% for row in bucket.rows %}<tr class="data-row">{% for column in columns %}<td class="{% if column.align == 'right' %}right{% endif %}">{% with value=row|get_item:column.key %}{% if column.is_amount %}{{ value|default:0|floatformat:0|intcomma }}{% elif loan_detail_links and column.key == 'client' %}<a href="{% url 'loans:loan_detail' row.loan_id %}">{{ value }}</a>{% else %}{{ value|default_if_none:'-' }}{% endif %}{% endwith %}</td>{% endfor %}</tr>{% endfor %}
             <tr class="bucket-total">{% for column in columns %}<td class="{% if column.align == 'right' %}right{% endif %}">{% if column.key in total_keys %}{{ bucket.totals|get_item:column.key|floatformat:0|intcomma }}{% elif forloop.first %}Subtotal{% endif %}</td>{% endfor %}</tr>
           {% endfor %}
         {% else %}
-          {% for row in rows %}<tr class="data-row">{% for column in columns %}<td class="{% if column.align == 'right' %}right{% endif %}">{% with value=row|get_item:column.key %}{% if column.is_amount %}{{ value|default:0|floatformat:0|intcomma }}{% else %}{{ value|default:'-' }}{% endif %}{% endwith %}</td>{% endfor %}</tr>{% endfor %}
+          {% for row in rows %}<tr class="data-row">{% for column in columns %}<td class="{% if column.align == 'right' %}right{% endif %}">{% with value=row|get_item:column.key %}{% if column.is_amount %}{{ value|default:0|floatformat:0|intcomma }}{% elif loan_detail_links and column.key == 'client' %}<a href="{% url 'loans:loan_detail' row.loan_id %}">{{ value }}</a>{% else %}{{ value|default_if_none:'-' }}{% endif %}{% endwith %}</td>{% endfor %}</tr>{% endfor %}
         {% endif %}
         </tbody>
-        <tfoot><tr>{% for column in columns %}<td class="{% if column.align == 'right' %}right{% endif %}">{% if column.key in total_keys %}{{ totals|get_item:column.key|floatformat:0|intcomma }}{% elif forloop.first %}Totals{% endif %}</td>{% endfor %}</tr></tfoot>
+        {% if not hide_table_totals %}<tfoot><tr>{% for column in columns %}<td class="{% if column.align == 'right' %}right{% endif %}">{% if column.key in total_keys %}{{ totals|get_item:column.key|floatformat:0|intcomma }}{% elif forloop.first %}Totals{% endif %}</td>{% endfor %}</tr></tfoot>{% endif %}
       </table>
     </div>
     {% if not grouped_rows and page_obj.has_other_pages %}
@@ -78,7 +117,7 @@
     </nav>
     {% endif %}
   </section>
-  {% else %}<div class="empty-state">No report data found for the selected filters.</div>{% endif %}
+  {% else %}<div class="empty-state">{% if invalid_filters %}Correct the filters above to calculate this report.{% else %}No report data found for the selected filters.{% endif %}</div>{% endif %}
 </main>
 <script defer src="{% static 'js/compact-loan-report.js' %}"></script>
 </body>

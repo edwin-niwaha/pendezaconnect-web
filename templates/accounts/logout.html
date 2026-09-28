@@ -175,15 +175,27 @@
           <i class="fas fa-check"></i>
         </div>
         <div>
+          {% if user.is_authenticated %}
+          <h1 class="signedout-title" id="signedout-title">Sign out of Pendeza Connect?</h1>
+          <p class="signedout-subtitle">Select Sign out to end your current session.</p>
+          {% else %}
           <h1 class="signedout-title" id="signedout-title">You’re signed out</h1>
           <p class="signedout-subtitle">Your session ended successfully. Sign in again whenever you’re ready.</p>
+          {% endif %}
         </div>
       </header>
 
       <div class="signedout-actions">
+        {% if user.is_authenticated %}
+        <form method="post" action="{% url 'logout' %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-dark signedout-primary" style="width:100%">Sign out</button>
+        </form>
+        {% else %}
         <a href="{% url 'login' %}" class="btn btn-dark signedout-primary">
           <i class="fas fa-sign-in-alt mr-2" aria-hidden="true"></i>Sign in
         </a>
+        {% endif %}
         <a href="{% url 'users-home' %}" class="btn btn-outline-dark signedout-secondary">
           <i class="fas fa-home mr-2" aria-hidden="true"></i>Back to home
         </a>

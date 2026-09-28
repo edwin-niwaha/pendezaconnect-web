@@ -106,6 +106,35 @@ class LoanReportFilterForm(forms.Form):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Loan aging filters
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+class LoanAgingReportFilterForm(LoanReportFilterForm):
+    arrears_over = forms.ChoiceField(
+        required=False,
+        choices=[("", "All running loans"), ("30", "Arrears over 30 days")],
+        widget=forms.HiddenInput,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields = {
+            key: field for key, field in self.fields.items() if key in {"start_date", "end_date", "q", "arrears_over"}
+        }
+
+    def clean(self):
+        cleaned = super().clean()
+        end_date = cleaned.get("end_date") or timezone.localdate()
+        cleaned["end_date"] = end_date
+        if end_date > timezone.localdate():
+            self.add_error("end_date", "End date cannot be in the future.")
+        if cleaned.get("start_date") and cleaned["start_date"] > end_date:
+            raise forms.ValidationError("End date cannot be before start date.")
+        return cleaned
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # ChartOfAccountsForm
 # ─────────────────────────────────────────────────────────────────────────────
 
