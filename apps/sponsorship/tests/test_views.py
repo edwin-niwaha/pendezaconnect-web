@@ -4,7 +4,7 @@ from unittest.mock import patch
 import responses
 from django.contrib.auth.models import User
 from django.contrib.messages import get_messages
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
 from apps.child.models import Child
@@ -13,6 +13,7 @@ from apps.sponsorship.models import ChildSponsorship, MoMoTransaction
 from apps.users.models import Profile
 
 
+@override_settings(MOMO_PAYMENT_INITIATION_ENABLED=True)
 class ViewTests(TestCase):
     def setUp(self):
         self.client = Client()

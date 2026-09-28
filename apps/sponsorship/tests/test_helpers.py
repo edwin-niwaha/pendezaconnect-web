@@ -1,5 +1,5 @@
 import responses
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from apps.sponsorship.momo_prod import (
     create_access_token,
@@ -8,6 +8,7 @@ from apps.sponsorship.momo_prod import (
 )
 
 
+@override_settings(MOMO_PAYMENT_INITIATION_ENABLED=True)
 class HelperFunctionTests(TestCase):
     @responses.activate
     def test_create_access_token_success(self):

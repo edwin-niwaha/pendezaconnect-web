@@ -14,6 +14,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import urlencode
+from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
 
 from apps.child.models import Child
@@ -504,7 +505,11 @@ def terminate_staff_sponsorship(request, sponsorship_id):
 
 
 # ---------------- MoMo Payment Initiation View ---------------- #
+@never_cache
 def initiate_payment(request):
+    if not settings.MOMO_PAYMENT_INITIATION_ENABLED:
+        return render(request, "sponsorship/payment_paused.html", status=503)
+
     if request.method == "POST":
         phone = re.sub(r"[^0-9]", "", request.POST.get("phone", ""))
         if phone.startswith("256") and len(phone) == 12:

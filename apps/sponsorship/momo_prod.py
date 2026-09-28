@@ -43,6 +43,8 @@ def create_access_token(reference_id, api_key, subscription_key):
 # Initiate MoMo Collection request
 def request_to_pay(access_token, subscription_key, phone, amount, transaction_id):
     """Initiate MTN MoMo Collection request."""
+    if not settings.MOMO_PAYMENT_INITIATION_ENABLED:
+        return 503, "Mobile Money payment initiation is temporarily paused."
 
     # Convert phone to MTN accepted format
     if phone.startswith("0"):

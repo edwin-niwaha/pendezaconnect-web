@@ -8,6 +8,7 @@ from apps.sponsorship.models import MoMoTransaction
 
 
 @override_settings(
+    MOMO_PAYMENT_INITIATION_ENABLED=True,
     MOMO_API_USER="test-user",
     MOMO_API_KEY="test-key",
     SUBSCRIPTION_KEY="test-subscription",

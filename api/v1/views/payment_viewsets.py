@@ -38,6 +38,17 @@ class PaymentViewSet(viewsets.ReadOnlyModelViewSet):
         url_path="mobile-money/initiate",
     )
     def initiate_mobile_money(self, request):
+        if not settings.MOMO_PAYMENT_INITIATION_ENABLED:
+            return Response(
+                {
+                    "code": "payment_initiation_paused",
+                    "detail": "Mobile Money payments are temporarily paused while we review payment consent "
+                    "safeguards. Please check back later. Thank you for your patience.",
+                },
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+                headers={"Cache-Control": "no-store"},
+            )
+
         phone = str(request.data.get("phone", "")).strip().replace(" ", "")
         name = str(request.data.get("name", "")).strip() or None
         email = str(request.data.get("email", "")).strip() or None

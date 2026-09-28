@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#163f36">
+  <title>Payments temporarily paused | Pendeza Connect</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; color: #163f36; background: #f6f5ef; font-family: "Segoe UI", Arial, sans-serif; }
+    a { color: inherit; }
+    a:focus-visible { outline: 3px solid #bd851c; outline-offset: 5px; }
+    .header { max-width: 1120px; margin: auto; padding: 28px 32px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+    .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; font-size: 18px; font-weight: 750; letter-spacing: -.5px; }
+    .brand-mark { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 11px 11px 11px 3px; color: #fff; background: #163f36; font-family: Georgia, serif; font-size: 26px; }
+    .header-note { font-size: 12px; color: #64766d; letter-spacing: .08em; text-transform: uppercase; }
+    main { max-width: 1040px; padding: 24px 32px 40px; margin: 0 auto; }
+    .card { display: grid; grid-template-columns: 1.05fr 1fr; min-height: 560px; overflow: hidden; background: white; border: 1px solid #dde4da; border-radius: 28px; box-shadow: 0 24px 64px #163f3610; }
+    .visual { position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; padding: 42px; color: #faf9ef; background: radial-gradient(ellipse at 80% 35%, #2d6250 0, #163f36 65%); }
+    .eyebrow { position: relative; margin: 0; font-size: 11px; font-weight: 650; letter-spacing: .18em; text-transform: uppercase; }
+    .illustration { position: relative; display: grid; place-items: center; height: 235px; margin: 16px 0; }
+    .ring { position: absolute; width: 236px; height: 236px; border: 1px solid #ffffff20; border-radius: 50%; }
+    .ring::after { content: ""; position: absolute; inset: 23px; border: 1px solid #ffffff20; border-radius: 50%; }
+    .shield { position: relative; width: 116px; height: 138px; filter: drop-shadow(0 12px 18px #08281c55); }
+    .visual h2 { margin: 0 0 12px; font-family: Georgia, "Times New Roman", serif; font-size: 36px; line-height: 1.15; font-weight: 400; letter-spacing: -.6px; }
+    .visual p:last-child { margin: 0; color: #ceded4; font-size: 14px; line-height: 1.7; max-width: 300px; }
+    .content { padding: 46px 40px; align-self: center; }
+    .status { display: inline-flex; align-items: center; gap: 8px; border: 1px solid #e4d6b7; border-radius: 30px; background: #faf4e7; color: #795820; padding: 8px 12px; font-size: 11px; font-weight: 700; letter-spacing: .03em; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: #a3782b; }
+    h1 { margin: 22px 0 18px; color: #183f35; font-size: clamp(28px, 3vw, 36px); line-height: 1.16; letter-spacing: -1.2px; font-weight: 650; }
+    .description { color: #607168; font-size: 15px; line-height: 1.8; margin: 0 0 24px; }
+    .notice { padding: 16px 18px; background: #f3f6f1; border-left: 3px solid #739380; border-radius: 0 9px 9px 0; }
+    .notice strong { display: block; font-size: 13px; margin-bottom: 7px; }
+    .notice p { color: #53685b; font-size: 13px; line-height: 1.7; margin: 0; }
+    .home-link { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 28px; padding: 15px 18px; background: #163f36; color: white; text-decoration: none; border-radius: 10px; font-size: 13px; font-weight: 650; }
+    .home-link:hover { background: #245746; }
+    .thanks { margin: 16px 0 0; text-align: center; font-size: 12px; color: #6c7a72; line-height: 1.6; }
+    footer { text-align: center; margin-top: 26px; color: #6a796d; font-size: 12px; line-height: 1.6; }
+    @media (max-width: 700px) {
+      .header { padding: 22px 20px; }
+      .header-note { display: none; }
+      main { padding: 8px 16px 28px; }
+      .card { grid-template-columns: 1fr; border-radius: 22px; }
+      .visual { padding: 28px; }
+      .illustration { height: 135px; margin: 12px 0; }
+      .ring { height: 146px; width: 146px; }
+      .ring::after { inset: 14px; }
+      .shield { height: 98px; width: 84px; }
+      .visual h2 { font-size: 28px; }
+      .visual p:last-child { max-width: none; }
+      .content { padding: 30px 28px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <a class="brand" href="{% url 'users-home' %}" aria-label="Pendeza Connect home"><span class="brand-mark" aria-hidden="true">p</span>Pendeza Connect</a>
+    <span class="header-note">Care. Community. Connection.</span>
+  </header>
+  <main>
+    <section class="card" aria-labelledby="page-title">
+      <div class="visual">
+        <p class="eyebrow">A moment of care</p>
+        <div class="illustration" aria-hidden="true">
+          <span class="ring"></span>
+          <svg class="shield" viewBox="0 0 116 138" fill="none">
+            <path d="M58 5 108 25v42c0 29-22 52-50 65C30 119 8 96 8 67V25L58 5Z" fill="#e9efdc" stroke="#fffaf0" stroke-width="2"/>
+            <path d="M58 17 97 33v34c0 23-16 42-39 54-23-12-39-31-39-54V33l39-16Z" stroke="#8caa92"/>
+            <rect x="42" y="48" width="10" height="35" rx="4" fill="#2e5c45"/>
+            <rect x="64" y="48" width="10" height="35" rx="4" fill="#2e5c45"/>
+          </svg>
+        </div>
+        <div>
+          <h2>Your trust.<br>Our priority.</h2>
+          <p>Every contribution should begin with your choice and your consent.</p>
+        </div>
+      </div>
+      <div class="content">
+        <span class="status"><span class="dot" aria-hidden="true"></span>Temporarily unavailable</span>
+        <h1 id="page-title">Mobile Money<br>payments are paused.</h1>
+        <p class="description">We’ve temporarily paused payment requests while we review and strengthen our consent safeguards. We’ll reopen this service once the issue is resolved.</p>
+        <div class="notice">
+          <strong>No action is needed from you.</strong>
+          <p>If you receive a payment prompt you didn’t request, please decline it. Never share your Mobile Money PIN.</p>
+        </div>
+        <a class="home-link" href="{% url 'users-home' %}"><span aria-hidden="true">&larr;</span>Return to Pendeza Connect</a>
+        <p class="thanks">Thank you for your patience and continued support.</p>
+      </div>
+    </section>
+    <footer>Supporting our community starts with looking after one another.</footer>
+  </main>
+</body>
+</html>

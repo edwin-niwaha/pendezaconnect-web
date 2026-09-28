@@ -421,6 +421,8 @@ FLUTTERWAVE_SECRET_KEY = os.getenv("FLUTTERWAVE_SECRET_KEY")
 FLUTTERWAVE_ENCRYPTION_KEY = os.getenv("FLUTTERWAVE_ENCRYPTION_KEY")
 
 SUBSCRIPTION_KEY = os.getenv("SUBSCRIPTION_KEY")
+# Keep initiation paused until the payment-consent issue has been resolved.
+MOMO_PAYMENT_INITIATION_ENABLED = env_bool("MOMO_PAYMENT_INITIATION_ENABLED", False)
 MOMO_API_USER = os.getenv("MOMO_API_USER")
 MOMO_API_KEY = os.getenv("MOMO_API_KEY")
 MOMO_CALLBACK_URL = os.getenv(
