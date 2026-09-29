@@ -1,0 +1,38 @@
+{% extends 'client/workspace_base.html' %}
+{% block title %}Client import | Pendeza Connect{% endblock %}
+{% block content %}
+<header class="page-heading"><div><h1>Client import</h1><p>{{ job.filename }}</p></div><a class="btn" href="{% url 'import_client_data' %}">Back to imports</a></header>
+<section class="profile-section" aria-live="polite">
+{% if job.status == 'queued' or job.status == 'processing' %}
+<h3 id="import-state">{{ job.status|capfirst }}</h3>
+<p><span id="processed">{{ job.processed }}</span> rows checked. You can leave this page and return from the imports page.</p>
+<p id="connection-note" class="muted">This page checks progress automatically. If progress stops for several minutes, ask an administrator to check the background worker.</p>
+{% elif job.status == 'failed' %}<h3>Import stopped</h3><p>{{ job.error }}</p>
+{% else %}<h3>Import results</h3>{% endif %}
+{% if result %}<p><strong>{{ result.created }}</strong> created &middot; <strong>{{ result.updated }}</strong> updated &middot; <strong>{{ result.unchanged }}</strong> unchanged &middot; <strong>{{ result.errors|length }}</strong> issues</p>
+{% if result.errors %}<p>Correct the affected rows before uploading them again.</p><ul>{% for error in result.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% endif %}{% endif %}
+</section>
+{% endblock %}
+{% block scripts %}
+{% if job.status == 'queued' or job.status == 'processing' %}
+<script>
+(() => {
+  async function checkProgress() {
+    try {
+      const response = await fetch('?format=json', {credentials: 'same-origin', cache: 'no-store'});
+      if (!response.ok || !response.headers.get('content-type')?.includes('application/json')) throw new Error();
+      const data = await response.json();
+      if (data.status === 'completed' || data.status === 'failed') { window.location.reload(); return; }
+      document.getElementById('import-state').textContent = data.status === 'queued' ? 'Queued' : 'Processing';
+      document.getElementById('processed').textContent = data.processed;
+    } catch (_) {
+      document.getElementById('connection-note').textContent = 'Could not check progress. Refresh this page to reconnect.';
+      return;
+    }
+    window.setTimeout(checkProgress, 5000);
+  }
+  window.setTimeout(checkProgress, 5000);
+})();
+</script>
+{% endif %}
+{% endblock %}

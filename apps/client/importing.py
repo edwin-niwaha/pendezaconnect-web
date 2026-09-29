@@ -85,18 +85,20 @@ def clean_value(field, value, epoch, legacy_cycle=False):
 
 @dataclass
 class ImportResult:
+    processed: int = 0
     created: int = 0
     updated: int = 0
     unchanged: int = 0
     errors: list = field(default_factory=list)
 
 
-def import_clients(excel_file, *, report=False):
+def import_clients(excel_file, *, report=False, progress=None):
     result = ImportResult()
     errors = result.errors
     workbook = load_workbook(excel_file, read_only=True, data_only=False)
     try:
         sheet = workbook["Updates"] if "Updates" in workbook.sheetnames else workbook.active
+        sheet.reset_dimensions()
         source = sheet.iter_rows(values_only=True)
         headers = [header_key(value) for value in next(source, ())]
         canonical = {header_key(field): field for field in (*PROFILE_FIELDS, "picture")}
@@ -111,10 +113,16 @@ def import_clients(excel_file, *, report=False):
         if unknown:
             errors.append("Unknown columns: " + ", ".join(unknown))
             return result if report else errors
-        rows = list(source)
         reg_index = mapping.index("reg_number")
-        counts = Counter(str(row[reg_index] or "").strip().lower() for row in rows)
-        for row_number, row in enumerate(rows, 2):
+        # Two streaming passes preserve duplicate detection without retaining
+        # every cell in memory. Ignore worksheet dimensions inflated by styling.
+        counts = Counter()
+        for row_number, row in enumerate(sheet.iter_rows(min_row=2, max_col=len(headers), values_only=True), 2):
+            if row_number > 25001:
+                raise ValueError("Import at most 25,000 rows per workbook.")
+            counts[str(row[reg_index] or "").strip().lower()] += 1
+        for row_number, row in enumerate(sheet.iter_rows(min_row=2, max_col=len(headers), values_only=True), 2):
+            result.processed = row_number - 1
             if not any(value not in (None, "") for value in row):
                 continue
             try:
@@ -190,6 +198,8 @@ def import_clients(excel_file, *, report=False):
                         result.unchanged += 1
             except (ValidationError, ValueError, InvalidOperation) as exc:
                 errors.append(f"Row {row_number}: {exc}")
+            if progress and (row_number - 1) % 100 == 0:
+                progress(row_number - 1, result)
     finally:
         workbook.close()
     return result if report else errors

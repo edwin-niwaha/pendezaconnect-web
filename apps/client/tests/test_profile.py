@@ -1,5 +1,6 @@
 from datetime import date
 from io import BytesIO
+from unittest.mock import patch
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
@@ -11,8 +12,9 @@ from openpyxl.utils.datetime import to_excel
 from api.v1.serializers.client_serializers import ClientSerializer
 from apps.client.forms import ClientForm
 from apps.client.importing import import_clients
-from apps.client.models import Client
+from apps.client.models import Client, ClientImportJob
 from apps.client.profile_fields import PROFILE_FIELDS
+from apps.client.tasks import run_client_import
 from apps.users.models import Profile
 
 
@@ -274,7 +276,15 @@ class ClientProfileTests(TestCase):
         Client.objects.create(reg_number="OLD", full_name="Old Client")
         source = self.workbook(["reg_number", "full_name"], [["OLD", "Updated Client"], ["NEW", "New Client"]])
         source.name = "clients.xlsx"
-        response = self.client.post(reverse("import_client_data"), {"excel_file": source})
+        with patch("apps.client.views.enqueue_client_import") as enqueue:
+            with self.captureOnCommitCallbacks(execute=True):
+                response = self.client.post(reverse("import_client_data"), {"excel_file": source})
+        job = ClientImportJob.objects.get()
+        self.assertRedirects(response, reverse("client_import_status", args=[job.pk]))
+        enqueue.assert_called_once_with(job.pk)
+        self.assertEqual(Client.objects.count(), 1)
+        run_client_import(job.pk)
+        response = self.client.get(reverse("client_import_status", args=[job.pk]))
         self.assertContains(response, "Import results")
-        self.assertEqual(response.context["result"].created, 1)
-        self.assertEqual(response.context["result"].updated, 1)
+        self.assertEqual(response.context["result"]["created"], 1)
+        self.assertEqual(response.context["result"]["updated"], 1)

@@ -4,10 +4,12 @@
 <header class="page-heading"><div><p class="eyebrow">Client management</p><h1>Import / update clients</h1><p class="muted">Add new clients and update existing profiles using Reg. No.</p></div><a class="btn" href="{% url 'client_list' %}">Back to clients</a></header>
 <section class="profile-section">
 <h3>Upload your client workbook</h3>
+<p>Imports run in the background. Upload an .xlsx workbook up to 10 MB and 25,000 rows, then follow its progress on the results page.</p>
 <p>Include <strong>reg_number</strong> and <strong>full_name</strong> headers. Reg. No is required on every row; a name is required for new clients.</p>
 <ul><li>Existing Reg. No: update nonblank fields on the same client record.</li><li>New Reg. No: create a new client.</li><li>Blank cells: keep current values. A numeric zero is an explicit value.</li><li>Duplicate Reg. No or invalid data: skip the affected rows and list the reasons below.</li></ul>
 <p class="muted">Column order does not matter. Dates: DD/MM/YYYY or YYYY-MM-DD. If the workbook has an Updates sheet, only that sheet is imported; otherwise the active sheet is used. Review and Instructions sheets in the prepared workbook are not imported.</p>
 <form method="post" enctype="multipart/form-data">{% csrf_token %}{{ form|crispy }}<div class="actions"><button class="btn btn-primary" type="submit">Import / update clients</button></div></form>
 </section>
+{% if jobs %}<section class="profile-section"><h3>Your recent imports</h3><ul>{% for job in jobs %}<li><a href="{% url 'client_import_status' job.pk %}">{{ job.filename }}</a> — {{ job.status }} — {{ job.created_at }}</li>{% endfor %}</ul></section>{% endif %}
 {% if result %}<section class="profile-section" style="margin-top:20px" aria-live="polite"><h3>Import results</h3><p><strong>{{ result.created }}</strong> created &middot; <strong>{{ result.updated }}</strong> updated &middot; <strong>{{ result.unchanged }}</strong> unchanged &middot; <strong>{{ result.errors|length }}</strong> issues</p>{% if result.errors %}<p>Valid rows were processed. Correct the issues below before uploading those rows again.</p><ul>{% for error in result.errors %}<li>{{ error }}</li>{% endfor %}</ul>{% else %}<p>All supplied rows were processed successfully.</p>{% endif %}</section>{% endif %}
 {% endblock %}

@@ -26,8 +26,9 @@ from apps.users.decorators import (
 
 from .forms import ClientForm, ClientPhotoForm, ImportClientsForm, SevenHillsRegistrationForm
 from .importing import import_clients
-from .models import Client, ClientProfilePicture, ClientRegistrationDraft, SevenHillsRegistration
+from .models import Client, ClientImportJob, ClientProfilePicture, ClientRegistrationDraft, SevenHillsRegistration
 from .profile_fields import PROFILE_FIELDS, profile_sections
+from .tasks import enqueue_client_import
 
 
 # =================================== Fetch and display all clients details ===================================
@@ -350,7 +351,6 @@ def delete_client(request, pk):
 # =================================== Process and Import Excel data ===================================
 @login_required
 @admin_required
-@transaction.atomic
 def import_client_data(request):
     result = None
     if request.method == "POST":
@@ -359,15 +359,28 @@ def import_client_data(request):
             excel_file = form.cleaned_data["excel_file"]
             if not excel_file.name.lower().endswith(".xlsx"):
                 form.add_error("excel_file", "Please upload an .xlsx workbook.")
+            elif excel_file.size > 10 * 1024 * 1024:
+                form.add_error("excel_file", "Upload a workbook smaller than 10 MB. Split larger files first.")
             else:
-                try:
-                    result = import_clients(excel_file, report=True)
-                except Exception:
-                    logger.exception("Client workbook import failed")
-                    form.add_error("excel_file", "Could not read the workbook. Check that it is a valid .xlsx file.")
+                job = ClientImportJob.objects.create(
+                    user=request.user, filename=excel_file.name[:255], workbook=excel_file.read()
+                )
+                transaction.on_commit(lambda: enqueue_client_import(job.pk))
+                return redirect("client_import_status", pk=job.pk)
     else:
         form = ImportClientsForm()
-    return render(request, "client/bulk_import.html", {"form": form, "result": result})
+    jobs = ClientImportJob.objects.filter(user=request.user).defer("workbook", "result").order_by("-created_at")[:10]
+    return render(request, "client/bulk_import.html", {"form": form, "result": result, "jobs": jobs})
+
+
+@login_required
+@admin_required
+@never_cache
+def client_import_status(request, pk):
+    job = get_object_or_404(ClientImportJob.objects.defer("workbook"), pk=pk, user=request.user)
+    if request.GET.get("format") == "json":
+        return JsonResponse({"status": job.status, "processed": job.processed})
+    return render(request, "client/import_status.html", {"job": job, "result": job.result})
 
 
 # Function to import Excel data

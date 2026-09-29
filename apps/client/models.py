@@ -11,6 +11,7 @@ from django.core.validators import (
     RegexValidator,
 )
 from django.db import models
+from django.db.models.functions import Lower, Trim
 from django.utils import timezone
 from phonenumber_field.modelfields import PhoneNumberField
 
@@ -110,6 +111,7 @@ class Client(models.Model):
 
     class Meta:
         db_table = "client_info"
+        indexes = [models.Index(Lower(Trim("reg_number")), name="client_import_reg_idx")]
         verbose_name = "Client Bio Data"
         verbose_name_plural = "Clients Bio Data"
 
@@ -335,4 +337,16 @@ class ClientRegistrationDraft(models.Model):
     revision = models.PositiveIntegerField(default=0)
     photo = models.BinaryField(null=True, blank=True)
     photo_name = models.CharField(max_length=255, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+class ClientImportJob(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    filename = models.CharField(max_length=255)
+    workbook = models.BinaryField(null=True)
+    status = models.CharField(max_length=16, default="queued")
+    processed = models.PositiveIntegerField(default=0)
+    result = models.JSONField(default=dict)
+    error = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
