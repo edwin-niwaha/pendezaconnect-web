@@ -26,6 +26,7 @@ from apps.users.decorators import (
     admin_or_manager_required,
     admin_required,
 )
+from core.report_cache import cached_report
 
 from .forms import (
     ChartOfAccountsForm,
@@ -2787,10 +2788,13 @@ LOAN_TOTAL_KEYS = [
 COLLECTION_TOTAL_KEYS = ["principal", "interest", "fees", "penalties", "paid_amount"]
 
 
-def _loan_report_rows(filters, *, date_field="disbursement_date", statuses=None, as_of=None):
+@cached_report("loans")
+def _loan_report_rows(filters, *, date_field="disbursement_date", statuses=None, as_of=None, disbursed_only=False):
     qs = filtered_loans(filters, date_field=date_field)
     if statuses:
         qs = qs.filter(status__in=statuses)
+    if disbursed_only:
+        qs = qs.filter(disbursement_date__isnull=False)
     return [loan_financial_row(loan, today=as_of) for loan in qs]
 
 
@@ -2895,7 +2899,7 @@ def loan_due_overdue_report(request):
 @admin_or_manager_or_staff_required
 def loan_disbursement_report(request):
     filters = parse_report_filters(request)
-    rows = [loan_financial_row(loan) for loan in filtered_loans(filters).filter(disbursement_date__isnull=False)]
+    rows = _loan_report_rows(filters, disbursed_only=True)
     return _standard_report_response(
         request,
         "Loan Disbursement Report",
@@ -2943,10 +2947,7 @@ def defaulted_loans_report(request):
 @admin_or_manager_or_staff_required
 def closed_loans_report(request):
     filters = parse_report_filters(request)
-    rows = [
-        loan_financial_row(loan)
-        for loan in filtered_loans(filters, date_field="updated_at").filter(status__in=["closed", "repaid"])
-    ]
+    rows = _loan_report_rows(filters, date_field="updated_at", statuses=["closed", "repaid"])
     return _standard_report_response(
         request,
         "Closed Loans Report",
@@ -2964,8 +2965,7 @@ def loan_officer_performance_report(request):
     filters = parse_report_filters(request)
     rows = []
     grouped = {}
-    for loan in filtered_loans(filters):
-        row = loan_financial_row(loan)
+    for row in _loan_report_rows(filters):
         officer = row["loan_officer"]
         grouped.setdefault(
             officer,
@@ -2998,8 +2998,7 @@ def loan_officer_performance_report(request):
 def loan_product_performance_report(request):
     filters = parse_report_filters(request)
     grouped = {}
-    for loan in filtered_loans(filters):
-        row = loan_financial_row(loan)
+    for row in _loan_report_rows(filters):
         product = row["loan_product"]
         grouped.setdefault(
             product,

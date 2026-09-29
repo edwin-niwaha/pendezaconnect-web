@@ -5,7 +5,7 @@ from io import StringIO
 from unittest.mock import patch
 
 from django.contrib.auth.models import User
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -17,6 +17,9 @@ from .models import ChartOfAccounts, Loan, LoanPenalty, LoanRepayment
 from .services.reporting import aging_report_rows, aging_report_summary, loan_financial_row
 
 
+# These accounting fixtures use bulk writes, which intentionally bypass signals.
+# Cache lifecycle is covered separately by dashboard.test_report_cache.
+@override_settings(REPORT_CACHE_TTL=0)
 class AgingReportTests(TestCase):
     def setUp(self):
         self.borrower = Client.objects.create(full_name="Aging Client", reg_number="AGING-1")

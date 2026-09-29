@@ -2,7 +2,7 @@ from collections import defaultdict
 
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
-from django.db.models import Sum
+from django.db.models import Count, Q, Sum
 from django.shortcuts import render
 
 from apps.child.models import Child
@@ -14,6 +14,7 @@ from apps.staff.models import Staff
 from apps.users.decorators import (
     admin_or_manager_or_staff_required,
 )
+from core.report_cache import cached_report
 
 # =================================== Helper Functions ===================================
 
@@ -53,38 +54,44 @@ def reports_dash(request):
     """
     Render the reports dashboard with counts of sponsors, children, and staff.
     """
+    return render(request, "reports/_reports_dash_.html", _build_reports_dashboard())
+
+
+@cached_report("sponsorship")
+def _build_reports_dashboard():
     # Sponsors
     sponsors_count = get_active_sponsors_count()
     sponsors_departed_count = get_departed_sponsors_count()
 
-    # Children
-    children_count = Child.objects.count()
-    sponsored_count = Child.objects.filter(is_departed=False, is_sponsored=True).count()
-    non_sponsored_count = Child.objects.filter(is_departed=False, is_sponsored=False).count()
-    children_departed_count = Child.objects.filter(is_departed=True).count()
-
-    # Staff
-    staff_count = Staff.objects.count()
+    children = Child.objects.aggregate(
+        total=Count("id"),
+        sponsored=Count("id", filter=Q(is_departed=False, is_sponsored=True)),
+        non_sponsored=Count("id", filter=Q(is_departed=False, is_sponsored=False)),
+        departed=Count("id", filter=Q(is_departed=True)),
+    )
+    staff = Staff.objects.aggregate(
+        total=Count("id"),
+        non_sponsored=Count("id", filter=Q(is_departed=False, is_sponsored=False)),
+        departed=Count("id", filter=Q(is_departed=True)),
+    )
     sponsored_staff_count = StaffSponsorship.objects.filter(is_active=True).count()
-    non_sponsored_staff_count = Staff.objects.filter(is_departed=False, is_sponsored=False).count()
-    departed_staff_count = Staff.objects.filter(is_departed=True).count()
 
     context = {
         # Sponsors
         "sponsors_count": sponsors_count,
         "sponsors_departed_count": sponsors_departed_count,
         # Children
-        "children_count": children_count,
-        "children_departed_count": children_departed_count,
-        "sponsored_count": sponsored_count,
-        "non_sponsored_count": non_sponsored_count,
+        "children_count": children["total"],
+        "children_departed_count": children["departed"],
+        "sponsored_count": children["sponsored"],
+        "non_sponsored_count": children["non_sponsored"],
         # Staff
-        "staff_count": staff_count,
+        "staff_count": staff["total"],
         "sponsored_staff_count": sponsored_staff_count,
-        "non_sponsored_staff_count": non_sponsored_staff_count,
-        "departed_staff_count": departed_staff_count,
+        "non_sponsored_staff_count": staff["non_sponsored"],
+        "departed_staff_count": staff["departed"],
     }
-    return render(request, "reports/_reports_dash_.html", context)
+    return context
 
 
 # =================================== All Children Master List ===================================

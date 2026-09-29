@@ -258,6 +258,9 @@ CACHES = {
     }
 }
 
+# Reports share data snapshots across requests; bulk updates refresh by this TTL.
+REPORT_CACHE_TTL = int(os.environ.get("REPORT_CACHE_TTL", "300"))
+
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL") or REDIS_URL
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND") or REDIS_URL
 

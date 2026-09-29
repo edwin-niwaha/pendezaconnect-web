@@ -1,14 +1,11 @@
 import json
 import logging
 from datetime import date, datetime, timedelta
-from decimal import Decimal
+from decimal import ROUND_DOWN, Decimal
 
 from django.contrib.auth.decorators import login_required
-from django.core.cache import cache
 from django.db.models import (
     Count,
-    F,
-    FloatField,
     Q,
     Sum,
 )
@@ -20,15 +17,19 @@ from django.utils import timezone
 from apps.child.models import Child
 from apps.finance.models import ChildPayments, StaffPayments
 from apps.inventory.products.models import Category, Product
-from apps.inventory.sales.models import Sale
+from apps.inventory.sales.models import Sale, SaleDetail
 from apps.loans.models import Loan, LoanDisbursement, LoanRepayment
-from apps.loans.services.reporting import loan_financial_row, portfolio_at_risk_summary
+from apps.loans.services.reporting import (
+    loan_financial_row,
+    portfolio_at_risk_summary,
+    remaining_balances_from_related,
+)
 from apps.sponsor.models import Sponsor
 from apps.sponsorship.models import ChildSponsorship, StaffSponsorship
 from apps.users.decorators import admin_or_manager_or_staff_required
+from core.report_cache import cached_chart, cached_report, invalidate_report_cache, report_snapshot
 
-CACHE_KEY = "loans_dashboard_main_v1"
-CACHE_TTL = 300  # 5 minutes — matches the other dashboard view's cadence
+LOANS_DASHBOARD_CACHE_KEY = "loans_dashboard_main_v2"
 
 
 logger = logging.getLogger(__name__)
@@ -42,8 +43,6 @@ def home(request):
 
 
 CACHE_KEY = "loan_dashboard_summary"
-CACHE_TTL = 300  # seconds (5 minutes)
-DASHBOARD_OVERVIEW_CACHE_KEY = "sponsorship_dashboard_overview"
 
 
 def get_loan_dashboard_summary(force_refresh=False):
@@ -52,10 +51,13 @@ def get_loan_dashboard_summary(force_refresh=False):
     Used by views and context processors.
     """
 
-    if not force_refresh:
-        cached = cache.get(CACHE_KEY)
-        if cached:
-            return cached
+    if force_refresh:
+        invalidate_report_cache("loans")
+    return _build_loan_dashboard_summary()
+
+
+@cached_report("loans")
+def _build_loan_dashboard_summary():
 
     today = timezone.now().date()
 
@@ -65,7 +67,7 @@ def get_loan_dashboard_summary(force_refresh=False):
     overdue_loans = []
 
     for loan in loans:
-        balances = loan.calculate_remaining_balances()
+        balances = remaining_balances_from_related(loan)
         total_balance = balances["principal_balance"] + balances["interest_balance"] + balances["penalty_balance"]
 
         if total_balance <= 0:
@@ -118,7 +120,6 @@ def get_loan_dashboard_summary(force_refresh=False):
         ),
     }
 
-    cache.set(CACHE_KEY, summary, CACHE_TTL)
     return summary
 
 
@@ -128,30 +129,31 @@ def get_loan_dashboard_summary(force_refresh=False):
 @login_required
 @admin_or_manager_or_staff_required
 def dashboard(request):
-    context = cache.get(DASHBOARD_OVERVIEW_CACHE_KEY)
-    if context is None:
-        top_sponsors = get_top_sponsors()
-        top_children = get_top_children_sponsored()
-        top_staff = get_top_staff_sponsored()
-        context = {
-            "sponsors_count": Sponsor.objects.active_real_supporters().count(),
-            "children_count": Child.objects.count(),
-            "children_departed_count": Child.objects.filter(is_departed=True).count(),
-            "sponsored_count": Child.objects.filter(
-                is_departed=False,
-                is_sponsored=True,
-            ).count(),
-            "non_sponsored_count": Child.objects.filter(
-                is_departed=False,
-                is_sponsored=False,
-            ).count(),
-            "top_sponsors_with_counts": list(zip(top_sponsors["sponsors"], top_sponsors["counts"])),
-            "top_children_with_counts": list(zip(top_children["children"], top_children["counts"])),
-            "top_staff_with_counts": list(zip(top_staff["staff_active"], top_staff["counts"])),
-        }
-        cache.set(DASHBOARD_OVERVIEW_CACHE_KEY, context, 300)
+    return render(request, "main/main_dashboard.html", _build_sponsorship_dashboard())
 
-    return render(request, "main/main_dashboard.html", context)
+
+@cached_report("sponsorship")
+def _build_sponsorship_dashboard():
+    top_sponsors = get_top_sponsors()
+    top_children = get_top_children_sponsored()
+    top_staff = get_top_staff_sponsored()
+    children = Child.objects.aggregate(
+        total=Count("id"),
+        departed=Count("id", filter=Q(is_departed=True)),
+        sponsored=Count("id", filter=Q(is_departed=False, is_sponsored=True)),
+        non_sponsored=Count("id", filter=Q(is_departed=False, is_sponsored=False)),
+    )
+    context = {
+        "sponsors_count": Sponsor.objects.active_real_supporters().count(),
+        "children_count": children["total"],
+        "children_departed_count": children["departed"],
+        "sponsored_count": children["sponsored"],
+        "non_sponsored_count": children["non_sponsored"],
+        "top_sponsors_with_counts": list(zip(top_sponsors["sponsors"], top_sponsors["counts"])),
+        "top_children_with_counts": list(zip(top_children["children"], top_children["counts"])),
+        "top_staff_with_counts": list(zip(top_staff["staff_active"], top_staff["counts"])),
+    }
+    return context
 
 
 # =================================== Child Sponsorship Count ===================================
@@ -211,6 +213,9 @@ def get_top_staff_sponsored():
 # =================================== Sponsorship Chart ===================================
 
 
+@login_required
+@admin_or_manager_or_staff_required
+@cached_chart("sponsorship")
 def sponsorship_chart(request):
     categories = (
         ("Child Sponsors", Sponsor.objects.child_sponsors()),
@@ -226,6 +231,7 @@ def sponsorship_chart(request):
 # =================================== Sponsors Graph ===================================
 @login_required
 @admin_or_manager_or_staff_required
+@cached_chart("sponsorship")
 def get_sponsors_data(request):
     try:
         sponsors_per_year = (
@@ -251,6 +257,7 @@ def get_sponsors_data(request):
 # =================================== Children Graph ===================================
 @login_required
 @admin_or_manager_or_staff_required
+@cached_chart("sponsorship")
 def get_children_data(request):
     try:
         children_per_year = (
@@ -275,6 +282,7 @@ def get_children_data(request):
 # =================================== Sponsors & Children ===================================
 @login_required
 @admin_or_manager_or_staff_required
+@cached_chart("sponsorship")
 def get_combined_data(request):
     try:
         sponsors_per_year = (
@@ -315,15 +323,15 @@ def get_combined_data(request):
 # =================================== Children Birthday Graph ===================================
 @login_required
 @admin_or_manager_or_staff_required
+@cached_chart("sponsorship")
 def birthdays_by_month(request):
-    # Query all children with non-null date_of_birth
-    children = Child.objects.filter(date_of_birth__isnull=False)
-
-    # Extract month
-    months = [child.date_of_birth.month for child in children]
-
-    # Count occurrences per month
-    month_counts = [months.count(month) for month in range(1, 13)]
+    month_counts = [0] * 12
+    for row in (
+        Child.objects.filter(date_of_birth__isnull=False)
+        .annotate(month=ExtractMonth("date_of_birth"))
+        .values("month").annotate(count=Count("id")).order_by("month")
+    ):
+        month_counts[row["month"] - 1] = row["count"]
 
     # Prepare the response data
     response_data = {
@@ -348,6 +356,9 @@ def birthdays_by_month(request):
 
 
 # =================================== Sponsor Payments - Children ===================================
+@login_required
+@admin_or_manager_or_staff_required
+@cached_chart("sponsorship")
 def get_payments_children(request):
     payments_per_year = (
         ChildPayments.objects.annotate(year=ExtractYear("payment_date"))
@@ -360,6 +371,9 @@ def get_payments_children(request):
 
 
 # =================================== Sponsor Payments - Staff ===================================
+@login_required
+@admin_or_manager_or_staff_required
+@cached_chart("sponsorship")
 def get_payments_staff(request):
     payments_per_year = (
         StaffPayments.objects.annotate(year=ExtractYear("payment_date"))
@@ -386,6 +400,11 @@ def get_total_sales_for_period(start_date, end_date):
 @login_required
 @admin_or_manager_or_staff_required
 def inventory_dashboard(request):
+    return render(request, "main/inventory_dashboard.html", _build_inventory_dashboard())
+
+
+@cached_report("inventory")
+def _build_inventory_dashboard():
     today = date.today()
     year = today.year
 
@@ -398,13 +417,7 @@ def inventory_dashboard(request):
             or 0
         )
 
-    # Calculate monthly and annual earnings
-    monthly_earnings = [
-        Sale.objects.filter(trans_date__year=year, trans_date__month=month).aggregate(
-            total=Coalesce(Sum("grand_total"), 0.0)
-        )["total"]
-        for month in range(1, 13)
-    ]
+    monthly_earnings = _monthly_sales(year)
     annual_earnings = format(sum(monthly_earnings), ".2f")
     avg_month = format(sum(monthly_earnings) / 12, ".2f")
 
@@ -414,7 +427,7 @@ def inventory_dashboard(request):
     total_sales_month = get_total_sales_for_period(today.replace(day=1), today)
 
     # Get top-selling products using the new method
-    top_products = get_top_selling_products()
+    top_products = list(get_top_selling_products())
 
     # Total stock from Inventory
     total_stock = Product.objects.filter(status="ACTIVE").aggregate(total=Coalesce(Sum("inventory__quantity"), 0))[
@@ -422,7 +435,10 @@ def inventory_dashboard(request):
     ]
 
     # Calculate total profit from all sales
-    total_profit = sum(sum(detail.calculate_profit() for detail in sale.items.all()) for sale in Sale.objects.all())
+    total_profit = sum(
+        detail.calculate_profit()
+        for detail in SaleDetail.objects.select_related("product", "variant__product").iterator()
+    )
 
     context = {
         "products": Product.objects.filter(status="ACTIVE").count(),
@@ -438,23 +454,16 @@ def inventory_dashboard(request):
         "top_products": top_products,
     }
 
-    return render(request, "main/inventory_dashboard.html", context)
+    return context
 
 
 @login_required
 @admin_or_manager_or_staff_required
+@cached_chart("inventory")
 def monthly_earnings_view(request):
     today = date.today()
     year = today.year
-    monthly_earnings = []
-
-    for month in range(1, 13):
-        earning = (
-            Sale.objects.filter(trans_date__year=year, trans_date__month=month)
-            .aggregate(total_variable=Coalesce(Sum(F("grand_total")), 0.0, output_field=FloatField()))
-            .get("total_variable")
-        )
-        monthly_earnings.append(earning)
+    monthly_earnings = _monthly_sales(year)
 
     return JsonResponse(
         {
@@ -480,6 +489,7 @@ def monthly_earnings_view(request):
 # =================================== Annual Sales graph ===================================
 @login_required
 @admin_or_manager_or_staff_required
+@cached_chart("inventory")
 def sales_data_api(request):
     # Query to get total sales grouped by year
     sales_per_year = (
@@ -874,14 +884,32 @@ def sales_data_api(request):
 @login_required
 @admin_or_manager_or_staff_required
 def loans_dashboard(request):
-    context = cache.get(CACHE_KEY)
-    if context is not None:
-        return render(request, "main/loans_dashboard.html", context)
-
-    context = _build_loans_dashboard_context()
-    cache.set(CACHE_KEY, context, timeout=CACHE_TTL)
-
+    context = report_snapshot("loans", LOANS_DASHBOARD_CACHE_KEY, {}, _build_loans_dashboard_context)
     return render(request, "main/loans_dashboard.html", context)
+
+
+def _dashboard_due_balance(loan, due_date, total_amount_due):
+    """Match Loan.calculate_total_amount_due_balance using prefetched records.
+
+    Filtering/aggregating a related manager bypasses Django's prefetch cache,
+    causing extra database round trips for every active loan on a cold load.
+    """
+    total_paid = sum(
+        (
+            r.principal_payment + r.interest_payment + r.penalty_payment
+            for r in loan.repayments.all()
+            if r.repayment_date <= due_date
+        ),
+        Decimal("0.00"),
+    )
+    total_penalty = sum(
+        (p.penalty_amount for p in loan.penalties.all() if p.penalty_date <= due_date and not p.is_paid),
+        Decimal("0.00"),
+    )
+    return max(
+        Decimal(str(total_amount_due)) + total_penalty - total_paid,
+        Decimal("0.00"),
+    ).quantize(Decimal("0.01"), rounding=ROUND_DOWN)
 
 
 def _build_loans_dashboard_context():
@@ -940,7 +968,7 @@ def _build_loans_dashboard_context():
         try:
             if not loan.disbursement_date or loan.loan_period_months <= 0:
                 continue
-            balances = loan.calculate_remaining_balances()
+            balances = remaining_balances_from_related(loan)
             total_balance = balances["principal_balance"] + balances["interest_balance"] + balances["penalty_balance"]
             if total_balance <= 0:
                 continue
@@ -970,8 +998,8 @@ def _build_loans_dashboard_context():
                     sum(p["principal_payment"] + p["interest_payment"] for p in due_payments),
                     total_balance,
                 )
-                total_amount_due_balance = loan.calculate_total_amount_due_balance(
-                    due_date=today, total_amount_due=total_amount_due
+                total_amount_due_balance = _dashboard_due_balance(
+                    loan, due_date=today, total_amount_due=total_amount_due
                 )
                 if total_amount_due_balance > 0:
                     due_loans.append(
@@ -1003,8 +1031,8 @@ def _build_loans_dashboard_context():
                         total_balance,
                     )
                 )
-                total_amount_due_balance = loan.calculate_total_amount_due_balance(
-                    due_date=today, total_amount_due=total_amount_due
+                total_amount_due_balance = _dashboard_due_balance(
+                    loan, due_date=today, total_amount_due=total_amount_due
                 )
                 if total_amount_due_balance > 0:
                     overdue_loans.append(
@@ -1160,9 +1188,13 @@ def _build_loans_dashboard_context():
     # recent repayments/disbursements globally (not scoped to
     # active_loans), so they legitimately need their own queries.
     recent_activity = []
-    for repayment in LoanRepayment.objects.select_related("loan").order_by("-repayment_date")[:5]:
+    for repayment in (
+        LoanRepayment.objects.select_related("loan")
+        .prefetch_related("loan__repayments", "loan__penalties")
+        .order_by("-repayment_date")[:5]
+    ):
         try:
-            balances = repayment.loan.calculate_remaining_balances()
+            balances = remaining_balances_from_related(repayment.loan)
             total_balance = balances["principal_balance"] + balances["interest_balance"] + balances["penalty_balance"]
             recent_activity.append(
                 {
@@ -1178,11 +1210,15 @@ def _build_loans_dashboard_context():
             logger.error(f"Error processing repayment for loan {repayment.loan.id}: {e}")
             continue
 
-    for disbursement in LoanDisbursement.objects.select_related("loan").order_by("-loan__disbursement_date")[:5]:
+    for disbursement in (
+        LoanDisbursement.objects.select_related("loan")
+        .prefetch_related("loan__repayments", "loan__penalties")
+        .order_by("-loan__disbursement_date")[:5]
+    ):
         try:
             if not disbursement.loan.disbursement_date:
                 continue
-            balances = disbursement.loan.calculate_remaining_balances()
+            balances = remaining_balances_from_related(disbursement.loan)
             total_balance = balances["principal_balance"] + balances["interest_balance"] + balances["penalty_balance"]
             recent_activity.append(
                 {
@@ -1221,3 +1257,15 @@ def _build_loans_dashboard_context():
         "recent_activity": recent_activity,
         "loan_dashboard_charts": loan_dashboard_charts,
     }
+
+
+@cached_report("inventory")
+def _monthly_sales(year):
+    amounts = [0.0] * 12
+    for row in (
+        Sale.objects.filter(trans_date__year=year)
+        .annotate(month=ExtractMonth("trans_date"))
+        .values("month").annotate(total=Sum("grand_total")).order_by("month")
+    ):
+        amounts[row["month"] - 1] = row["total"] or 0.0
+    return amounts

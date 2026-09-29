@@ -4,7 +4,7 @@ from decimal import Decimal
 from io import StringIO
 from unittest.mock import patch
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from apps.client.models import Client
@@ -13,6 +13,7 @@ from . import test_aging_report
 from .risk_reports import principal_risk_bands
 
 
+@override_settings(REPORT_CACHE_TTL=0)
 class RiskReportTests(TestCase):
     setUp = test_aging_report.AgingReportTests.setUp
     loan = test_aging_report.AgingReportTests.loan

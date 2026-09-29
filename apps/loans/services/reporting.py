@@ -11,6 +11,7 @@ from django.http import HttpResponse
 from django.utils import timezone
 
 from apps.loans.models import Loan, LoanRepayment
+from core.report_cache import cached_report
 
 STANDARD_AGING_BUCKETS = (
     "Current",
@@ -181,6 +182,7 @@ def penalty_balance_as_of(repayments, penalties, as_of):
     return sum(remaining.values(), Decimal("0.00"))
 
 
+@cached_report("loans")
 def aging_report_rows(filters):
     """Select the disbursement cohort, then reconstruct its end-date exposure."""
     as_of = filters["end_date"]
@@ -216,6 +218,7 @@ def aging_report_summary(rows):
     }
 
 
+@cached_report("loans")
 def repayment_rows(filters) -> list[dict]:
     qs = LoanRepayment.objects.select_related("loan", "loan__borrower", "loan__applied_by", "account").order_by(
         "repayment_date", "id"
