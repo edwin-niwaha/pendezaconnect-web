@@ -14,7 +14,7 @@ from apps.users.models import Profile
 
 from .forms import LoanAgingReportFilterForm
 from .models import ChartOfAccounts, Loan, LoanPenalty, LoanRepayment
-from .services.reporting import aging_report_rows, aging_report_summary, loan_financial_row
+from .services.reporting import aging_bucket, aging_report_rows, aging_report_summary, loan_financial_row
 
 
 # These accounting fixtures use bulk writes, which intentionally bypass signals.
@@ -61,6 +61,83 @@ class AgingReportTests(TestCase):
         )
         values.update(overrides)
         return LoanPenalty.objects.bulk_create([LoanPenalty(**values)])[0]
+
+    def test_due_date_is_current_and_becomes_overdue_next_day(self):
+        self.loan()
+        for cutoff, overdue, days in (("2026-02-01", "0", 0), ("2026-02-02", "110", 1)):
+            with self.subTest(cutoff=cutoff):
+                response = self.client.get(self.url, {"end_date": cutoff})
+                row = response.context["all_rows"][0]
+                self.assertEqual(row["overdue_amount"], Decimal(overdue))
+                self.assertEqual(row["days_in_arrears"], days)
+                self.assertEqual(response.context["totals"]["overdue_amount"], Decimal(overdue))
+                exported = self.client.get(self.url, {"end_date": cutoff, "export": "csv"})
+                self.assertEqual(
+                    Decimal(list(csv.DictReader(StringIO(exported.content.decode())))[0]["Overdue"]),
+                    Decimal(overdue),
+                )
+
+    def test_cutoff_payment_settles_old_arrears_before_current_installment(self):
+        loan = self.loan()
+        self.payment(loan, date(2026, 3, 1), principal="50")
+        response = self.client.get(self.url, {"end_date": "2026-03-01"})
+        row = response.context["all_rows"][0]
+        self.assertEqual(row["overdue_amount"], Decimal("60"))
+        self.assertEqual(row["due_on_date"], Decimal("110"))
+        self.assertEqual(row["days_in_arrears"], 28)
+
+    def test_reducing_rate_uses_declining_contractual_installments(self):
+        # 1,200 principal / 12 months; 12% annual interest: 12, 11, ... 1.
+        loan = self.loan(principal_amount=Decimal("1200"), total_interest=Decimal("78"),
+                         interest_rate=Decimal("12"), interest_method="reducing_rate", loan_period_months=12)
+        self.payment(loan, date(2026, 2, 1), principal="100", interest="6.50")
+        first = loan_financial_row(loan, today=date(2026, 2, 2))
+        self.assertEqual(first["expected_due"], Decimal("112"))
+        self.assertEqual(first["overdue_amount"], Decimal("5.50"))
+        self.assertEqual(first["days_in_arrears"], 1)
+        second = loan_financial_row(loan, today=date(2026, 3, 2))
+        self.assertEqual(second["expected_due"], Decimal("223"))
+        self.assertEqual(second["overdue_amount"], Decimal("116.50"))
+        self.assertEqual(second["days_in_arrears"], 29)
+        final = loan_financial_row(loan, today=date(2027, 1, 2))
+        self.assertEqual(final["expected_due"], Decimal("1278"))
+        self.assertEqual(final["overdue_amount"], final["outstanding_amount"])
+
+    def test_month_end_due_dates_and_bucket_boundaries(self):
+        loan = self.loan(disbursement_date=date(2024, 1, 31))
+        self.assertEqual(loan_financial_row(loan, today=date(2024, 2, 28))["expected_due"], Decimal("0"))
+        self.assertEqual(loan_financial_row(loan, today=date(2024, 3, 1))["days_in_arrears"], 1)
+        for days, expected in ((0, "Current"), (1, "1-30 days overdue"), (30, "1-30 days overdue"),
+                               (31, "31-60 days overdue"), (60, "31-60 days overdue"),
+                               (61, "61-90 days overdue"), (90, "61-90 days overdue"),
+                               (91, "91-180 days overdue"), (180, "91-180 days overdue"),
+                               (181, "Over 180 days overdue")):
+            self.assertEqual(aging_bucket(days), expected)
+
+    def test_penalty_only_balance_does_not_create_installment_arrears(self):
+        loan = self.loan()
+        self.payment(loan, date(2026, 2, 1), principal="1000", interest="100")
+        self.penalty(loan, date(2026, 2, 1), amount="50")
+        row = loan_financial_row(loan, today=date(2026, 3, 3))
+        self.assertEqual(row["outstanding_amount"], Decimal("50"))
+        self.assertEqual(row["overdue_amount"], Decimal("0"))
+        self.assertEqual(row["days_in_arrears"], 0)
+
+    def test_fractional_balances_remain_visible_and_totals_reconcile(self):
+        loan = self.loan(total_interest=Decimal("0"), loan_period_months=3)
+        self.payment(loan, date(2026, 4, 1), principal="999.99")
+        response = self.client.get(self.url, {"end_date": "2026-04-02"})
+        self.assertContains(response, "0.01")
+        totals = response.context["totals"]
+        self.assertEqual(totals["outstanding_amount"], Decimal("0.01"))
+        self.assertEqual(
+            totals["outstanding_amount"],
+            totals["outstanding_principal"] + totals["outstanding_interest"] + totals["outstanding_penalties"],
+        )
+        self.assertEqual(
+            sum(group["totals"]["outstanding_amount"] for group in response.context["grouped_rows"]),
+            totals["outstanding_amount"],
+        )
 
     def test_balances_and_last_payment_exclude_later_repayments(self):
         loan = self.loan()
@@ -177,7 +254,6 @@ class AgingReportTests(TestCase):
     def test_invalid_date_filters_do_not_calculate_or_export(self):
         for query in (
             {"end_date": "not-a-date"},
-            {"start_date": "2026-04-01", "end_date": "2026-03-01"},
             {"end_date": "2999-01-01"},
             {"arrears_over": "invalid"},
         ):
@@ -188,9 +264,52 @@ class AgingReportTests(TestCase):
                 self.assertNotContains(response, 'aria-label="Report totals"', status_code=400)
                 build.assert_not_called()
 
+    def test_as_of_date_includes_older_loans_despite_legacy_start_date(self):
+        older = self.loan(disbursement_date=date(2025, 12, 31))
+        self.loan(disbursement_date=date(2026, 4, 1))
+        query = {"start_date": "2026-04-01", "end_date": "2026-03-03"}
+        response = self.client.get(self.url, query)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "As of date")
+        self.assertNotContains(response, 'name="start_date"')
+        self.assertNotContains(response, "End date")
+        self.assertNotContains(response, "Disbursed:")
+        self.assertEqual([row["loan_id"] for row in response.context["all_rows"]], [older.pk])
+        exported = self.client.get(self.url, {**query, "export": "csv"})
+        data = list(csv.DictReader(StringIO(exported.content.decode())))
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]["Disbursed On"], "31/12/2025")
+
+    def test_as_of_date_picker_and_server_reject_tomorrow(self):
+        with patch("django.utils.timezone.localdate", return_value=date(2026, 9, 30)):
+            response = self.client.get(self.url)
+            self.assertContains(response, 'max="2026-09-30"')
+            form = LoanAgingReportFilterForm({"end_date": "2026-09-30"}, as_of_only=True)
+            self.assertTrue(form.is_valid(), form.errors)
+            for export in ("", "csv"):
+                response = self.client.get(self.url, {"end_date": "2026-10-01", "export": export})
+                self.assertEqual(response.status_code, 400)
+                self.assertContains(response, "As of date cannot be in the future.", status_code=400)
+
+    def test_contract_interest_rate_and_period_columns_and_export(self):
+        loan = self.loan(interest_rate=Decimal("12.50"))
+        self.payment(loan, date(2026, 2, 1), interest="10")
+        query = {"end_date": "2026-03-03"}
+        response = self.client.get(self.url, query)
+        labels = [column.label for column in response.context["columns"]]
+        index = labels.index("Principal")
+        self.assertEqual(labels[index:index + 4], ["Principal", "Interest", "Rate (%)", "Period (months)"])
+        self.assertEqual(response.context["totals"]["interest"], Decimal("100"))
+        exported = self.client.get(self.url, {**query, "export": "csv"})
+        row = list(csv.DictReader(StringIO(exported.content.decode())))[0]
+        self.assertEqual(row["Interest"], "100.00")
+        self.assertEqual(row["Interest Bal."], "90.00")
+        self.assertEqual(row["Rate (%)"], "12.50")
+        self.assertEqual(row["Period (months)"], "10")
+
     def test_blank_end_date_defaults_to_today(self):
         with patch("django.utils.timezone.localdate", return_value=date(2026, 3, 3)):
-            form = LoanAgingReportFilterForm({})
+            form = LoanAgingReportFilterForm({}, as_of_only=True)
             self.assertTrue(form.is_valid(), form.errors)
             self.assertEqual(form.cleaned_data["end_date"], date(2026, 3, 3))
 
@@ -267,7 +386,7 @@ class AgingReportTests(TestCase):
                 response = self.client.get(self.url, {"end_date": end_date})
                 self.assertEqual(response.context["aging_summary"]["non_performing_loans"], expected)
                 self.assertContains(response, "Non-performing loans (90+ days):")
-        for extra in ({"start_date": "2026-02-01"}, {"q": "Other Borrower"}):
+        for extra in ({"q": "Other Borrower"},):
             response = self.client.get(self.url, {"end_date": "2026-05-02", **extra})
             self.assertEqual(response.context["aging_summary"]["non_performing_loans"], 0)
         response = self.client.get(self.url, {"end_date": "2026-05-02", "arrears_over": "30"})
@@ -287,7 +406,7 @@ class AgingReportTests(TestCase):
         # The arrears table toggle must not shrink PAR's denominator to risky loans only.
         response = self.client.get(self.url, {**query, "arrears_over": "30"})
         self.assertEqual(response.context["aging_summary"]["par_over_30_percent"], Decimal("50"))
-        for extra in ({"q": "Current Borrower"}, {"start_date": "2026-03-01"}):
+        for extra in ({"q": "Current Borrower"},):
             response = self.client.get(self.url, {**query, **extra})
             self.assertEqual(response.context["aging_summary"]["clients_in_arrears"], 0)
             self.assertEqual(response.context["aging_summary"]["par_over_30_percent"], Decimal("0"))

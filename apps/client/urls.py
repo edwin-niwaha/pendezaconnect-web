@@ -8,6 +8,8 @@ urlpatterns = [
     path("add/", views.register_client, name="register_client"),
     path("photo/", views.upload_client_photo, name="upload_client_photo"),
     path("list/", views.client_list, name="client_list"),
+    path("inactive/", views.client_list, {"inactive_report": True}, name="inactive_clients_report"),
+    path("<int:pk>/status/", views.change_client_status, name="change_client_status"),
     path(
         "photo/<int:pk>/delete/",
         views.delete_client_profile_picture,

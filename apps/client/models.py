@@ -106,6 +106,12 @@ class Client(models.Model):
     group_secretary = models.CharField(max_length=255, blank=True)
     group_treasurer = models.CharField(max_length=255, blank=True)
     branch = models.CharField(max_length=150, blank=True)
+    is_active = models.BooleanField(default=True, db_index=True)
+    status_changed_at = models.DateTimeField(null=True, blank=True)
+    status_changed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True,
+        on_delete=models.SET_NULL, related_name="client_status_changes",
+    )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Created at")
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -1,7 +1,7 @@
 import csv
 from dataclasses import dataclass
 from datetime import date, timedelta
-from decimal import Decimal
+from decimal import ROUND_DOWN, ROUND_HALF_UP, Decimal
 from typing import Iterable
 
 from dateutil.relativedelta import relativedelta
@@ -124,6 +124,8 @@ def loan_financial_row(loan: Loan, today: date | None = None) -> dict:
         "maturity_date": loan.due_date,
         "principal": loan.principal_amount or Decimal("0.00"),
         "interest": loan.total_interest or Decimal("0.00"),
+        "interest_rate": loan.interest_rate,
+        "loan_period_months": loan.loan_period_months,
         "fees": Decimal("0.00"),
         "penalties": balances["penalty_balance"],
         "paid_principal": paid_principal,
@@ -284,6 +286,11 @@ def installment_arrears(
     paid_principal_interest: Decimal,
     outstanding: Decimal,
 ) -> dict:
+    """Unpaid scheduled P&I through today, allocating payments oldest-first.
+
+    Includes today's installment so Due reports can split it from past arrears.
+    Loan Aging displays the separately calculated overdue_before_date amount.
+    """
     if outstanding <= 0 or not loan.disbursement_date or not loan.loan_period_months:
         return {
             "days_in_arrears": 0,
@@ -293,41 +300,44 @@ def installment_arrears(
         }
 
     term_months = int(loan.loan_period_months)
-    final_due_date = loan.disbursement_date + relativedelta(months=term_months)
-    if today < loan.disbursement_date:
-        installments_due = 0
-    elif today >= final_due_date:
-        installments_due = term_months
-    else:
-        installments_due = sum(
-            1 for month in range(1, term_months + 1) if loan.disbursement_date + relativedelta(months=month) <= today
-        )
+    cumulative_due = Decimal("0.00")
+    interest_due = Decimal("0.00")
+    first_unpaid_due_date = None
+    installments_due = 0
+    for month in range(1, term_months + 1):
+        due_date = loan.disbursement_date + relativedelta(months=month)
+        if due_date > today:
+            break
+        installments_due = month
+        if month == term_months:
+            # Settle the stored contractual balance, including rounding remainders.
+            cumulative_due = loan.total_repayable
+        elif loan.interest_method == "reducing_rate":
+            monthly_principal = loan.principal_amount / Decimal(term_months)
+            opening_principal = loan.principal_amount - monthly_principal * (month - 1)
+            monthly_rate = Decimal(loan.interest_rate) / Decimal("1200")
+            interest_due += (opening_principal * monthly_rate).quantize(
+                Decimal("0.01"), rounding=ROUND_DOWN
+            )
+            principal_due = (monthly_principal * month).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            cumulative_due = min(
+                principal_due + min(interest_due, loan.total_interest or Decimal("0")),
+                loan.total_repayable,
+            )
+        else:
+            cumulative_due = min(loan.monthly_installment * month, loan.total_repayable)
+        if first_unpaid_due_date is None and paid_principal_interest < cumulative_due:
+            first_unpaid_due_date = due_date
 
-    # The final installment settles any cents left by monthly rounding.
-    expected_due = (
-        loan.total_repayable
-        if installments_due == term_months
-        else min(loan.monthly_installment * Decimal(installments_due), loan.total_repayable)
-    )
+    expected_due = cumulative_due
     overdue_amount = max(expected_due - paid_principal_interest, Decimal("0.00"))
-    if overdue_amount <= 0:
+    if first_unpaid_due_date is None:
         return {
             "days_in_arrears": 0,
-            "overdue_amount": Decimal("0.00"),
+            "overdue_amount": overdue_amount,
             "expected_due": expected_due,
             "installments_due": installments_due,
         }
-
-    first_unpaid_due_date = loan.disbursement_date + relativedelta(months=installments_due)
-    for month in range(1, installments_due + 1):
-        cumulative_due = (
-            loan.total_repayable
-            if month == term_months
-            else min(loan.monthly_installment * Decimal(month), loan.total_repayable)
-        )
-        if paid_principal_interest < cumulative_due:
-            first_unpaid_due_date = loan.disbursement_date + relativedelta(months=month)
-            break
 
     return {
         "days_in_arrears": max((today - first_unpaid_due_date).days, 0),

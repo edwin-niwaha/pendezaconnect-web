@@ -2,12 +2,13 @@
 
 ## Date and search filters
 
-- Start date and End date select disbursement dates, inclusively.
-- End date is also the balance and aging cutoff; a blank End date means today.
-- A blank Start date includes older loans that still had outstanding balances at
-  the cutoff. Start date is not a lower bound on repayments.
+- Loan Aging uses a single As of date for balances and aging; blank means today.
+- All loans disbursed on or before that date with outstanding balances are eligible,
+  including older loans. Legacy Start date query parameters are ignored on Loan Aging.
+- The internal cutoff parameter remains `end_date`. Related snapshot reports retain
+  their optional disbursement Start date and End date filters.
 - Search narrows the same loan cohort used by the table and headline indicators.
-- Invalid dates, reversed ranges, and future cutoffs return validation errors;
+- Invalid cutoff dates and future cutoffs return validation errors;
   they do not silently produce an unfiltered report or CSV.
 
 ## Calculations
@@ -28,9 +29,15 @@ a past balance.
 
 Days in arrears is the number of days since the oldest installment due date that
 is not fully covered by cumulative principal and interest payments at the cutoff.
-Monthly due dates follow the existing monthly loan schedule. The final installment
-settles rounding remainders. Overdue Amount is due principal and interest minus
-payments toward those components, floored at zero; it excludes penalties.
+Monthly due dates follow the existing monthly loan schedule. Flat-rate loans use
+equal installments; reducing-rate loans use equal principal with declining monthly
+interest on the opening principal, rounded down as in the contractual interest
+calculation. The final installment settles the stored contractual total and rounding
+remainders. On Loan Aging, Overdue is scheduled principal and interest due strictly
+before As of date, minus payments through As of date, floored at zero. Installments
+due on As of date are current until the following day. Penalties are excluded.
+Related Due reports retain the separate due-on-date and overdue-before-date amounts.
+Aging displays up to two decimal places so fractional outstanding balances remain visible.
 
 Principal outstanding on loans **over 30 days** in arrears sums the entire remaining
 principal of loans with days in arrears strictly greater than 30. It excludes

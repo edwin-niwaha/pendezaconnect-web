@@ -1,9 +1,9 @@
 {% load static %}
 <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{% block title %}Clients | Pendeza Connect{% endblock %}</title>
-<link rel="stylesheet" href="{% static 'css/client-workspace.css' %}?v=20260929-drafts">
+<link rel="stylesheet" href="{% static 'css/client-workspace.css' %}?v=20260930-client-status">
 </head><body class="client-workspace">
-<nav class="workspace-nav no-print" aria-label="Workspace navigation"><a class="workspace-brand" href="{% url 'loans-dashboard' %}">Pendeza<span>Connect</span></a><div><a href="{% url 'loans:loan_reports_dashboard' %}">Reports dashboard</a><a href="{% url 'client_list' %}">Clients</a></div></nav>
+<nav class="workspace-nav no-print" aria-label="Workspace navigation"><a class="workspace-brand" href="{% url 'loans-dashboard' %}">Pendeza<span>Connect</span></a><div><a href="{% url 'loans:loan_reports_dashboard' %}">Reports dashboard</a><a href="{% url 'client_list' %}">Clients</a><a href="{% url 'inactive_clients_report' %}">Inactive clients</a></div></nav>
 <main class="workspace-main">{% if messages %}<div class="messages" role="status">{% for message in messages %}<p>{{ message }}</p>{% endfor %}</div>{% endif %}{% block content %}{% endblock %}</main>
 {% block scripts %}{% endblock %}
 </body></html>

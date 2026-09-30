@@ -2801,10 +2801,13 @@ def _loan_report_rows(filters, *, date_field="disbursement_date", statuses=None,
 @login_required
 @admin_or_manager_or_staff_required
 def loan_aging_report(request):
-    filter_form = LoanAgingReportFilterForm(request.GET)
+    filter_form = LoanAgingReportFilterForm(request.GET, as_of_only=True)
     valid_filters = filter_form.is_valid()
     filters = dict(filter_form.cleaned_data)
     cohort_rows = aging_report_rows(filters) if valid_filters else []
+    for row in cohort_rows:
+        # An installment due on the assessment date is not yet overdue.
+        row["overdue_amount"] = row["overdue_before_date"]
     summary = aging_report_summary(cohort_rows)
     rows = cohort_rows
     if filters.get("arrears_over") == "30":
@@ -2822,7 +2825,12 @@ def loan_aging_report(request):
         if column.key not in {"loan_id", "loan_product", "loan_officer", "aging_bucket"}
     ]
     principal_balance_index = next(index for index, column in enumerate(columns) if column.key == "outstanding_principal")
-    columns.insert(principal_balance_index, ReportColumn("principal", "Principal", "right", True))
+    columns[principal_balance_index:principal_balance_index] = [
+        ReportColumn("principal", "Principal", "right", True),
+        ReportColumn("interest", "Interest", "right", True),
+        ReportColumn("interest_rate", "Rate (%)", "right"),
+        ReportColumn("loan_period_months", "Period (months)", "right"),
+    ]
     client_index = next(index for index, column in enumerate(columns) if column.key == "client")
     columns.insert(client_index + 1, ReportColumn("gender", "Gender"))
     return _standard_report_response(
@@ -2838,6 +2846,8 @@ def loan_aging_report(request):
         filter_form=filter_form,
         response_status=200 if valid_filters else 400,
         extra_context={
+            "as_of_only": True,
+            "amount_precision": "-2",
             "aging_summary": summary if valid_filters else None,
             "as_of": filters.get("end_date") if valid_filters else None,
             "invalid_filters": not valid_filters,
@@ -3075,6 +3085,7 @@ def _standard_report_response(
             "filters": filters,
             "filter_form": filter_form,
             "compact_filters": compact_filters,
+            "amount_precision": "0",
             "generated_at": timezone.now(),
             "status_choices": Loan.STATUS_CHOICES,
             "loan_product_choices": Loan.LOAN_PURPOSE_CHOICES,

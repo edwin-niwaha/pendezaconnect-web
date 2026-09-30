@@ -117,18 +117,24 @@ class LoanAgingReportFilterForm(LoanReportFilterForm):
         widget=forms.HiddenInput,
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, as_of_only=False, **kwargs):
+        self.as_of_only = as_of_only
         super().__init__(*args, **kwargs)
         self.fields = {
             key: field for key, field in self.fields.items() if key in {"start_date", "end_date", "q", "arrears_over"}
         }
+        self.fields["end_date"].widget.attrs["max"] = timezone.localdate().isoformat()
+        if as_of_only:
+            self.fields.pop("start_date")
+            self.fields["end_date"].label = "As of date"
 
     def clean(self):
         cleaned = super().clean()
         end_date = cleaned.get("end_date") or timezone.localdate()
         cleaned["end_date"] = end_date
         if end_date > timezone.localdate():
-            self.add_error("end_date", "End date cannot be in the future.")
+            label = "As of date" if self.as_of_only else "End date"
+            self.add_error("end_date", f"{label} cannot be in the future.")
         if cleaned.get("start_date") and cleaned["start_date"] > end_date:
             raise forms.ValidationError("End date cannot be before start date.")
         return cleaned

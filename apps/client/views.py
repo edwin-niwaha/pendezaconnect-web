@@ -11,6 +11,7 @@ from django.db.models import F, Q
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 
@@ -23,6 +24,7 @@ from apps.users.decorators import (
     admin_or_manager_required,
     admin_required,
 )
+from apps.users.roles import is_staff_user
 
 from .forms import ClientForm, ClientPhotoForm, ImportClientsForm, SevenHillsRegistrationForm
 from .importing import import_clients
@@ -34,10 +36,16 @@ from .tasks import enqueue_client_import
 # =================================== Fetch and display all clients details ===================================
 @login_required
 @admin_or_manager_or_staff_required
-def client_list(request):
-    base_queryset = Client.objects.prefetch_related("profile_pictures").order_by(
+def client_list(request, inactive_report=False):
+    status = "inactive" if inactive_report else request.GET.get("status", "active")
+    if status not in {"active", "inactive", "all"}:
+        status = "active"
+    all_clients = Client.objects.all()
+    base_queryset = all_clients.select_related("status_changed_by").prefetch_related("profile_pictures").order_by(
         F("reg_number").asc(nulls_last=True), "id"
     )
+    if status != "all":
+        base_queryset = base_queryset.filter(is_active=status == "active")
     queryset = base_queryset
 
     search_query = request.GET.get("search", "").strip()
@@ -53,12 +61,14 @@ def client_list(request):
 
     if request.GET.get("export") == "csv":
         response = HttpResponse(content_type="text/csv")
-        response["Content-Disposition"] = 'attachment; filename="clients.csv"'
+        filename = "inactive_clients.csv" if status == "inactive" else "clients.csv"
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
         writer = csv.writer(response)
-        writer.writerow(PROFILE_FIELDS)
+        export_fields = (*PROFILE_FIELDS, "is_active", "status_changed_at", "status_changed_by")
+        writer.writerow(export_fields)
         for client in queryset.iterator(chunk_size=200):
             values = []
-            for name in PROFILE_FIELDS:
+            for name in export_fields:
                 value = getattr(client, name)
                 text = str(value) if value is not None else ""
                 # Prevent text values being evaluated as spreadsheet formulas.
@@ -88,7 +98,15 @@ def client_list(request):
         "client/client_list.html",
         {
             "records": records,
-            "table_title": "Clients List",
+            "table_title": "Inactive clients report" if inactive_report else "Client directory",
+            "inactive_report": inactive_report,
+            "status_filter": status,
+            "active_clients": all_clients.filter(is_active=True).count(),
+            "inactive_clients": all_clients.filter(is_active=False).count(),
+            "can_manage_status": (
+                getattr(getattr(request.user, "profile", None), "role", "") in {"administrator", "manager", "ed", "hof"}
+                or is_staff_user(request.user, {"administrator", "manager", "ed", "hof"})
+            ),
             "search_query": search_query,
             "total_clients": base_queryset.count(),
             "clients_with_phone": base_queryset.exclude(mobile_telephone__isnull=True)
@@ -100,6 +118,27 @@ def client_list(request):
             .count(),
         },
     )
+
+
+@login_required
+@admin_or_manager_required
+@require_POST
+@transaction.atomic
+def change_client_status(request, pk):
+    action = request.POST.get("action")
+    if action not in {"deactivate", "reactivate"}:
+        return HttpResponse("Choose deactivate or reactivate.", status=400)
+    client = get_object_or_404(Client.objects.select_for_update(), pk=pk)
+    active = action == "reactivate"
+    if client.is_active != active:
+        client.is_active = active
+        client.status_changed_at = timezone.now()
+        client.status_changed_by = request.user
+        client.save(update_fields=["is_active", "status_changed_at", "status_changed_by", "updated_at"])
+        messages.success(request, f"{client.full_name} has been {'reactivated' if active else 'deactivated'}.")
+    else:
+        messages.info(request, "This client already has the selected status.")
+    return redirect("inactive_clients_report" if request.POST.get("return_to") == "inactive" else "client_list")
 
 
 # =================================== Upload Client Photo ===================================
